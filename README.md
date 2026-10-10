@@ -149,40 +149,79 @@ variables : `gateway/README.md`, `response/README.md`, `relay/README.md`,
 
 ## Lancer la démo
 
-**État réel : il n'y a pas encore de commande unique, ni de `make demo`.** Ce
-bloc sera mis à jour quand elle existera. Trois choses se jouent aujourd'hui.
-
-**1. La scène sur le dashboard, simulée.** Scénarios 3, 4 puis 1, servis par des
-fixtures : rien ne vient d'un vrai service.
+Une commande lance toute la chaîne sur `127.0.0.1` : service de réponse (8790),
+porte d'entrée (8780), IA du client (8770), relais et API (8787), dashboard
+(5173). Il faut Node 22.18 ou plus récent et les dépendances de `response/`,
+`gateway/`, `relay/` et `dashboard/` (`npm ci --ignore-scripts` dans chacun).
 
 ```bash
-cd dashboard && npm run dev:fixtures
+make demo
 ```
 
 ```bash
-cd dashboard && npm run dev:sim
-```
-
-**2. Le scénario 3 en vrai, de la porte d'entrée au rapport d'incident.** Avec
-`response/` et `gateway/` lancés, depuis la racine : un agent envoie le document
-piégé des exemples.
-
-```bash
-curl -s -X POST http://127.0.0.1:8780/requests \
-  -H "Authorization: Bearer $(jq -r '.agents["A-DEM-2"].token' gateway/var/agent-tokens.json)" \
-  -H 'content-type: application/json' \
-  --data @specs/examples/inbound/valid/03-document-piege.json
-```
-
-La demande est rejetée. L'agent est en pause et un rapport existe :
-
-```bash
-curl -s http://127.0.0.1:8790/agents/paused
+make scenes
 ```
 
 ```bash
-curl -s http://127.0.0.1:8790/incidents
+make demo-stop
 ```
+
+`make scenes` joue les scénarios de
+[specs/acceptance/scenarios.md](specs/acceptance/scenarios.md) par la vraie porte
+d'entrée, en HTTP, avec le jeton de chaque agent, puis compare ce que les
+services ont fait à ce que la spec attend : une ligne par scène, « OK » ou
+« ÉCART », code de sortie non nul au moindre écart. Chaque scène repart d'un état
+neuf. Une seule scène : `make scene S=4`. Les scènes 5 et 6b attendent pour de
+bon : 30 secondes chacune.
+
+| Commande | Effet |
+|---|---|
+| `make demo-status` | Service, port, état |
+| `make demo-reset` | Archive le journal, les rapports et les bases du relais, réémet les jetons, relance les services. Rien n'est effacé |
+| `make demo-smoke` | Lance, joue les scènes 1, 2, 3, 4 et 8 deux fois avec une remise à zéro entre les deux, vérifie le journal, arrête tout |
+| `make demo-chain-check` | Mode chain sur anvil avec une doublure de contrat : la chaîne de services, sans aucune règle de paiement |
+
+Les pid, un log par service et les bases du relais sont sous `var/demo/`, jamais
+versionné. `make demo-stop` n'arrête que ce que `make demo` a lancé.
+
+### Ce qui est réel, ce qui est simulé
+
+Par défaut, `VAULT_MODE=fake` : **le coffre est simulé**. Aucun fonds, aucune
+chaîne.
+
+| Élément | En mode fake |
+|---|---|
+| Porte d'entrée, jetons, détecteur `regles-0.3`, schéma | Réel : `gateway/`, en HTTP |
+| Journal chaîné, réactions, pauses hors chaîne, rapports d'incident | Réel : `response/` |
+| File, relais, indexeur, API en lecture | Réel : `relay/` |
+| IA du client | Bouchon : signe tout ce qui passe le schéma, sans modèle |
+| Coffre et ses décisions | **Simulé** : `relay/src/fake-vault.ts` rejoue les règles de la spec en mémoire, dans le processus du relais. « Payé » y est un nombre qui baisse |
+| Clé du client | Tirée à chaque `make demo`, gardée sous `var/demo/`, lisible par son seul propriétaire |
+| Approbateur (scènes 6a et 6b) | Simulé : un port de contrôle de démo (8788) appelle `approve`, `refuse`, `expire` du faux coffre |
+| Pause d'un agent sur la chaîne | Absente : aucun composant ne la pose |
+| Dashboard | Lancé en mode réel, branché sur le relais et le service de réponse. Ses écrans n'ont pas été relus pour ce README |
+
+Ce que `make scenes` a montré le jour de cette rédaction, en mode fake : les
+décisions, les motifs, les montants et les réactions attendus par la spec sont
+observés dans les dix scènes. Trois écarts restent, et la commande sort en
+échec tant qu'ils ne sont pas tranchés :
+
+- **Ordre du journal.** La spec place `FORWARDED_TO_CLIENT_AI` avant
+  `REQUEST_SIGNED` et `ENQUEUED` ; la porte l'écrit après le retour de l'IA du
+  client, donc après. Toutes les scènes qui passent la porte sont touchées.
+- **Scène 5, relais arrêté.** L'alerte de disponibilité à 15 secondes et
+  `QUEUE_EXPIRED` n'arrivent pas tant que le relais est arrêté : c'est lui qui
+  balaie la file et qui la sert au service de réponse. Elles arrivent à sa
+  relance, dans l'ordre inverse. Rien n'est soumis ni payé.
+- **Scènes 3 et 4.** `AGENT_PAUSED (ONCHAIN)`, annoncé « plus tard » par la spec,
+  n'est jamais écrit. Signalé en note, sans faire échouer la commande.
+
+`VAULT_MODE=chain make demo` vise un vrai contrat sur un réseau de test local
+(anvil). Le contrat du coffre n'existe pas encore : la commande s'arrête sur
+« ArgentVault absent : VAULT_MODE=chain impossible », sans se replier sur le
+faux coffre. Ce qui ne se joue donc pas aujourd'hui : un paiement par un
+contrat, le refus d'une attaque par un contrat, la pause d'un agent sur la
+chaîne.
 
 Le journal se vérifie, depuis `response/` :
 
@@ -190,17 +229,7 @@ Le journal se vérifie, depuis `response/` :
 npm run verify-journal -- var/journal.jsonl
 ```
 
-La pause ne se lève que par la commande humaine du [playbook](docs/playbook.md).
-
-**3. Les scénarios contre le faux coffre, en test.**
-
-```bash
-cd relay && npm test
-```
-
-Ce qui ne se joue pas aujourd'hui : un paiement réel, le refus d'une attaque
-par un contrat sur une chaîne, la pause d'un agent sur la chaîne, la scène
-complète enchaînée de l'agent au dashboard.
+Une pause ne se lève que par la commande humaine du [playbook](docs/playbook.md).
 
 ## Vérifier
 
@@ -234,18 +263,18 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 
 | Composant | Où | Fait | Branché | À savoir |
 |---|---|---|---|---|
-| Agents scriptés | `relay/src/agents.ts` | oui | non | Ils passent par un bouchon de porte (`relay/src/gateway-stub.ts`), pas par `gateway/` |
-| Porte d'entrée | `gateway/` | oui | oui, au journal | Transmission à l'IA du client prévue par `CLIENT_AI_URL` ; l'enchaînement n'a pas été rejoué pour ce README |
+| Agents scriptés | `relay/src/agents.ts` | oui | non | Ceux des tests passent par un bouchon de porte (`relay/src/gateway-stub.ts`). Les scènes de `make scenes` passent par `gateway/` |
+| Porte d'entrée | `gateway/` | oui | oui, au journal | Transmet à l'IA du client par `CLIENT_AI_URL` : enchaînement joué par `make scenes` |
 | Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesure finale absente |
 | Journal chaîné | `response/src/journal.ts` | oui | oui | Écrivain unique. « Au moins une fois » : une entrée peut apparaître deux fois, jamais zéro |
 | Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne |
 | IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle |
 | File d'attente | `relay/src/queue.ts` | oui | oui | SQLite, idempotente |
-| Relais | `relay/src/relay.ts` | oui | au journal et aux pauses, par configuration | Soumet à un faux coffre en test. Écarte un agent en pause en lisant le service de réponse |
+| Relais | `relay/src/relay.ts` | oui | au journal et aux pauses | Soumet à un faux coffre, en test comme dans `make demo`. Écarte un agent en pause en lisant le service de réponse |
 | Contrat (coffre) | `specs/contract/IArgentVault.sol` | **absent** | non | Interface gelée, aucune implémentation. `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
-| Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | non | Rien à indexer sans contrat déployé |
+| Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui, au faux coffre | Dans `make demo`, indexe les événements du faux coffre. Aucun contrat déployé |
 | Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; le coffre est simulé tant qu'aucun contrat n'est déployé |
-| Commande de démo | | **absent** | | Pas de `make demo` |
+| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; le mode chain attend le contrat |
 | Mesure du détecteur | `docs/mesures/` | **absent** | | Jeu prêt dans `data/jeu-factures/`, non lancé |
 
 `src/`, `test/`, `script/` et `offchain/` contiennent d'autres contrats et leurs

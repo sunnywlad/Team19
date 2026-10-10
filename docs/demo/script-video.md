@@ -11,19 +11,47 @@ n'arrête pas la suivante.
 À dire une fois à l'oral et à garder visible à l'écran : chaque panneau du
 dashboard porte son étiquette « réel » ou « simulation ».
 
-| Plan | Source |
-|---|---|
-| Scénario 3 dans le terminal | Réel : `gateway/` et `response/` lancés, commandes du [README](../../README.md), « Lancer la démo » |
-| Tous les plans du dashboard | Simulés par les fixtures de `dashboard/`, tant qu'aucun contrat n'est déployé |
-| Décisions du contrat (scénarios 1, 4, 6, 7, 8) | Règles de la spec, rejouées par un faux coffre. Aucun fonds réel |
+Ce tableau dit ce qui a été observé en lançant `make demo` puis `make scenes`
+le 11 octobre 2026, en mode fake (coffre simulé), pas ce qui est espéré.
+
+| Plan | Source | Observé |
+|---|---|---|
+| Scénarios 1 à 8 dans le terminal, par `make scenes` | Réel : chaque demande passe par `gateway/` en HTTP, puis `response/` et `relay/` | Oui : décisions, motifs, montants et réactions attendus dans les dix scènes |
+| Porte d'entrée, détecteur, pause hors chaîne, rapport d'incident (scénarios 2, 3) | Réel | Oui |
+| Cas manqué (scénario 4) | Réel pour la porte : un document du jeu de réglage que le détecteur laisse passer avec un score de 45 sur un seuil de 70 | Oui : il passe, puis il est refusé, facture inconnue |
+| Décisions du contrat (scénarios 1, 4, 6, 7, 8) | **Simulées** : règles de la spec rejouées par un faux coffre, dans le relais. Aucun fonds, aucune chaîne | Oui, sur le faux coffre |
+| Approbation et délai dépassé (scénario 6) | Faux coffre, et un port de contrôle de démo à la place de l'approbateur. Le compte à rebours de 30 s est réel | Oui |
+| Relais en panne (scénario 5) | Réel : le processus du relais est arrêté | En partie : rien n'est soumis, la demande expire. L'alerte de disponibilité et l'expiration ne s'écrivent qu'à la relance du relais, pas pendant la panne |
+| Vérification du journal | Réel | Oui : chaînage intègre sur le journal courant et sur chaque journal archivé |
+| Plans du dashboard | `make demo` le lance en mode réel, branché sur `relay/` et `response/` | **Non** : le dashboard démarre et son proxy répond, mais ses écrans n'ont pas été relus. À relire avant le tournage ; sinon, repli sur les fixtures |
+| Pause d'un agent sur la chaîne (scénarios 3, 4) | Absente : aucun composant ne la pose | Non observée |
+
+Deux écarts avec la spec restent visibles à l'écran du terminal, et
+`make scenes` sort en échec tant qu'ils ne sont pas tranchés : l'ordre de
+`FORWARDED_TO_CLIENT_AI` dans le journal, et le scénario 5 ci-dessus. Ne pas
+couper ces lignes au montage sans le dire.
 
 Si un contrat est déployé avant le tournage, ce tableau et les mentions
 « simulation » se mettent à jour, pas avant.
 
 ## Préparation
 
-Deux terminaux pour le dashboard, depuis `dashboard/`. La scène enchaîne les
-scénarios 3, 4 puis 1 en 47 s ; relancer le serveur de fixtures la rejoue.
+Toute la chaîne, depuis la racine, puis une scène à la fois :
+
+```bash
+make demo
+```
+
+```bash
+make scene S=3
+```
+
+Chaque scène repart d'un état neuf : le journal et les bases d'avant sont
+archivés, rien n'est effacé. Arrêt : `make demo-stop`.
+
+Repli sur le dashboard simulé : deux terminaux, depuis `dashboard/`. La scène
+enchaîne les scénarios 3, 4 puis 1 en 47 s ; relancer le serveur de fixtures la
+rejoue.
 
 ```bash
 npm run dev:fixtures
