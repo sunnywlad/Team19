@@ -1,5 +1,6 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
-.PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final
+.PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final \
+	demo demo-stop demo-status demo-reset scenes scene demo-smoke
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -69,3 +70,36 @@ else
 	@echo "scan-final : FETCH=0, refs distantes NON rafraîchies"
 endif
 	scripts/gitleaks.sh git --config .gitleaks.toml --log-opts="--all" --redact --no-banner --verbose .
+
+# --- Démo -------------------------------------------------------------------
+# Toute la chaîne sur 127.0.0.1 : response (8790), gateway (8780), client-ia
+# (8770), relais (8787), dashboard (5173). VAULT_MODE=fake par défaut : faux
+# coffre en mémoire, aucun fonds, aucune chaîne. Données sous var/demo/.
+demo:
+	node demo/run.mjs up
+
+# N'arrête que les processus lancés par « make demo ».
+demo-stop:
+	node demo/run.mjs stop
+
+demo-status:
+	node demo/run.mjs status
+
+# Archive le journal, les rapports et les bases du relais, puis repart d'un
+# état neuf. Rien n'est effacé.
+demo-reset:
+	DEMO_MODE=1 node demo/run.mjs reset
+
+# Scénarios de specs/acceptance/scenarios.md, joués par la vraie porte d'entrée.
+# Chaque scène repart d'un état neuf. Code de sortie non nul au moindre écart.
+scenes:
+	DEMO_MODE=1 node demo/scenes.mjs
+
+# Une seule scène : make scene S=4   (1, 2, 3, 4, 5, 6a, 6b, 7a, 7b, 8)
+scene:
+	DEMO_MODE=1 node demo/scenes.mjs $(S)
+
+# Démo en mode fake, scènes 1, 2, 3, 4 et 8, deux fois, puis vérification du
+# journal et arrêt.
+demo-smoke:
+	node demo/smoke.mjs
