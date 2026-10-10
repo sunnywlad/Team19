@@ -1,0 +1,71 @@
+{
+  "schema": "../../schemas/journal-entry.schema.json",
+  "cases": [
+    {
+      "file": "valid/01-decision-humaine.json",
+      "expect": "valid"
+    },
+    {
+      "file": "valid/02-jeton-rejete.json",
+      "expect": "valid",
+      "why": "Agent non authentifié : agent_id null, identifiant déclaré dans data."
+    },
+    {
+      "file": "invalid/01-type-inconnu.json",
+      "expect": "schema-invalid",
+      "why": "Type hors de la liste fermée."
+    },
+    {
+      "file": "invalid/02-champ-inconnu-dans-data.json",
+      "expect": "schema-invalid",
+      "why": "Aucun champ libre : pas de donnée nominative dans le journal."
+    },
+    {
+      "file": "invalid/03-nombre-a-virgule.json",
+      "expect": "schema-invalid",
+      "why": "Entiers seulement : la forme canonique reste triviale."
+    },
+    {
+      "file": "invalid/04-sans-empreinte-precedente.json",
+      "expect": "schema-invalid"
+    }
+  ],
+  "chains": [
+    {
+      "file": "chaine-valide.jsonl",
+      "expect": "OK",
+      "head": "0a3ce2d2f2cc21120426f9670537c389d31aa8b9ebf5d226a71fe345006422a2",
+      "why": "Scénario 4, 13 entrées."
+    },
+    {
+      "file": "chaine-modifiee.jsonl",
+      "expect": "HASH_MISMATCH",
+      "at": 7,
+      "why": "Entrée 7 : décision 0 changée en 2."
+    },
+    {
+      "file": "chaine-supprimee.jsonl",
+      "expect": "SEQ_MISMATCH",
+      "at": 8,
+      "why": "Entrée 8 retirée."
+    },
+    {
+      "file": "chaine-reordonnee.jsonl",
+      "expect": "SEQ_MISMATCH",
+      "at": 9,
+      "why": "Entrées 9 et 10 échangées."
+    },
+    {
+      "file": "chaine-tronquee.jsonl",
+      "expect": "OK",
+      "head": "a477011581fa5028b20ea475ef99fcfa89677373e20e98cd493a4deafc79520c",
+      "why": "LIMITE : les 3 dernières entrées retirées, la chaîne reste cohérente. Seule la comparaison avec une tête connue (--expect-head) le détecte."
+    },
+    {
+      "file": "chaine-reecrite.jsonl",
+      "expect": "OK",
+      "head": "c23e22b0755d76b92393d76ad718fb6a278b0fa64907a7e28683201b34601857",
+      "why": "LIMITE : entrée 7 falsifiée puis empreintes recalculées. Même remède : une tête connue hors du journal."
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:schema:incident-report:1",
+  "title": "Rapport d'incident (specs/05-incident.md)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version",
+    "incident_id",
+    "generated_at_ms",
+    "trigger",
+    "request_ids",
+    "authority_chain",
+    "timestamps",
+    "detector",
+    "contract",
+    "amounts",
+    "automatic_actions",
+    "human_decision",
+    "journal_head"
+  ],
+  "properties": {
+    "report_version": { "const": 1 },
+    "incident_id": { "$ref": "#/$defs/bytes32" },
+    "generated_at_ms": { "$ref": "#/$defs/unixMillis" },
+    "trigger": {
+      "enum": [
+        "DETECTOR_SCORE",
+        "SCHEMA_REJECTED",
+        "CONTRACT_REFUSAL",
+        "RATE_BURST",
+        "REPEATED_REFUSALS"
+      ]
+    },
+    "request_ids": {
+      "description": "La première est la demande déclenchante.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/bytes32" }
+    },
+    "authority_chain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "agent_mandate",
+        "client_id",
+        "client_signer",
+        "request_digest",
+        "relay_tx_hash"
+      ],
+      "properties": {
+        "agent_id": { "$ref": "#/$defs/bytes32" },
+        "agent_mandate": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["PAY_INVOICE", "PLACE"] }
+        },
+        "client_id": { "$ref": "#/$defs/bytes32" },
+        "client_signer": { "oneOf": [{ "$ref": "#/$defs/address" }, { "type": "null" }] },
+        "request_digest": { "oneOf": [{ "$ref": "#/$defs/bytes32" }, { "type": "null" }] },
+        "relay_tx_hash": { "oneOf": [{ "$ref": "#/$defs/bytes32" }, { "type": "null" }] }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "received_at_ms",
+        "detected_at_ms",
+        "observed_at_ms",
+        "paused_at_ms",
+        "alerted_at_ms"
+      ],
+      "properties": {
+        "received_at_ms": { "$ref": "#/$defs/unixMillis" },
+        "detected_at_ms": { "$ref": "#/$defs/unixMillis" },
+        "observed_at_ms": { "oneOf": [{ "$ref": "#/$defs/unixMillis" }, { "type": "null" }] },
+        "paused_at_ms": { "oneOf": [{ "$ref": "#/$defs/unixMillis" }, { "type": "null" }] },
+        "alerted_at_ms": { "oneOf": [{ "$ref": "#/$defs/unixMillis" }, { "type": "null" }] }
+      }
+    },
+    "detector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "threshold", "reason_codes"],
+      "properties": {
+        "score": { "oneOf": [{ "type": "integer", "minimum": 0, "maximum": 100 }, { "type": "null" }] },
+        "threshold": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "reason_codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "INSTRUCTION_IN_DATA",
+              "AUTHORITY_VIOLATION",
+              "PAYMENT_ANOMALY",
+              "SCHEMA_INVALID",
+              "TOKEN_INVALID",
+              "RATE_LIMITED"
+            ]
+          }
+        }
+      }
+    },
+    "contract": {
+      "description": "null si la demande n'a jamais atteint le contrat.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision", "reason", "tx_hash", "block_number", "block_timestamp"],
+          "properties": {
+            "decision": { "enum": [0, 1, 2] },
+            "reason": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "tx_hash": { "$ref": "#/$defs/bytes32" },
+            "block_number": { "type": "integer", "minimum": 0 },
+            "block_timestamp": { "type": "integer", "minimum": 1, "maximum": 4294967295 }
+          }
+        }
+      ]
+    },
+    "amounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exposed_wei", "out_wei"],
+      "properties": {
+        "exposed_wei": {
+          "description": "Montant inscrit pour la référence visée. null si la référence est inconnue du contrat.",
+          "oneOf": [{ "$ref": "#/$defs/wei" }, { "type": "null" }]
+        },
+        "out_wei": { "$ref": "#/$defs/wei" }
+      }
+    },
+    "automatic_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "at_ms", "journal_seq"],
+        "properties": {
+          "action": {
+            "enum": ["QUARANTINE", "AGENT_PAUSE_OFFCHAIN", "AGENT_PAUSE_ONCHAIN", "ALERT", "REPORT"]
+          },
+          "at_ms": { "$ref": "#/$defs/unixMillis" },
+          "journal_seq": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "human_decision": {
+      "description": "null tant qu'aucun humain n'a qualifié l'incident.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision", "author_role", "author_id", "at_ms", "journal_seq"],
+          "properties": {
+            "decision": {
+              "enum": [
+                "FALSE_POSITIVE",
+                "ATTACK_CONFIRMED",
+                "AGENT_RESUMED",
+                "TOKEN_REVOKED",
+                "VAULT_PAUSED",
+                "VAULT_RESUMED"
+              ]
+            },
+            "author_role": { "enum": ["ANALYST", "OWNER", "APPROVER"] },
+            "author_id": { "$ref": "#/$defs/bytes32" },
+            "at_ms": { "$ref": "#/$defs/unixMillis" },
+            "journal_seq": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "journal_head": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seq", "hash"],
+      "properties": {
+        "seq": { "type": "integer", "minimum": 0 },
+        "hash": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  },
+  "$defs": {
+    "bytes32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$",
+      "not": { "const": "0x0000000000000000000000000000000000000000000000000000000000000000" }
+    },
+    "address": { "type": "string", "pattern": "^0x[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "wei": {
+      "description": "Entier décimal en chaîne : un montant en wei dépasse la précision des nombres JSON.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,77})$"
+    },
+    "unixMillis": { "type": "integer", "minimum": 1, "maximum": 4294967295999 }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "request_id": "0xb5bc28b7011590ad8909b929306c2de0044fec145373e12cb9753bc9bf8da3ba",
+  "agent_id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+  "score": 8,
+  "threshold": 70,
+  "verdict": "BLOCK",
+  "reason_codes": [
+    "SCHEMA_INVALID"
+  ],
+  "received_at_ms": 1791662431000,
+  "detected_at_ms": 1791662431045,
+  "detector_version": "regles-0.1"
+}

@@ -1,0 +1,50 @@
+{
+  "schema": "../../schemas/request.schema.json",
+  "cases": [
+    {
+      "file": "valid/01-paiement-facture.json",
+      "expect": "valid",
+      "now": 1791662410
+    },
+    {
+      "file": "valid/02-placement.json",
+      "expect": "valid",
+      "now": 1791663005
+    },
+    {
+      "file": "valid/03-facture-au-dessus-du-seuil.json",
+      "expect": "valid",
+      "now": 1791663900,
+      "why": "Deux bornes : durée de vie = 300 s, et now = expires_at."
+    },
+    {
+      "file": "invalid/01-champ-inconnu.json",
+      "expect": "schema-invalid",
+      "why": "Champ « amount » : le montant ne voyage jamais dans la demande."
+    },
+    {
+      "file": "invalid/02-champ-manquant.json",
+      "expect": "schema-invalid",
+      "why": "agent_id absent."
+    },
+    {
+      "file": "invalid/03-mauvais-type.json",
+      "expect": "schema-invalid",
+      "why": "issued_at en chaîne au lieu d'un entier."
+    },
+    {
+      "file": "invalid/04-expiree.json",
+      "expect": "rule-invalid",
+      "rule": "REQUEST_EXPIRED",
+      "now": 1791662521,
+      "why": "Signature valide ; now = expires_at + 1."
+    },
+    {
+      "file": "invalid/05-duree-trop-longue.json",
+      "expect": "rule-invalid",
+      "rule": "VALIDITY_WINDOW_INVALID",
+      "now": 1791662410,
+      "why": "Signature valide ; durée de vie = 301 s."
+    }
+  ]
+}

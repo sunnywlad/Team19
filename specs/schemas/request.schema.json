@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:schema:request:1",
+  "title": "Demande de décision signée (specs/01-demande.md)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "client_id",
+    "agent_id",
+    "action",
+    "ref_id",
+    "issued_at",
+    "expires_at",
+    "signature"
+  ],
+  "properties": {
+    "request_id": { "$ref": "#/$defs/bytes32" },
+    "client_id": { "$ref": "#/$defs/bytes32" },
+    "agent_id": { "$ref": "#/$defs/bytes32" },
+    "action": { "enum": ["PAY_INVOICE", "PLACE"] },
+    "ref_id": { "$ref": "#/$defs/bytes32" },
+    "issued_at": { "$ref": "#/$defs/unixSeconds" },
+    "expires_at": { "$ref": "#/$defs/unixSeconds" },
+    "signature": {
+      "description": "r || s || v sur 65 octets, v = 27 ou 28.",
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{128}(1b|1c)$"
+    }
+  },
+  "$defs": {
+    "bytes32": {
+      "description": "Identifiant opaque : 32 octets en hexadécimal minuscule, jamais nul.",
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$",
+      "not": { "const": "0x0000000000000000000000000000000000000000000000000000000000000000" }
+    },
+    "unixSeconds": {
+      "description": "Secondes Unix, entier.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295
+    }
+  }
+}
