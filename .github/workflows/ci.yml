@@ -259,6 +259,34 @@ jobs:
       - name: Tests du cache, de la passerelle et du vérificateur
         run: make offchain
 
+  demo-smoke:
+    name: demo-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Informatif : à rendre bloquant après deux exécutions vertes. Le job
+    # échoue aussi quand une scène s'écarte de specs/acceptance/scenarios.md.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      - name: Installer les dépendances des services (lockfiles, aucun script tiers)
+        run: |
+          for dir in response gateway relay dashboard; do
+            (cd "$dir" && npm ci --ignore-scripts --no-fund --no-audit)
+          done
+      # Mode fake : faux coffre en mémoire, aucune clé à fournir, aucune chaîne.
+      - name: Démo en mode fake, scènes 1, 2, 3, 4 et 8, journal vérifié, arrêt
+        run: make demo-smoke
+      - name: Logs des services
+        if: always()
+        run: |
+          shopt -s nullglob
+          for log in var/demo/*.log; do echo "::group::$log"; cat "$log"; echo "::endgroup::"; done
+
   detecteur:
     name: detecteur
     # TODO : bloquant une fois le seuil de rappel fixé par Loris.
