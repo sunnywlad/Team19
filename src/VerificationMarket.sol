@@ -110,6 +110,8 @@ contract VerificationMarket is IVerificationMarket {
         c[1] = committee1;
         c[2] = committee2;
         emit CommitteeDrawn(requestId, c);
+
+        _afterCreate(requestId);
     }
 
     /// @notice Dépose le commitment d'un membre pendant la fenêtre de commit.
@@ -211,6 +213,8 @@ contract VerificationMarket is IVerificationMarket {
         r.code = code;
 
         emit RequestFinalized(requestId, code, n, refuseCount, humanCount, acceptCount, contestDeadline);
+
+        _afterFinalize(requestId, r.fee);
     }
 
     /// @notice Clôt la contestation après contestDeadline ; passe en Closed.
@@ -225,6 +229,8 @@ contract VerificationMarket is IVerificationMarket {
         r.status = Status.Closed;
 
         emit RequestClosed(requestId);
+
+        _afterClose(requestId);
     }
 
     // ---------------------------------------------------------------------
@@ -301,4 +307,17 @@ contract VerificationMarket is IVerificationMarket {
     function _isMember(address account) internal view returns (bool) {
         return account == committee0 || account == committee1 || account == committee2;
     }
+
+    // ---------------------------------------------------------------------
+    // Crochets d'extension (phase 2 : StakedVerificationMarket les surcharge)
+    // ---------------------------------------------------------------------
+
+    /// @notice Appelé à la fin de createRequest. Vide en phase 1.
+    function _afterCreate(uint256 requestId) internal virtual {}
+
+    /// @notice Appelé à la fin de finalize, avec les frais payés par la demande. Vide en phase 1.
+    function _afterFinalize(uint256 requestId, uint256 fee_) internal virtual {}
+
+    /// @notice Appelé à la fin de close. Vide en phase 1.
+    function _afterClose(uint256 requestId) internal virtual {}
 }
