@@ -113,6 +113,7 @@ export const ENV_NAMES = [
   "API_PORT",
   "POLL_INTERVAL_MS",
   "JOURNAL_URL",
+  "JOURNAL_OUTBOX_DB",
   "PAUSE_SOURCE_URL",
   "CLIENT_IA_PORT",
 ] as const;

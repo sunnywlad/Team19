@@ -53,7 +53,7 @@ export function vaultFromEnv(): { vault: VaultClient; note: string } {
 }
 
 /** Chemin d'une base SQLite, dossier créé au besoin. */
-export function dbPath(name: "QUEUE_DB" | "INDEX_DB", fallback: string): string {
+export function dbPath(name: "QUEUE_DB" | "INDEX_DB" | "JOURNAL_OUTBOX_DB", fallback: string): string {
   const path = readEnv(name) ?? fallback;
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   return path;

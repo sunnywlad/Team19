@@ -24,7 +24,7 @@ Les interfaces viennent de [../specs/](../specs/) et ne sont pas redéfinies ici
 | Bouchon | Fichier | À remplacer par |
 |---|---|---|
 | Porte d'entrée | [src/gateway-stub.ts](src/gateway-stub.ts) | `gateway/` (Loris). Le bouchon rend le verdict écrit dans la scène, il n'analyse rien |
-| Journal | `MemoryJournal` dans [src/journal.ts](src/journal.ts), seulement si `JOURNAL_URL` est absente | Avec `JOURNAL_URL`, [src/http-journal.ts](src/http-journal.ts) remet chaque entrée au service de `response/`. Sans réponse du service, rien n'entre en file et rien n'est soumis |
+| Journal | `MemoryJournal` dans [src/journal.ts](src/journal.ts), seulement si `JOURNAL_URL` est absente | Avec `JOURNAL_URL`, [src/http-journal.ts](src/http-journal.ts) remet chaque entrée au service de `response/`, par une boîte d'envoi. Sans réponse du service, rien n'entre en file et rien n'est soumis |
 | Alertes | `MemoryAlerts`, `stderrAlerts` | Le service de réponse, derrière `AlertSink` |
 | Pause hors chaîne | `StaticPauseSource` dans [src/pauses.ts](src/pauses.ts), seulement si `PAUSE_SOURCE_URL` est absente | Avec `PAUSE_SOURCE_URL`, `HttpPauseSource` lit `GET /agents/paused` du service de `response/`. Sans réponse lisible, rien n'est soumis |
 | IA du client | [src/client-ia.ts](src/client-ia.ts) signe tout ce qui est conforme, sans modèle | Un vrai jugement avant signature |
@@ -99,7 +99,7 @@ Limites :
 
 - Aucun modèle : tout ce qui est conforme est signé. La signature ne prouve pas que la demande est légitime (scénario 4).
 - Aucune authentification : quiconque atteint le port obtient une demande signée. Le service n'écoute que sur `127.0.0.1` et refuse un appel venu d'une page web (`403`).
-- Une demande refusée par un `502` après l'écriture de `REQUEST_SIGNED` laisse cette entrée au journal ; la reprise en écrit une seconde, pour une nouvelle signature.
+- Une demande refusée par un `502` laisse son `REQUEST_SIGNED` au journal ou dans la boîte d'envoi ; la reprise en écrit un second, pour une nouvelle signature.
 
 ## API en lecture seule
 
@@ -120,6 +120,23 @@ Chaque décision porte `tx_hash`, `log_index`, `block_number` et
 Pour suivre les nouveautés, relire avec `since_id` égal au dernier `id` reçu :
 seules les lignes d'`id` strictement supérieur sont rendues. La clôture d'un cas 1
 arrive ainsi comme une ligne à part, sous le `request_id` d'origine.
+
+## Journal : boîte d'envoi et clé d'idempotence
+
+Avec `JOURNAL_URL`, chaque entrée reçoit une clé d'idempotence (UUID) une seule
+fois, à sa création. La clé et le corps sont écrits dans la boîte d'envoi
+(`JOURNAL_OUTBOX_DB`, SQLite) avant le premier envoi.
+
+- **Nouvelle tentative.** Une entrée restée sans réponse, ou reçue par un service en erreur (5xx), attend dans la boîte. Elle repart avec le même corps et la même clé, avant toute autre entrée et au début de chaque tour du relais, y compris après un redémarrage. Le service n'en écrit donc qu'une.
+- **Contenu.** La clé ne dépend pas du contenu : deux entrées identiques, par exemple deux `SCHEMA_REJECTED` sans `request_id` et de même `error_count`, sont deux entrées du journal.
+- **Échec fermé.** Tant qu'une entrée attend, l'appelant reçoit une erreur : rien n'entre en file, et le tour du relais s'arrête avant toute soumission.
+- **Refus définitif.** Une entrée refusée par le service (4xx) n'est jamais renvoyée. Elle reste dans la boîte, marquée `REFUSED`, et le relais le signale sur sa sortie d'erreur.
+
+Conséquence à connaître : une mise en file refusée faute de journal laisse son
+`ENQUEUED` dans la boîte, alors que la demande n'est pas en file. Si la demande
+est remise en file ensuite, le journal porte deux `ENQUEUED` pour elle : celui
+de la tentative, puis celui de l'entrée réelle. Il en va de même pour
+`REQUEST_SIGNED` après un `502` du service « IA du client ».
 
 ## Décision courante
 

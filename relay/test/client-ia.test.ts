@@ -100,7 +100,7 @@ test("client-ia 400 : champ inconnu, manquant ou mal typé, et rien n'est signé
 test("client-ia 502 : file indisponible (journal coupé), rien n'entre en file", async () => {
   const s = makeStack();
   // Journal réel injoignable : la file refuse d'enregistrer sans lui.
-  const journal = new HttpJournal("http://127.0.0.1:9", 200);
+  const journal = new HttpJournal("http://127.0.0.1:9", { timeoutMs: 200 });
   const queue = new Queue({ path: ":memory:", policy: s.policy, clock: s.clock.now, journal, alerts: new MemoryAlerts() });
   const c = await service(s, queue, journal);
   try {

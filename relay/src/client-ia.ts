@@ -148,7 +148,7 @@ async function main(): Promise<void> {
   const client = new ClientSigner(clientSignerKey(), clientId, domainFor(chainId(), vaultAddress()), policy, systemClock);
   // Même règle que le relais : avec JOURNAL_URL, le journal est obligatoire.
   const journalUrl = readEnv("JOURNAL_URL");
-  const journal: JournalClient = journalUrl === undefined ? new MemoryJournal(systemClock) : new HttpJournal(journalUrl);
+  const journal: JournalClient = journalUrl === undefined ? new MemoryJournal(systemClock) : new HttpJournal(journalUrl, { outboxPath: dbPath("JOURNAL_OUTBOX_DB", "var/journal-outbox.db") });
   const queue = new Queue({ path: dbPath("QUEUE_DB", "var/queue.db"), policy, clock: systemClock, journal, alerts: stderrAlerts });
   const port = await listen(createClientIa({ client, clientId, queue, journal }), intEnv("CLIENT_IA_PORT", CLIENT_IA_DEFAULT_PORT));
   console.error(journalUrl === undefined ? "[client-ia] journal : bouchon en mémoire (JOURNAL_URL absente)" : "[client-ia] journal : service de journal (JOURNAL_URL)");

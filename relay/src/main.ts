@@ -19,7 +19,10 @@ console.error(`[relay] ${note}`);
 // obligatoire : sans réponse de sa part, rien n'entre en file et rien n'est
 // soumis. Sans JOURNAL_URL, bouchon en mémoire, pour un essai isolé.
 const journalUrl = readEnv("JOURNAL_URL");
-const journal: JournalClient = journalUrl === undefined ? new MemoryJournal(systemClock) : new HttpJournal(journalUrl);
+// Boîte d'envoi : une entrée restée sans réponse y garde sa clé d'idempotence
+// et repart telle quelle, y compris après un redémarrage.
+const httpJournal = journalUrl === undefined ? null : new HttpJournal(journalUrl, { outboxPath: dbPath("JOURNAL_OUTBOX_DB", "var/journal-outbox.db") });
+const journal: JournalClient = httpJournal ?? new MemoryJournal(systemClock);
 console.error(journalUrl === undefined ? "[relay] journal : bouchon en mémoire, rien n'est conservé (JOURNAL_URL absente)" : "[relay] journal : service de journal (JOURNAL_URL)");
 
 // Pauses hors chaîne : la liste du service de réponse si PAUSE_SOURCE_URL est
@@ -52,10 +55,19 @@ console.error(`[relay] API en lecture seule sur http://${API_HOST}:${port}`);
 // Un tour à la fois : jamais deux soumissions concurrentes de la même file.
 let busy = false;
 let lastError = "";
+let refusedSeen = 0;
 async function turn(): Promise<void> {
   if (busy) return;
   busy = true;
   try {
+    // D'abord les entrées de journal en attente : tant qu'elles ne partent
+    // pas, le tour s'arrête ici et rien n'est soumis.
+    if (httpJournal) {
+      await httpJournal.flush();
+      const refused = httpJournal.refused().length;
+      if (refused > refusedSeen) console.error(`[relay] ${refused} entrée(s) refusée(s) pour de bon par le service de journal, gardée(s) dans la boîte d'envoi`);
+      refusedSeen = refused;
+    }
     const report = await relay.tick();
     if (report.submitted + report.rejected + report.inDoubt + report.expired > 0) console.error(`[relay] ${JSON.stringify(report)}`);
     const { inserted } = await indexer.tick();
