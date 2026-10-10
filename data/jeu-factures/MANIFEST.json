@@ -1,0 +1,240 @@
+{
+  "nom": "jeu-factures",
+  "version": "1.0.0",
+  "date": "2026-10-11",
+  "synthetique": true,
+  "mention": "Jeu entièrement synthétique. Sociétés, personnes, domaines, IBAN et adresses de portefeuille sont inventés ; les IBAN ont une somme de contrôle invalide.",
+  "methode": "Chaque document a été rédigé un par un par un modèle de langage (Claude, Anthropic) à partir de la seule liste des familles, sans gabarit à trous ni génération par programme, et sans lire le code, les tests ni les règles du détecteur. Un script d'assemblage a ensuite encodé les charges cachées (base64, caractères invisibles), mélangé l'ordre avec une graine fixe et attribué les identifiants.",
+  "format": {
+    "champs": [
+      "id",
+      "label",
+      "family",
+      "action",
+      "mandate",
+      "document"
+    ],
+    "etiquettes": [
+      "legit",
+      "attack"
+    ],
+    "actions": [
+      "PAY_INVOICE",
+      "PLACE"
+    ],
+    "longueur_max_document": 8192
+  },
+  "repartition": "1 attaque pour 1 légitime : choix de mesure, pas la fréquence réelle des attaques.",
+  "verification": "node data/jeu-factures/verifier.mjs",
+  "fichiers": {
+    "dev.jsonl": {
+      "usage": "réglage : lisible par l'auteur des règles",
+      "sha256": "fbdf57656aac808c2145de6314233a3277878793f24016dfe0b9963f7f484333",
+      "lignes": 120,
+      "etiquettes": {
+        "legit": 60,
+        "attack": 60
+      },
+      "actions": {
+        "PAY_INVOICE": 110,
+        "PLACE": 10
+      },
+      "familles": {
+        "legit": {
+          "avoir": 4,
+          "cas-difficile": 16,
+          "devis": 4,
+          "facture-anglais": 4,
+          "facture-detaillee": 5,
+          "facture-espagnol": 4,
+          "facture-longue": 3,
+          "facture-simple": 5,
+          "montant-eleve": 4,
+          "note-honoraires": 4,
+          "placement": 3,
+          "relance": 4
+        },
+        "attack": {
+          "changement-coordonnees": 5,
+          "changement-role": 5,
+          "doublon-facture": 5,
+          "fausse-autorite": 5,
+          "hors-mandat": 5,
+          "instruction-cachee": 5,
+          "instruction-directe": 5,
+          "instruction-fragmentee": 5,
+          "montant-rectifie": 5,
+          "obfuscation": 5,
+          "politique-levee": 5,
+          "pression-urgence": 5
+        }
+      },
+      "attaques_par_langue": {
+        "fr": 39,
+        "en": 12,
+        "es": 9
+      },
+      "langues_hors_francais": {
+        "en": [
+          "d-007",
+          "d-011",
+          "d-012",
+          "d-019",
+          "d-024",
+          "d-038",
+          "d-039",
+          "d-040",
+          "d-052",
+          "d-064",
+          "d-070",
+          "d-076",
+          "d-078",
+          "d-079",
+          "d-085",
+          "d-097",
+          "d-099",
+          "d-101",
+          "d-102",
+          "d-111"
+        ],
+        "es": [
+          "d-010",
+          "d-013",
+          "d-014",
+          "d-035",
+          "d-046",
+          "d-077",
+          "d-089",
+          "d-091",
+          "d-095",
+          "d-096",
+          "d-104",
+          "d-112",
+          "d-115",
+          "d-119"
+        ]
+      }
+    },
+    "test.jsonl": {
+      "usage": "mesure finale : une seule fois, règles figées",
+      "sha256": "1342dc012744df4c4f7662d2a5d761afc99705ac3f61af0448775afc0f6a160e",
+      "lignes": 200,
+      "etiquettes": {
+        "legit": 100,
+        "attack": 100
+      },
+      "actions": {
+        "PAY_INVOICE": 186,
+        "PLACE": 14
+      },
+      "familles": {
+        "legit": {
+          "avoir": 7,
+          "cas-difficile": 26,
+          "devis": 7,
+          "facture-anglais": 7,
+          "facture-detaillee": 8,
+          "facture-espagnol": 7,
+          "facture-longue": 5,
+          "facture-simple": 9,
+          "montant-eleve": 6,
+          "note-honoraires": 7,
+          "placement": 4,
+          "relance": 7
+        },
+        "attack": {
+          "changement-coordonnees": 9,
+          "changement-role": 8,
+          "doublon-facture": 8,
+          "fausse-autorite": 8,
+          "hors-mandat": 8,
+          "instruction-cachee": 9,
+          "instruction-directe": 8,
+          "instruction-fragmentee": 9,
+          "montant-rectifie": 8,
+          "obfuscation": 9,
+          "politique-levee": 8,
+          "pression-urgence": 8
+        }
+      },
+      "attaques_par_langue": {
+        "fr": 62,
+        "en": 24,
+        "es": 14
+      },
+      "langues_hors_francais": {
+        "en": [
+          "t-003",
+          "t-005",
+          "t-013",
+          "t-022",
+          "t-028",
+          "t-036",
+          "t-040",
+          "t-042",
+          "t-044",
+          "t-050",
+          "t-055",
+          "t-061",
+          "t-063",
+          "t-074",
+          "t-078",
+          "t-080",
+          "t-081",
+          "t-091",
+          "t-093",
+          "t-095",
+          "t-103",
+          "t-104",
+          "t-112",
+          "t-115",
+          "t-117",
+          "t-120",
+          "t-127",
+          "t-128",
+          "t-132",
+          "t-133",
+          "t-135",
+          "t-144",
+          "t-154",
+          "t-165",
+          "t-166",
+          "t-167",
+          "t-168",
+          "t-173",
+          "t-182",
+          "t-184",
+          "t-192"
+        ],
+        "es": [
+          "t-002",
+          "t-019",
+          "t-024",
+          "t-031",
+          "t-041",
+          "t-052",
+          "t-060",
+          "t-067",
+          "t-100",
+          "t-101",
+          "t-109",
+          "t-113",
+          "t-123",
+          "t-130",
+          "t-140",
+          "t-143",
+          "t-145",
+          "t-151",
+          "t-163",
+          "t-164",
+          "t-171",
+          "t-180",
+          "t-181",
+          "t-191",
+          "t-193",
+          "t-197"
+        ]
+      }
+    }
+  }
+}
