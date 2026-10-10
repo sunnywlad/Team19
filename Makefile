@@ -1,5 +1,5 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
-.PHONY: setup check secrets contrat dependances semgrep lint-ci
+.PHONY: setup check secrets contrat dependances semgrep lint-ci scan-final
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -26,3 +26,16 @@ semgrep:
 lint-ci:
 	@if command -v actionlint >/dev/null 2>&1; then actionlint; \
 	else echo "lint-ci : actionlint absent, étape ignorée"; fi
+
+# Scan de livraison : toutes les refs (branches locales, distantes, tags),
+# pas seulement l'historique de HEAD. Récupère d'abord les refs du dépôt
+# distant, sinon le scan porterait sur un état périmé ; FETCH=0 pour s'en
+# passer (hors ligne), en connaissance de cause.
+FETCH ?= 1
+scan-final:
+ifeq ($(FETCH),1)
+	git fetch --all --prune --tags
+else
+	@echo "scan-final : FETCH=0, refs distantes NON rafraîchies"
+endif
+	scripts/gitleaks.sh git --config .gitleaks.toml --log-opts="--all" --redact --no-banner --verbose .
