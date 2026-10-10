@@ -1,0 +1,151 @@
+{
+  "comment": "Généré par specs/tools/gen-request-vectors.js. Ne pas éditer à la main.",
+  "domain": {
+    "name": "ArgentVault",
+    "version": "1",
+    "chainId": 31337,
+    "verifyingContract": "0x1111111111111111111111111111111111111111"
+  },
+  "types": {
+    "EIP712Domain": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "version",
+        "type": "string"
+      },
+      {
+        "name": "chainId",
+        "type": "uint256"
+      },
+      {
+        "name": "verifyingContract",
+        "type": "address"
+      }
+    ],
+    "Request": [
+      {
+        "name": "requestId",
+        "type": "bytes32"
+      },
+      {
+        "name": "clientId",
+        "type": "bytes32"
+      },
+      {
+        "name": "agentId",
+        "type": "bytes32"
+      },
+      {
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "name": "refId",
+        "type": "bytes32"
+      },
+      {
+        "name": "issuedAt",
+        "type": "uint64"
+      },
+      {
+        "name": "expiresAt",
+        "type": "uint64"
+      }
+    ]
+  },
+  "primaryType": "Request",
+  "request_type": "Request(bytes32 requestId,bytes32 clientId,bytes32 agentId,uint8 action,bytes32 refId,uint64 issuedAt,uint64 expiresAt)",
+  "type_hash": "0x9c20c49ec3a8f2638d52c8199e76df714419f6e2a1e6e4fba13f13ab7e7c6ce2",
+  "domain_separator": "0xa6eeee6f237cff2ac6c4724d382d4ced1a06bafb55b0708fbe164288e40a2bae",
+  "expected_signer": "0x2294022049feaae4987f70d940af08735d4af542",
+  "vectors": [
+    {
+      "file": "valid/01-paiement-facture.json",
+      "expect": "valid",
+      "rule": null,
+      "message": {
+        "requestId": "0x0f9f1aa766995cb9ffaf28a5118ea931ce433c676d2be21e30efa5b3eaea48ff",
+        "clientId": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+        "agentId": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+        "action": 1,
+        "refId": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+        "issuedAt": 1791662400,
+        "expiresAt": 1791662520
+      },
+      "struct_hash": "0xcaf1a9ca4569bace1f8a29113ec2ac133d01e86ee55e7d4f3f55255018adb108",
+      "digest": "0x5ee250e296a956296afa86a74773da223d447cab7b4cadb03007a705eed35b1f",
+      "signature": "0x4c82228d8a7efb9c7b7e289732532bbdc5b8460e8c5d8b4d2638daa846bd421d7ee55b451925d8dd766b8351c4f866daa1def50869809c94f0a991288a9b845b1c"
+    },
+    {
+      "file": "valid/02-placement.json",
+      "expect": "valid",
+      "rule": null,
+      "message": {
+        "requestId": "0xb95585833d21070853fd3a207802ef54fa27fcbe847ae387bb25f15b79dd2d81",
+        "clientId": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+        "agentId": "0x3b012bc1ee917e20bc9fd4e7e96949b845385fe2337c9b7e57ddb78612a22c78",
+        "action": 2,
+        "refId": "0x4253f8c51272c785bd58704a4d22f7205299f6bf601dc39e6e0b8a72c58ca0da",
+        "issuedAt": 1791663000,
+        "expiresAt": 1791663060
+      },
+      "struct_hash": "0xe05d5d0341a0f04b3dca960c57d25a203199245757632d01918f0bf4a8ae9f1e",
+      "digest": "0xe8b470528ab46df4cabec80c53d559e3f322937db251dc3f18a2d4a3d443fec3",
+      "signature": "0x1b785afb1bfd7246bbfef57fc8d4da571143c97922999a372b464e53a85140b6407e3b4054be6cd7cb07568c02edb9ab461ba6b862fe35991ef9d2bbb9e44f641b"
+    },
+    {
+      "file": "valid/03-facture-au-dessus-du-seuil.json",
+      "expect": "valid",
+      "rule": null,
+      "message": {
+        "requestId": "0x02db3ae3cd8821807a1ef2ea891b144ecb56aa167bc4b28b470564d5263e355a",
+        "clientId": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+        "agentId": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+        "action": 1,
+        "refId": "0x6caf3d2be4cf3cd29da1a2c49da20583230f10e51e083d953fb70778efa0ce3e",
+        "issuedAt": 1791663600,
+        "expiresAt": 1791663900
+      },
+      "struct_hash": "0x98a10255dcbb91ff1f040d0aab5fc27679f01bc3f69e3422be0114c8428d28b8",
+      "digest": "0x1c6047113e5e7c0ece282a505f225e5788bf3cd3b1cc594c4e13259fd340f706",
+      "signature": "0xbaea1bec97fa3e8061ee7acd4990139be5d800529e37122f338bd62796fe7b2e2af14b4e18fbf5328a903ae5ff0a167330af2491462c20665d6449ec8b19488c1b"
+    },
+    {
+      "file": "invalid/04-expiree.json",
+      "expect": "rule-invalid",
+      "rule": "REQUEST_EXPIRED",
+      "message": {
+        "requestId": "0xe9c3eba71a7c9fb919c63b4422e3daea64f55f8d271221c5b3a37826956f6719",
+        "clientId": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+        "agentId": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+        "action": 1,
+        "refId": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+        "issuedAt": 1791662400,
+        "expiresAt": 1791662520
+      },
+      "struct_hash": "0x8be25362598b84804bb1a094c9a2ea85d9d2f13c3083233052c47624392e60f3",
+      "digest": "0xb30d5460a6a9e414525ce1f9082f8d099bc727898e5919eacf26bb954c52c307",
+      "signature": "0xc7758dbc5340800ae2aa58e08aab0f82489a9ea354b5482cc422c4fbd35161ad444c9c26c00278b21b32bbdc50778ae37a7960ff5a9cff7c89bfbdd4499312401c"
+    },
+    {
+      "file": "invalid/05-duree-trop-longue.json",
+      "expect": "rule-invalid",
+      "rule": "VALIDITY_WINDOW_INVALID",
+      "message": {
+        "requestId": "0xb97fb86f3263f33a116a076f13b3e915eda91885bc54effc8ad895ec17892862",
+        "clientId": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+        "agentId": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+        "action": 1,
+        "refId": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+        "issuedAt": 1791662400,
+        "expiresAt": 1791662701
+      },
+      "struct_hash": "0xf6715e2c0339323eb635837507389edc22083056b96e5826868ae0e811eeef78",
+      "digest": "0xcfa7cf0a3853a6c1e1a7db5fd7bef14fe111a8f0fd2a9c5c7e8b29d95ec18ffc",
+      "signature": "0x40d84ad303f336de5dd30ed68628f4b92f232e86e51a2ca862964c4f471c8f9f0db56c50190d7cd1feef4b1fe41ac25556b6b22c4d94d6dafba81ea8f354980b1b"
+    }
+  ]
+}
