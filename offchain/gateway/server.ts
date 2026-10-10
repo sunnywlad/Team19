@@ -425,6 +425,12 @@ async function handleGetEvents(
 ): Promise<void> {
   const url = new URL(req.url ?? '/', 'http://127.0.0.1');
   const fromBlockStr = url.searchParams.get('fromBlock') ?? '0';
+
+  // Valider que fromBlock est un entier non négatif
+  if (!/^\d+$/.test(fromBlockStr)) {
+    throw new HttpError(400, `fromBlock invalide : "${fromBlockStr}" n'est pas un entier`);
+  }
+
   const fromBlock = BigInt(fromBlockStr);
 
   const pClient = publicClient(opts.rpcUrl, opts.chainId);

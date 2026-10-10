@@ -122,5 +122,16 @@ export async function advanceTime(rpcUrl: string, seconds: number): Promise<void
   });
 }
 
+// Retourne une fonction d'horloge qui lit le timestamp du dernier bloc EVM.
+// À injecter dans startVerifier({ now: makeBlockNow(rpcUrl) }) pendant les tests,
+// afin que le vérificateur suive l'horloge EVM (evm_increaseTime) et non le mur.
+export function makeBlockNow(rpcUrl: string): () => Promise<number> {
+  const client = makePublicClient(rpcUrl, CHAIN_ID);
+  return async () => {
+    const block = await client.getBlock({ blockTag: 'latest' });
+    return Number(block.timestamp);
+  };
+}
+
 export { makePublicClient, makeWalletClient, privateKeyToAccount };
 export type { Hex };

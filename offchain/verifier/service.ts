@@ -79,6 +79,25 @@ function isAlreadyDone(err: unknown): boolean {
   );
 }
 
+// Vérifie si l'erreur provient d'un échec de simulation (eth_estimateGas ou eth_call) sans
+// qu'aucune transaction n'ait été envoyée.
+// Sur un L1 inactif, le dernier bloc est en retard : la simulation utilise un
+// block.timestamp < commitDeadline → WrongPhase → pas de transaction envoyée.
+// Signe fiable : aucun transactionHash dans toute la chaîne de cause.
+function isSimulationFailure(err: unknown): boolean {
+  let curr: unknown = err;
+  while (curr && typeof curr === 'object') {
+    const c = curr as Record<string, unknown>;
+    // Si un hash de transaction est présent quelque part, une tx a été envoyée
+    if (typeof c['transactionHash'] === 'string' && c['transactionHash']) {
+      return false;
+    }
+    curr = c['cause'];
+  }
+  // Aucun hash de tx trouvé → simulation seulement, aucune tx envoyée
+  return true;
+}
+
 // ─── startVerifier ────────────────────────────────────────────────────────────
 
 export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
@@ -96,16 +115,12 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
   const incidentsLog = opts.incidentsLog     ?? config?.incidentsLog     ?? 'offchain/incidents.log';
   const pollMs       = opts.pollMs           ?? config?.pollMs           ?? 1_000;
 
-  // Horloge : par défaut, timestamp du dernier bloc (en secondes).
-  // En production : horloge murale. En tests avec evm_increaseTime : timestamp EVM.
-  const nowFn: () => Promise<number> | number = opts.now ?? (async () => {
-    try {
-      const block = await pubClient.getBlock({ blockTag: 'latest' });
-      return Number(block.timestamp);
-    } catch {
-      return Math.floor(Date.now() / 1000);
-    }
-  });
+  // Horloge : par défaut, horloge murale (secondes).
+  // En tests avec evm_increaseTime : timestamp EVM injecté via opts.now.
+  // Ne pas lire block.timestamp : sur un L1 inactif, le dernier bloc peut avoir
+  // un timestamp très en retard sur l'horloge murale (aucun bloc ne mine entre
+  // deux transactions), rendant les décisions commit→reveal non déterministes.
+  const nowFn: () => Promise<number> | number = opts.now ?? (() => Math.floor(Date.now() / 1000));
 
   if (!verifierKey) throw new Error('VERIFIER_KEY manquante');
   if (!marketAddress) throw new Error('MARKET_ADDRESS manquante');
@@ -356,11 +371,18 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
 
     // ── Étape : committed → revealed ──
     if (state.step === 'committed') {
-      // Reveal dès now >= commitDeadline + 2s et avant revealDeadline
-      if (nowSecNorm < commitDeadline + 2) return;
-      if (nowSecNorm >= revealDeadline) return;
+      // Décision basée sur l'horloge murale (nowFn), jamais sur le statut lu par eth_call.
+      // Sur un L1 inactif, block.timestamp reste figé après le dernier bloc : getRequest
+      // rendrait Commit indéfiniment même après commitDeadline → interblocage.
+      // Reveal quand : now >= commitDeadline + 3 ET now < revealDeadline.
+      if (nowSecNorm < commitDeadline + 3) return; // trop tôt
+      if (nowSecNorm >= revealDeadline) {
+        // Fenêtre de reveal manquée : sauter directement à finalize
+        store.set({ ...state, step: 'detailed' });
+        return;
+      }
 
-      // Vérifier si déjà révélé sur la chaîne
+      // Vérifier si déjà révélé sur la chaîne (anti double-reveal, reprise après crash)
       try {
         const reveal = await pubClient.readContract({
           address: marketAddress,
@@ -373,21 +395,55 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
           return;
         }
       } catch {
-        // continuer
+        // pas de reveal disponible, continuer
       }
 
-      try {
-        const txHash = await wltClient.writeContract({
+      // Tenter le reveal ; WrongPhase / TooEarly = bloc encore en retard, réessayer au tour suivant.
+      // Stratégie gaz en deux temps :
+      //   1. Essai sans gas explicite (laisser eth_estimateGas estimer).
+      //   2. Si eth_estimateGas échoue (WrongPhase/TooEarly car timestamp du dernier bloc
+      //      < commitDeadline), réessayer avec gas=200_000 pour contourner la simulation
+      //      et forcer le nœud à miner un nouveau bloc au timestamp courant.
+      // Cette stratégie évite d'envoyer des transactions vouées à l'échec sur des chaînes
+      // de test (anvil) où la simulation fonctionne normalement.
+      const doReveal = async (gasLimit?: bigint): Promise<void> => {
+        const commonArgs = {
           address: marketAddress,
           abi: marketAbi,
-          functionName: 'revealVerdict',
-          args: [requestId, state.vote, state.reasons, state.detailHash, state.salt],
-        });
+          functionName: 'revealVerdict' as const,
+          args: [requestId, state.vote as number, state.reasons as number, state.detailHash as Hex, state.salt as Hex] as const,
+        };
+        const txHash = gasLimit !== undefined
+          ? await wltClient.writeContract({ ...commonArgs, gas: gasLimit })
+          : await wltClient.writeContract(commonArgs);
         await pubClient.waitForTransactionReceipt({ hash: txHash });
         store.set({ ...state, step: 'revealed' });
+      };
+
+      try {
+        await doReveal();
       } catch (err) {
         if (isAlreadyDone(err)) {
-          store.set({ ...state, step: 'revealed' });
+          if (String(err).includes('AlreadyRevealed')) {
+            store.set({ ...state, step: 'revealed' });
+          } else if (isSimulationFailure(err)) {
+            // Simulation a échoué (eth_estimateGas, aucune tx envoyée) : L1 inactif,
+            // timestamp de bloc en retard. Réessayer avec gas fixe pour contourner
+            // la simulation et forcer le nœud à miner un nouveau bloc au timestamp courant.
+            try {
+              await doReveal(200_000n);
+            } catch (err2) {
+              if (isAlreadyDone(err2) && String(err2).includes('AlreadyRevealed')) {
+                store.set({ ...state, step: 'revealed' });
+              } else if (isAlreadyDone(err2)) {
+                console.log(`[verifier] revealVerdict revert (gas fixe), réessai requestId=${requestId}`);
+              } else {
+                console.error(`[verifier] Erreur reveal (gas fixe) requestId=${requestId}:`, err2);
+              }
+            }
+          } else {
+            console.log(`[verifier] revealVerdict revert (bloc en retard), réessai requestId=${requestId}`);
+          }
         } else {
           console.error(`[verifier] Erreur reveal requestId=${requestId}:`, err);
         }
@@ -415,25 +471,58 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
 
     // ── Étape : detailed → finalized ──
     if (state.step === 'detailed') {
-      // Finalize dès que tous ont révélé ou après revealDeadline
-      // On peut appeler finalize à tout moment (le contrat vérifie lui-même)
+      // Finalize dès que les 3 reveals sont visibles via getReveal, OU dès que
+      // now >= revealDeadline + 2 (le contrat autorise finalize après revealDeadline même
+      // sans 3 reveals). Décision sur l'horloge murale (nowFn), pas sur le statut eth_call.
+      // WrongPhase/TooEarly = bloc encore en retard, réessayer au prochain tick.
+
+      // Vérifier d'abord si déjà finalisé par un autre (Contest/Closed on-chain)
       try {
         const onChain = await getRequestOnChain(requestId);
         const sName = statusName(onChain.status);
-
         if (sName === 'Contest' || sName === 'Closed') {
-          // Déjà finalisé par un autre
           store.set({ ...state, step: 'finalized', contestDeadline: onChain.contestDeadline.toString() });
           return;
         }
+      } catch {
+        // Réessayer au tour suivant si la lecture échoue
+        return;
+      }
 
-        if (sName !== 'Reveal') return; // pas encore prêt
+      // Compter les reveals visibles via getReveal (sans faire confiance au statut)
+      let revealCount = 0;
+      try {
+        const committee = await pubClient.readContract({
+          address: marketAddress,
+          abi: marketAbi,
+          functionName: 'getCommittee',
+          args: [requestId],
+        }) as readonly `0x${string}`[];
+        for (const member of committee) {
+          const rev = await pubClient.readContract({
+            address: marketAddress,
+            abi: marketAbi,
+            functionName: 'getReveal',
+            args: [requestId, member],
+          });
+          if (rev.revealed) revealCount++;
+        }
+      } catch {
+        // Continuer avec revealCount = 0 (on se basera sur l'horloge)
+      }
 
+      const allRevealed = revealCount >= 3;
+      const pastRevealDeadline = nowSecNorm >= revealDeadline + 2;
+
+      if (!allRevealed && !pastRevealDeadline) return; // pas encore prêt
+
+      try {
         const txHash = await wltClient.writeContract({
           address: marketAddress,
           abi: marketAbi,
           functionName: 'finalize',
           args: [requestId],
+          gas: 300_000n,
         });
         await pubClient.waitForTransactionReceipt({ hash: txHash });
 
@@ -446,15 +535,26 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
         });
       } catch (err) {
         if (isAlreadyDone(err)) {
-          // Lire le contestDeadline quand même
+          // Relire le statut pour distinguer :
+          // - WrongPhase car le contrat est maintenant Contest (finalisé par un autre) → passer à finalized
+          // - WrongPhase/TooEarly car le bloc est en retard → réessayer au prochain tick
           try {
             const updated = await getRequestOnChain(requestId);
-            store.set({
-              ...state,
-              step: 'finalized',
-              contestDeadline: updated.contestDeadline.toString(),
-            });
-          } catch { /* */ }
+            const updSName = statusName(updated.status);
+            if (updSName === 'Contest' || updSName === 'Closed') {
+              store.set({
+                ...state,
+                step: 'finalized',
+                contestDeadline: updated.contestDeadline.toString(),
+              });
+            } else {
+              // Bloc en retard (toujours Reveal ou Commit) : réessayer
+              console.log(`[verifier] finalize revert (bloc en retard), réessai requestId=${requestId}`);
+            }
+          } catch {
+            // Relecture impossible, réessayer au prochain tick
+            console.log(`[verifier] finalize revert (relecture impossible), réessai requestId=${requestId}`);
+          }
         } else {
           console.error(`[verifier] Erreur finalize requestId=${requestId}:`, err);
         }
@@ -465,7 +565,8 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
     // ── Étape : finalized → closed ──
     if (state.step === 'finalized') {
       if (contestDeadline === 0) return; // pas encore de contestDeadline
-      if (nowSecNorm < contestDeadline) return; // fenêtre de contestation pas encore écoulée
+      // close quand now >= contestDeadline + 2 (marge pour que le bloc soit à jour)
+      if (nowSecNorm < contestDeadline + 2) return;
 
       try {
         const onChain = await getRequestOnChain(requestId);

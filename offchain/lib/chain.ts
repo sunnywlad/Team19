@@ -25,6 +25,7 @@ export function publicClient(rpcUrl: string, chainId: number = 191919) {
   return createPublicClient({
     chain: chkChain(chainId),
     transport: http(rpcUrl),
+    cacheTime: 0,
   });
 }
 
