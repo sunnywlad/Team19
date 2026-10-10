@@ -289,11 +289,11 @@ export async function startService(svc, timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (exited) break;
-    if (await healthy(svc.health)) return child.pid;
+    if (await (svc.ready ? svc.ready() : healthy(svc.health))) return child.pid;
     await sleep(150);
   }
   await stopService(svc.name);
-  throw new DemoError(`${svc.name} : ${exited ? "arrêté au démarrage" : `pas de réponse sur ${svc.health} en ${timeoutMs / 1000} s`}\n--- fin de var/demo/${svc.name}.log ---\n${logTail(svc.name)}`);
+  throw new DemoError(`${svc.name} : ${exited ? "arrêté au démarrage" : `pas de réponse sur le port ${svc.port} en ${timeoutMs / 1000} s`}\n--- fin de var/demo/${svc.name}.log ---\n${logTail(svc.name)}`);
 }
 
 /**

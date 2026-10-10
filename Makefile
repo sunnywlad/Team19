@@ -1,6 +1,6 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
 .PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final \
-	demo demo-stop demo-status demo-reset scenes scene demo-smoke
+	demo demo-stop demo-status demo-reset scenes scene demo-smoke demo-chain-check
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -103,3 +103,8 @@ scene:
 # journal et arrêt.
 demo-smoke:
 	node demo/smoke.mjs
+
+# Mode chain, en attendant ArgentVault : ce que la doublure StubVault permet de
+# vérifier sur anvil (anvil et forge requis). Ne prouve aucun paiement.
+demo-chain-check:
+	node demo/chain-check.mjs

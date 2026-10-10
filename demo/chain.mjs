@@ -9,7 +9,7 @@
 // reprendre quand il existera.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { DEPLOY_SCRIPT, DemoError, HOST, ROOT, run, setChainVault, startService, stopService } from "./lib.mjs";
+import { DEPLOY_SCRIPT, DemoError, HOST, ROOT, postJson, run, setChainVault, startService, stopService } from "./lib.mjs";
 
 const ROLE_KEYS = ["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY", "CLIENT_SIGNER"];
 
@@ -31,9 +31,18 @@ export function anvilService(config) {
     port: config.ports.anvil,
     cwd: ROOT,
     command: config.get("ANVIL") ?? "anvil",
-    args: ["--host", HOST, "--port", String(config.ports.anvil), "--chain-id", config.chainId, "--silent"],
-    // anvil répond 200 à un GET sur sa racine.
-    health: `http://${HOST}:${config.ports.anvil}/`,
+    // Un bloc par seconde : sans cela anvil ne mine qu'à chaque transaction, et
+    // l'indexeur attendrait sans fin la confirmation de la dernière décision.
+    args: ["--host", HOST, "--port", String(config.ports.anvil), "--chain-id", config.chainId, "--block-time", "1", "--silent"],
+    // anvil n'a pas de /health : prêt quand il répond à eth_chainId.
+    ready: async () => {
+      try {
+        const reply = await postJson(`http://${HOST}:${config.ports.anvil}`, { jsonrpc: "2.0", id: 1, method: "eth_chainId", params: [] }, {}, 1500);
+        return reply.status === 200 && typeof reply.body?.result === "string";
+      } catch {
+        return false;
+      }
+    },
     env: () => ({}),
   };
 }
