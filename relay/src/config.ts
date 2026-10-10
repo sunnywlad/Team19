@@ -114,6 +114,7 @@ export const ENV_NAMES = [
   "POLL_INTERVAL_MS",
   "JOURNAL_URL",
   "PAUSE_SOURCE_URL",
+  "CLIENT_IA_PORT",
 ] as const;
 export type EnvName = (typeof ENV_NAMES)[number];
 
