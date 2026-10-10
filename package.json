@@ -8,7 +8,7 @@
     "node": ">=22.18"
   },
   "scripts": {
-    "test": "node --test --disable-warning=ExperimentalWarning \"response/**/*.test.ts\"",
+    "test": "node --test --disable-warning=ExperimentalWarning \"response/**/*.test.ts\" \"relay/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "journal": "node --disable-warning=ExperimentalWarning response/cli.ts"
   },
