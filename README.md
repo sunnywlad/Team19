@@ -25,6 +25,23 @@ paiement part.
 Le contrat est aujourd'hui une interface gelée, sans implémentation. Le reste
 du flux tourne contre un faux coffre.
 
+## Cadrage du paiement
+
+**Démontré, sur réseau de test.** Le coffre détient des fonds de test et paie
+dans la transaction de décision : événement `Paid`, suivi d'un transfert natif.
+
+**Envisagé, non construit.** En production, `Paid` serait l'autorisation qu'un
+connecteur bancaire consomme. Dans ce mode, le contrat ne détient plus les
+fonds : la garantie « seuls les fonds détenus par le contrat sont protégés » ne
+s'applique plus, et le connecteur devient un composant de confiance à concevoir
+(finalité, rejeu, montant et bénéficiaire lus dans l'événement). Ce connecteur
+n'existe pas : ni code, ni spec.
+
+**État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](specs/02-contrat.md) § 1
+et § 8) et de l'interface gelée. Aucun contrat n'est écrit ni déployé : il est
+rejoué par un faux coffre, sans fonds. « Démontré » vaudra le jour où le contrat
+tournera sur le réseau de test ; ce paragraphe sera alors mis à jour.
+
 ## Architecture
 
 Dix composants, douze étapes. Conception : [specs/](specs/README.md).
@@ -243,7 +260,9 @@ Du kit :
 - L'injection de prompt n'est pas empêchée, ses conséquences sont bornées.
 - Le contrat ne vérifie pas la vérité d'une facture.
 - Un propriétaire compromis sort du modèle.
-- Seuls les fonds détenus par le contrat sont protégés.
+- Seuls les fonds détenus par le contrat sont protégés. Dans le mode envisagé
+  avec un connecteur bancaire, cette garantie ne s'applique plus : voir
+  [Cadrage du paiement](#cadrage-du-paiement).
 - Données synthétiques, réseau de test, aucun audit indépendant.
 
 Du dépôt :
