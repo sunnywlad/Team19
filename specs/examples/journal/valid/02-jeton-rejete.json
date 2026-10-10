@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "seq": 0,
+  "ts_ms": 1791662430002,
+  "type": "AUTH_REJECTED",
+  "component": "GATEWAY",
+  "request_id": "0xdc82a69c1999d7350703be235f3c0c2862a913ea2072a8ba54b202c38d43974c",
+  "agent_id": null,
+  "client_id": null,
+  "data": {
+    "received_at_ms": 1791662430000,
+    "cause": "TOKEN_EXPIRED",
+    "claimed_agent_id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376"
+  },
+  "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "hash": "91fce5e12b1a8bb6369d4f6ec5e41faea649648e64294f15ccfdee8a02b90fff"
+}

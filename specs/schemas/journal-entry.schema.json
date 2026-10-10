@@ -1,0 +1,800 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:schema:journal-entry:1",
+  "title": "Entrée du journal chaîné (specs/04-journal.md)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "v",
+    "seq",
+    "ts_ms",
+    "type",
+    "component",
+    "request_id",
+    "agent_id",
+    "client_id",
+    "data",
+    "prev_hash",
+    "hash"
+  ],
+  "properties": {
+    "v": {
+      "const": 1
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ts_ms": {
+      "$ref": "#/$defs/unixMillis"
+    },
+    "type": {
+      "enum": [
+        "REQUEST_RECEIVED",
+        "AUTH_REJECTED",
+        "RATE_LIMITED",
+        "DETECTION",
+        "REQUEST_PARSED",
+        "SCHEMA_REJECTED",
+        "QUARANTINED",
+        "AGENT_PAUSED",
+        "ALERT_SENT",
+        "INCIDENT_REPORT_GENERATED",
+        "FORWARDED_TO_CLIENT_AI",
+        "REQUEST_SIGNED",
+        "ENQUEUED",
+        "SUBMITTED",
+        "QUEUE_EXPIRED",
+        "DECISION_OBSERVED",
+        "HUMAN_DECISION"
+      ]
+    },
+    "component": {
+      "enum": [
+        "GATEWAY",
+        "CLIENT_AI",
+        "QUEUE",
+        "RELAY",
+        "RESPONSE",
+        "HUMAN"
+      ]
+    },
+    "request_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/bytes32"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "agent_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/bytes32"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "client_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/bytes32"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "data": {
+      "type": "object"
+    },
+    "prev_hash": {
+      "$ref": "#/$defs/sha256"
+    },
+    "hash": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "REQUEST_RECEIVED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "received_at_ms",
+              "document_sha256"
+            ],
+            "properties": {
+              "received_at_ms": {
+                "$ref": "#/$defs/unixMillis"
+              },
+              "document_sha256": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "AUTH_REJECTED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "received_at_ms",
+              "cause",
+              "claimed_agent_id"
+            ],
+            "properties": {
+              "received_at_ms": {
+                "$ref": "#/$defs/unixMillis"
+              },
+              "cause": {
+                "enum": [
+                  "TOKEN_MISSING",
+                  "TOKEN_EXPIRED",
+                  "TOKEN_REVOKED",
+                  "TOKEN_UNKNOWN",
+                  "AGENT_MISMATCH"
+                ]
+              },
+              "claimed_agent_id": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/bytes32"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "RATE_LIMITED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "received_at_ms",
+              "limit",
+              "window_s"
+            ],
+            "properties": {
+              "received_at_ms": {
+                "$ref": "#/$defs/unixMillis"
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "window_s": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "DETECTION"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "score",
+              "threshold",
+              "verdict",
+              "reason_codes",
+              "received_at_ms",
+              "detected_at_ms",
+              "detector_version"
+            ],
+            "properties": {
+              "score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "threshold": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "verdict": {
+                "enum": [
+                  "PASS",
+                  "BLOCK"
+                ]
+              },
+              "reason_codes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "INSTRUCTION_IN_DATA",
+                    "AUTHORITY_VIOLATION",
+                    "PAYMENT_ANOMALY",
+                    "SCHEMA_INVALID",
+                    "TOKEN_INVALID",
+                    "RATE_LIMITED"
+                  ]
+                }
+              },
+              "received_at_ms": {
+                "$ref": "#/$defs/unixMillis"
+              },
+              "detected_at_ms": {
+                "$ref": "#/$defs/unixMillis"
+              },
+              "detector_version": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,31}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "REQUEST_PARSED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "action",
+              "ref_id"
+            ],
+            "properties": {
+              "action": {
+                "enum": [
+                  "PAY_INVOICE",
+                  "PLACE"
+                ]
+              },
+              "ref_id": {
+                "$ref": "#/$defs/bytes32"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "SCHEMA_REJECTED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "error_count"
+            ],
+            "properties": {
+              "error_count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "QUARANTINED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "incident_id",
+              "document_sha256"
+            ],
+            "properties": {
+              "incident_id": {
+                "$ref": "#/$defs/bytes32"
+              },
+              "document_sha256": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "AGENT_PAUSED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "incident_id",
+              "scope",
+              "tx_hash"
+            ],
+            "properties": {
+              "incident_id": {
+                "$ref": "#/$defs/bytes32"
+              },
+              "scope": {
+                "enum": [
+                  "OFFCHAIN",
+                  "ONCHAIN"
+                ]
+              },
+              "tx_hash": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/bytes32"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ALERT_SENT"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "incident_id",
+              "kind",
+              "recipients"
+            ],
+            "properties": {
+              "incident_id": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/bytes32"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "kind": {
+                "enum": [
+                  "SECURITY",
+                  "REPETITION",
+                  "AVAILABILITY",
+                  "APPROVAL_REQUESTED"
+                ]
+              },
+              "recipients": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "enum": [
+                    "ANALYST",
+                    "TREASURER",
+                    "APPROVER",
+                    "OPERATIONS"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "INCIDENT_REPORT_GENERATED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "incident_id",
+              "report_sha256",
+              "journal_head_seq",
+              "journal_head_hash"
+            ],
+            "properties": {
+              "incident_id": {
+                "$ref": "#/$defs/bytes32"
+              },
+              "report_sha256": {
+                "$ref": "#/$defs/sha256"
+              },
+              "journal_head_seq": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "journal_head_hash": {
+                "$ref": "#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "FORWARDED_TO_CLIENT_AI"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [],
+            "properties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "REQUEST_SIGNED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "action",
+              "ref_id",
+              "issued_at",
+              "expires_at",
+              "signer",
+              "request_digest"
+            ],
+            "properties": {
+              "action": {
+                "enum": [
+                  "PAY_INVOICE",
+                  "PLACE"
+                ]
+              },
+              "ref_id": {
+                "$ref": "#/$defs/bytes32"
+              },
+              "issued_at": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              "expires_at": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              "signer": {
+                "$ref": "#/$defs/address"
+              },
+              "request_digest": {
+                "$ref": "#/$defs/bytes32"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ENQUEUED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "expires_at"
+            ],
+            "properties": {
+              "expires_at": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "SUBMITTED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tx_hash"
+            ],
+            "properties": {
+              "tx_hash": {
+                "$ref": "#/$defs/bytes32"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "QUEUE_EXPIRED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "expires_at"
+            ],
+            "properties": {
+              "expires_at": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "DECISION_OBSERVED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decision",
+              "reason",
+              "action",
+              "ref_id",
+              "tx_hash",
+              "block_number",
+              "block_timestamp",
+              "log_index"
+            ],
+            "properties": {
+              "decision": {
+                "enum": [
+                  0,
+                  1,
+                  2
+                ]
+              },
+              "reason": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "action": {
+                "enum": [
+                  1,
+                  2
+                ]
+              },
+              "ref_id": {
+                "$ref": "#/$defs/bytes32"
+              },
+              "tx_hash": {
+                "$ref": "#/$defs/bytes32"
+              },
+              "block_number": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "block_timestamp": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              "log_index": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "HUMAN_DECISION"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "incident_id",
+              "decision",
+              "author_role",
+              "author_id"
+            ],
+            "properties": {
+              "incident_id": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/bytes32"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decision": {
+                "enum": [
+                  "FALSE_POSITIVE",
+                  "ATTACK_CONFIRMED",
+                  "AGENT_RESUMED",
+                  "TOKEN_REVOKED",
+                  "VAULT_PAUSED",
+                  "VAULT_RESUMED"
+                ]
+              },
+              "author_role": {
+                "enum": [
+                  "ANALYST",
+                  "OWNER",
+                  "APPROVER"
+                ]
+              },
+              "author_id": {
+                "$ref": "#/$defs/bytes32"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "bytes32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$",
+      "not": {
+        "const": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "description": "SHA-256 en hexadécimal minuscule, sans préfixe.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "unixMillis": {
+      "description": "Millisecondes Unix, entier.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295999
+    }
+  }
+}
