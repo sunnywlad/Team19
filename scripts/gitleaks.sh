@@ -8,6 +8,8 @@ GITLEAKS_VERSION="8.30.1"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BIN="$ROOT/.tools/bin/gitleaks"
+# shellcheck source=scripts/lib.sh
+. "$ROOT/scripts/lib.sh"
 
 install_gitleaks() {
   local os arch asset sha tmp
@@ -41,11 +43,7 @@ install_gitleaks() {
     "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
 
   local got
-  if command -v sha256sum >/dev/null 2>&1; then
-    got="$(sha256sum "$tmp/$tarball" | cut -d' ' -f1)"
-  else
-    got="$(shasum -a 256 "$tmp/$tarball" | cut -d' ' -f1)"
-  fi
+  got="$(sha256 "$tmp/$tarball")"
   if [ "$got" != "$sha" ]; then
     echo "gitleaks : somme de contrôle invalide pour $tarball" >&2
     echo "  attendu : $sha" >&2

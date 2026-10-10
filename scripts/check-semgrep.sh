@@ -26,8 +26,8 @@ if [ "$(git -C "$RULES" rev-parse HEAD 2>/dev/null || true)" != "$SEMGREP_RULES_
 fi
 
 configs=()
-for set in "${RULESETS[@]}"; do
-  configs+=(--config "$RULES/$set")
+for ruleset in "${RULESETS[@]}"; do
+  configs+=(--config "$RULES/$ruleset")
 done
 
 semgrep scan --metrics=off --disable-version-check --error --quiet \

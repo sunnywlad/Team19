@@ -11,6 +11,8 @@ GITLEAKS="$ROOT/scripts/gitleaks.sh"
 # Code de sortie dédié aux fuites, pour ne pas confondre « secret détecté »
 # avec une erreur de gitleaks ou de configuration (qui sortent en 1).
 LEAK=42
+# shellcheck source=scripts/lib.sh
+. "$ROOT/scripts/lib.sh"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -18,7 +20,7 @@ trap 'rm -rf "$WORK"' EXIT
 # Jeton au format d'un PAT GitHub : préfixe assemblé + 36 caractères dérivés.
 prefix="gh"
 prefix="${prefix}p_"
-body="$(printf '%s' 'argent-intelligent-canari' | sha256sum | cut -c1-36)"
+body="$(printf '%s' 'argent-intelligent-canari' | sha256 | cut -c1-36)"
 fake="${prefix}${body}"
 
 failures=0

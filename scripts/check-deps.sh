@@ -17,19 +17,20 @@ tracked() {
     grep -Ev '(^|/)node_modules/|^contracts/lib/' || true
 }
 
-mapfile -t packages < <(tracked ':(glob)**/package.json')
-mapfile -t requirements < <(tracked ':(glob)**/requirements*.txt')
-mapfile -t unaudited < <(tracked ':(glob)**/yarn.lock' ':(glob)**/pnpm-lock.yaml' \
+# Listes : un chemin par ligne (pas de mapfile, absent de bash 3.2).
+packages="$(tracked ':(glob)**/package.json')"
+requirements="$(tracked ':(glob)**/requirements*.txt')"
+unaudited="$(tracked ':(glob)**/yarn.lock' ':(glob)**/pnpm-lock.yaml' \
   ':(glob)**/bun.lock' ':(glob)**/poetry.lock' ':(glob)**/uv.lock' \
-  ':(glob)**/Pipfile.lock' ':(glob)**/Cargo.lock' ':(glob)**/go.sum')
+  ':(glob)**/Pipfile.lock' ':(glob)**/Cargo.lock' ':(glob)**/go.sum')"
 
 has_file() { [ -n "$(tracked "$1")" ]; }
 
 if [ "${1:-}" = "--detect" ]; then
   node=false
   python=false
-  [ "${#packages[@]}" -gt 0 ] && node=true
-  [ "${#requirements[@]}" -gt 0 ] && python=true
+  [ -n "$packages" ] && node=true
+  [ -n "$requirements" ] && python=true
   echo "node=$node"
   echo "python=$python"
   exit 0
@@ -45,29 +46,35 @@ warn() {
   if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::warning::$*"; else echo "ATTENTION $*" >&2; fi
 }
 
-for lock in "${unaudited[@]}"; do
+while IFS= read -r lock; do
+  [ -n "$lock" ] || continue
   # TODO : brancher un audit (osv-scanner) dès qu'une stack utilise ce format.
   warn "$lock : format de lockfile non audité par la CI"
-done
+done <<< "$unaudited"
 
-for pkg in "${packages[@]}"; do
+# Les commandes lancées dans ces boucles lisent /dev/null, pour ne pas
+# consommer la liste qui alimente le « read ».
+while IFS= read -r pkg; do
+  [ -n "$pkg" ] || continue
   dir="$(dirname "$pkg")"
   if has_file "$dir/package-lock.json" || has_file "$dir/npm-shrinkwrap.json"; then
     echo "==> $dir : npm ci + npm audit"
     # --ignore-scripts : aucun script d'installation tiers exécuté pour l'audit.
-    if ! (cd "$dir" && npm ci --ignore-scripts --no-fund --no-audit); then
+    if ! (cd "$dir" && npm ci --ignore-scripts --no-fund --no-audit) < /dev/null; then
       fail "$dir : npm ci (lockfile désynchronisé de package.json ?)"
       continue
     fi
-    (cd "$dir" && npm audit --audit-level=high) || fail "$dir : npm audit (gravité haute ou plus)"
+    (cd "$dir" && npm audit --audit-level=high) < /dev/null ||
+      fail "$dir : npm audit (gravité haute ou plus)"
   elif has_file "$dir/yarn.lock" || has_file "$dir/pnpm-lock.yaml" || has_file "$dir/bun.lock"; then
     : # Verrouillé, mais non audité : déjà signalé ci-dessus.
   else
     fail "$pkg : aucun lockfile versionné à côté (lancer npm install puis committer package-lock.json)"
   fi
-done
+done <<< "$packages"
 
-for req in "${requirements[@]}"; do
+while IFS= read -r req; do
+  [ -n "$req" ] || continue
   echo "==> $req : versions figées + pip-audit"
   pinned=true
   lineno=0
@@ -95,10 +102,11 @@ for req in "${requirements[@]}"; do
     continue
   fi
   # pip-audit ne filtre pas par gravité : toute vulnérabilité connue bloque.
-  pip-audit --requirement "$req" --progress-spinner off || fail "$req : pip-audit"
-done
+  pip-audit --requirement "$req" --progress-spinner off < /dev/null ||
+    fail "$req : pip-audit"
+done <<< "$requirements"
 
-if [ "${#packages[@]}" -eq 0 ] && [ "${#requirements[@]}" -eq 0 ]; then
+if [ -z "$packages" ] && [ -z "$requirements" ]; then
   echo "dépendances : rien à analyser"
 fi
 
