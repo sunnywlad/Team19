@@ -17,6 +17,9 @@ Les interfaces viennent de [../specs/](../specs/) et ne sont pas redéfinies ici
 | [src/pauses.ts](src/pauses.ts) | Sources de pause d'un agent : service de réponse (HTTP) et contrat. En pause dès qu'une le dit |
 | [src/indexer.ts](src/indexer.ts), [src/api.ts](src/api.ts) | Indexeur idempotent et API en lecture seule sur `127.0.0.1` |
 | [src/vault.ts](src/vault.ts) | `VaultClient` : [fake-vault.ts](src/fake-vault.ts) pour les tests, [chain-vault.ts](src/chain-vault.ts) pour la chaîne |
+| [src/world.ts](src/world.ts) | Monde de test des fixtures monté sur le faux coffre : le même pour les tests et pour `VAULT_MODE=fake` |
+| [src/demo-control.ts](src/demo-control.ts) | Démo, faux coffre seulement : port à part (`127.0.0.1:8788`) qui appelle `approve`, `refuse`, `expire` à la place de l'approbateur |
+| [src/demo-replay.ts](src/demo-replay.ts) | Démo, scénario 8 a : remet en file une demande déjà soumise, sans la déduplication de la file |
 | [src/config.ts](src/config.ts) | Constantes des points de `specs/00-a-trancher.md` et noms des variables d'environnement |
 
 ## Bouchons à remplacer
@@ -74,6 +77,21 @@ npm run start:client-ia
 le service « IA du client » sur la même file. `npm run scene` joue une scène
 dans la même file, sans passer par ce service. Sans `RPC_URL`, sans `VAULT_ADDRESS` ou sans `RELAYER`, le
 relais ne soumet rien et les demandes expirent.
+
+## Faux coffre : `VAULT_MODE=fake`
+
+Sans `VAULT_MODE`, ou avec `chain`, rien ne change. Avec `fake`, `npm start`
+monte le faux coffre sur le monde de `specs/examples/fixtures.json` et l'annonce
+sur la sortie d'erreur : « COFFRE SIMULÉ : aucun fonds, aucune chaîne ». Un autre
+mode fait échouer le démarrage. Le faux coffre vit dans le processus du relais :
+relancer le relais repart du monde initial. Il avance d'un bloc par tour.
+
+Avec `DEMO_MODE=1` en plus, un port de contrôle s'ouvre sur `127.0.0.1:8788`
+(`DEMO_CONTROL_PORT`) : `POST /demo/approve`, `/demo/refuse`, `/demo/expire`,
+corps `{"request_id":"0x…"}`. Il tient la place de l'approbateur et ne fait rien
+d'autre ; l'API du port 8787 reste en lecture seule. Sans `DEMO_MODE=1`, ou
+devant un vrai contrat, ce port n'existe pas. La démo complète se lance depuis
+la racine : `make demo`.
 
 Sur anvil, l'adresse de `RELAYER` doit être celle du rôle relais du contrat, et
 celle de `CLIENT_SIGNER` son `clientSigner()`.

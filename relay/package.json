@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "start": "node --disable-warning=ExperimentalWarning src/main.ts",
     "start:client-ia": "node --disable-warning=ExperimentalWarning src/client-ia.ts",
-    "scene": "node --disable-warning=ExperimentalWarning src/scene-cli.ts"
+    "scene": "node --disable-warning=ExperimentalWarning src/scene-cli.ts",
+    "demo:replay": "node --disable-warning=ExperimentalWarning src/demo-replay.ts"
   },
   "dependencies": {
     "ajv": "8.20.0",

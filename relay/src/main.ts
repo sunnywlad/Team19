@@ -2,6 +2,7 @@
 //   npm start        (variables : voir relay/.env.example)
 import { createApi, listen, API_HOST } from "./api.ts";
 import { intEnv, readEnv } from "./config.ts";
+import { startDemoControl } from "./demo-control.ts";
 import { HttpJournal } from "./http-journal.ts";
 import { Indexer } from "./indexer.ts";
 import { MemoryJournal, type JournalClient } from "./journal.ts";
@@ -12,7 +13,7 @@ import { dbPath, policyFromEnv, stderrAlerts, vaultFromEnv } from "./runtime.ts"
 import { systemClock } from "./types.ts";
 
 const policy = policyFromEnv();
-const { vault, note } = vaultFromEnv();
+const { vault, note, fake } = vaultFromEnv();
 console.error(`[relay] ${note}`);
 
 // Journal : le service de response/ si JOURNAL_URL est posée. Il devient alors
@@ -52,6 +53,10 @@ const indexer = new Indexer({
 const port = await listen(createApi({ indexer, queue, confirmations: policy.confirmations, vault }), intEnv("API_PORT", 8787));
 console.error(`[relay] API en lecture seule sur http://${API_HOST}:${port}`);
 
+// Démo, faux coffre seulement : l'approbateur est remplacé par un port à part.
+const control = await startDemoControl(fake);
+if (control) console.error(`[relay] MODE DÉMO : contrôle du faux coffre sur http://${API_HOST}:${control.port} (approve, refuse, expire)`);
+
 // Un tour à la fois : jamais deux soumissions concurrentes de la même file.
 let busy = false;
 let lastError = "";
@@ -70,6 +75,8 @@ async function turn(): Promise<void> {
     }
     const report = await relay.tick();
     if (report.submitted + report.rejected + report.inDoubt + report.expired > 0) console.error(`[relay] ${JSON.stringify(report)}`);
+    // Le faux coffre n'a pas de mineur : un bloc par tour, pour les confirmations.
+    fake?.mine();
     const { inserted } = await indexer.tick();
     if (inserted > 0) console.error(`[indexeur] ${inserted} événement(s)`);
     lastError = "";
