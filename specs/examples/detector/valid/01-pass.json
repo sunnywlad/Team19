@@ -1,0 +1,11 @@
+{
+  "request_id": "0x0f9f1aa766995cb9ffaf28a5118ea931ce433c676d2be21e30efa5b3eaea48ff",
+  "agent_id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+  "score": 4,
+  "threshold": 70,
+  "verdict": "PASS",
+  "reason_codes": [],
+  "received_at_ms": 1791662399100,
+  "detected_at_ms": 1791662399138,
+  "detector_version": "regles-0.1"
+}
