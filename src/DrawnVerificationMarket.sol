@@ -5,6 +5,9 @@ import {VerificationMarketBase} from "./VerificationMarket.sol";
 import {VerifierRegistry} from "./VerifierRegistry.sol";
 import {Slashing} from "./Slashing.sol";
 import {Rewards} from "./Rewards.sol";
+import {AgentIdentityRegistry} from "./erc8004/AgentIdentityRegistry.sol";
+import {AgentReputationRegistry} from "./erc8004/AgentReputationRegistry.sol";
+import {AgentValidationRegistry} from "./erc8004/AgentValidationRegistry.sol";
 
 /// @title DrawnVerificationMarket
 /// @notice Phase 3 : marché cautionné dont le comité de 3 est tiré au sort par demande, à partir du
@@ -50,6 +53,29 @@ contract DrawnVerificationMarket is VerificationMarketBase {
     /// @notice Vrai une fois le comité tiré et les cautions verrouillées.
     mapping(uint256 => bool) public drawn;
 
+    // ---------------------------------------------------------------------
+    // Branchement ERC-8004 (facultatif, jamais bloquant pour finalize)
+    // ---------------------------------------------------------------------
+
+    /// @notice setErc8004 appelé deux fois.
+    error Erc8004AlreadySet();
+    /// @notice Appelant autre que l'admin pour setErc8004.
+    error OnlyErc8004Admin(address caller);
+    /// @notice Appel réservé au contrat lui-même (crochet ERC-8004 de finalize).
+    error OnlySelf(address caller);
+
+    /// @notice Émis au câblage des trois registres ERC-8004 (adresses nulles = branchement désactivé).
+    event Erc8004Set(address identity, address reputation, address validation);
+
+    /// @notice Admin autorisé à brancher les registres : fixé au déployeur à la construction.
+    address public immutable erc8004Admin;
+    /// @notice Vrai une fois `setErc8004` appelé (adresses nulles comprises : désactive le branchement).
+    bool public erc8004Set;
+
+    AgentIdentityRegistry public identityRegistry;
+    AgentReputationRegistry public reputationRegistry;
+    AgentValidationRegistry public validationRegistry;
+
     /// @param fee_ frais de demande.
     /// @param commitWindow_ fenêtre de commit.
     /// @param revealWindow_ fenêtre de reveal.
@@ -69,6 +95,7 @@ contract DrawnVerificationMarket is VerificationMarketBase {
         registry = registry_;
         slashing = slashing_;
         rewards = rewards_;
+        erc8004Admin = msg.sender;
     }
 
     // ---------------------------------------------------------------------
@@ -78,6 +105,23 @@ contract DrawnVerificationMarket is VerificationMarketBase {
     /// @notice Enregistre le bloc de tirage ; ne verrouille rien et n'émet pas CommitteeDrawn.
     function _afterCreate(uint256 requestId) internal override {
         drawBlock[requestId] = block.number + 1;
+    }
+
+    // ---------------------------------------------------------------------
+    // Branchement ERC-8004 (admin, une seule fois)
+    // ---------------------------------------------------------------------
+
+    /// @notice Branche les trois registres ERC-8004, admin seul, une seule fois. Adresses nulles
+    ///         autorisées : le branchement reste alors désactivé (finalize ne touche à aucun registre).
+    /// @dev Le branchement ne doit jamais faire échouer finalize ; voir `_notifyErc8004` / `pokeErc8004`.
+    function setErc8004(address identity, address reputation, address validation) external {
+        if (msg.sender != erc8004Admin) revert OnlyErc8004Admin(msg.sender);
+        if (erc8004Set) revert Erc8004AlreadySet();
+        erc8004Set = true;
+        identityRegistry = AgentIdentityRegistry(identity);
+        reputationRegistry = AgentReputationRegistry(reputation);
+        validationRegistry = AgentValidationRegistry(validation);
+        emit Erc8004Set(identity, reputation, validation);
     }
 
     // ---------------------------------------------------------------------
@@ -185,6 +229,7 @@ contract DrawnVerificationMarket is VerificationMarketBase {
         if (!drawn[requestId]) {
             // Jamais tirée : code 1, aucun VerifierMissed (comité vide), frais au trésor via liste vide.
             rewards.distribute{value: fee_}(requestId, new address[](0));
+            _notifyErc8004(requestId);
             return;
         }
 
@@ -215,6 +260,77 @@ contract DrawnVerificationMarket is VerificationMarketBase {
         }
 
         rewards.distribute{value: fee_}(requestId, revealers);
+        _notifyErc8004(requestId);
+    }
+
+    // ---------------------------------------------------------------------
+    // Crochet ERC-8004 : jamais bloquant pour finalize
+    // ---------------------------------------------------------------------
+
+    /// @notice Notifie les registres ERC-8004 après finalize, sans jamais pouvoir faire échouer finalize.
+    /// @dev Garantie par un unique `try` sur un auto-appel externe : branchement désactivé, identité
+    ///      absente, demande de validation absente ou revert d'un registre, tout est absorbé par le
+    ///      `catch`. Le `try` sur `this.pokeErc8004` isole aussi d'éventuelles révisions d'état du crochet.
+    function _notifyErc8004(uint256 requestId) internal {
+        if (!erc8004Set) return;
+        if (address(reputationRegistry) == address(0) && address(validationRegistry) == address(0)) return;
+        // Auto-appel externe isolé : aucune branche du crochet ne peut remonter jusqu'à finalize.
+        try this.pokeErc8004(requestId) {} catch {}
+    }
+
+    /// @notice Crochet ERC-8004 exécuté en auto-appel ; réservé au contrat lui-même.
+    /// @dev Pour chaque membre tiré ayant une identité : `giveFeedback` +1/-1 selon le reveal. Si une
+    ///      demande de validation désigne ce marché comme validateur du hash de la demande : `validationResponse`
+    ///      (code 2 -> 100, 1 -> 50, 0 -> 0). Chaque appel est protégé par son propre `try` pour qu'un échec
+    ///      isolé (un seul agent, une seule réponse) n'empêche pas les autres notifications.
+    function pokeErc8004(uint256 requestId) external {
+        if (msg.sender != address(this)) revert OnlySelf(msg.sender);
+
+        Request storage r = _requests[requestId];
+
+        // 1. Réputation : +1 pour un membre ayant révélé, -1 sinon, seulement s'il a une identité.
+        if (address(reputationRegistry) != address(0) && drawn[requestId]) {
+            address[3] memory m = _drawn[requestId];
+            for (uint256 i = 0; i < 3; i++) {
+                _feedbackFor(requestId, m[i]);
+            }
+        }
+
+        // 2. Validation : réponse chiffrée du code, si une demande désigne ce marché comme validateur.
+        if (address(validationRegistry) != address(0)) {
+            _validationFor(r.h, r.code);
+        }
+    }
+
+    /// @notice Dépose un retour de réputation pour un membre ayant une identité ; isolé par try.
+    function _feedbackFor(uint256 requestId, address member) private {
+        if (member == address(0)) return;
+        if (address(identityRegistry) == address(0)) return;
+        // identityRegistry est notre propre contrat ; boucle de 3 membres au plus, non réentrante.
+        // forge-lint: disable-next-line(calls-loop)
+        uint256 agentId = identityRegistry.agentIdOf(member);
+        if (agentId == 0) return;
+        int128 value = _reveal[requestId][member].revealed ? int128(1) : int128(-1);
+        AgentReputationRegistry.FeedbackData memory data = AgentReputationRegistry.FeedbackData({
+            value: value,
+            valueDecimals: 0,
+            tag1: "reveal",
+            tag2: "",
+            endpoint: "",
+            feedbackURI: "",
+            feedbackHash: bytes32(0)
+        });
+        // reputationRegistry est notre propre contrat ; appel isolé par try, boucle de 3 membres au plus.
+        // forge-lint: disable-next-line(calls-loop)
+        try reputationRegistry.giveFeedback(agentId, data) {} catch {}
+    }
+
+    /// @notice Répond à la demande de validation si ce marché en est le validateur désigné ; isolé par try.
+    function _validationFor(bytes32 h, Code code) private {
+        AgentValidationRegistry.Validation memory v = validationRegistry.getValidationStatus(h);
+        if (v.validatorAddress != address(this)) return;
+        uint8 response = code == Code.Accept ? 100 : (code == Code.HumanReview ? 50 : 0);
+        try validationRegistry.validationResponse(h, response, "", bytes32(0), "final") {} catch {}
     }
 
     /// @notice Déverrouille les 3 cautions, seulement si le comité a été tiré.

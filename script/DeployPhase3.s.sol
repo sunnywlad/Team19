@@ -6,6 +6,9 @@ import {VerifierRegistry} from "../src/VerifierRegistry.sol";
 import {Slashing} from "../src/Slashing.sol";
 import {Rewards} from "../src/Rewards.sol";
 import {DrawnVerificationMarket} from "../src/DrawnVerificationMarket.sol";
+import {AgentIdentityRegistry} from "../src/erc8004/AgentIdentityRegistry.sol";
+import {AgentReputationRegistry} from "../src/erc8004/AgentReputationRegistry.sol";
+import {AgentValidationRegistry} from "../src/erc8004/AgentValidationRegistry.sol";
 
 /// @notice Déploie la phase 3 : marché à comité tiré, câblé à Registry, Slashing, Rewards.
 /// @dev La clé privée est passée en ligne de commande, jamais dans le code. Le déployeur est le trésor et l'admin.
@@ -49,7 +52,15 @@ contract DeployPhase3 is Script {
 
     function run()
         public
-        returns (VerifierRegistry registry, Slashing slashing, Rewards rewards, DrawnVerificationMarket market)
+        returns (
+            VerifierRegistry registry,
+            Slashing slashing,
+            Rewards rewards,
+            DrawnVerificationMarket market,
+            AgentIdentityRegistry identity,
+            AgentReputationRegistry reputation,
+            AgentValidationRegistry validation
+        )
     {
         // `setMarket` étant à usage unique, une pile déjà câblée ne peut pas accueillir un nouveau marché :
         // fournir une seule de ces adresses est une erreur, le chemin nominal déploie une pile neuve.
@@ -94,12 +105,23 @@ contract DeployPhase3 is Script {
         registry.admit(p.candidates[2]);
         registry.admit(p.candidates[3]);
 
+        // 7. Registres ERC-8004 adaptés : identité, réputation, validation, puis câblage au marché.
+        identity = new AgentIdentityRegistry();
+        reputation = new AgentReputationRegistry();
+        validation = new AgentValidationRegistry();
+        reputation.initialize(address(identity));
+        validation.initialize(address(identity));
+        market.setErc8004(address(identity), address(reputation), address(validation));
+
         vm.stopBroadcast();
 
         console.log("VerifierRegistry        :", address(registry));
         console.log("Slashing                :", address(slashing));
         console.log("Rewards                 :", address(rewards));
         console.log("DrawnVerificationMarket :", address(market));
+        console.log("AgentIdentityRegistry   :", address(identity));
+        console.log("AgentReputationRegistry :", address(reputation));
+        console.log("AgentValidationRegistry :", address(validation));
         console.log("Treasury / admin        :", deployer);
         console.log("Candidat 1              :", p.candidates[0]);
         console.log("Candidat 2              :", p.candidates[1]);
