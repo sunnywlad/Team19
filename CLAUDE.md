@@ -13,9 +13,9 @@ Une spec ne se modifie pas sans décision à quatre.
 
 | Dossier | Contenu | Propriétaire |
 |---|---|---|
-| `contracts/` | Contrat Solidity (Foundry) | Wladimir |
-| `gateway/` | Porte d'entrée : jeton, limite de débit, détecteur, schéma (specs/03) | Loris |
-| `response/` | Journal chaîné, vérification, réactions, rapport d'incident (specs/04, 05) | Loris |
+| `src/`, `test/`, `script/`, `offchain/`, `l1/`, `lib/`, `foundry.*` | Contrats Solidity (Foundry) et leurs services hors chaîne | Wladimir |
+| `gateway/` | Porte d'entrée : jeton, limite de débit, détecteur, schéma (specs/03), banc de mesure | Loris |
+| `response/` | Journal chaîné, vérification, réactions, rapport d'incident, lecture pour le dashboard (specs/04, 05) | Loris |
 | `relay/` | Agents scriptés, signature du client, file, relais, indexeur, API de lecture | Joseph |
 | `dashboard/` | Dashboard en lecture seule | Joseph |
 | `specs/` | Interfaces gelées et exemples | Tous, décision à 4 |
@@ -34,6 +34,7 @@ Chaque dossier applicatif est un paquet Node autonome, avec son `package.json`.
 - `cd <dossier> && npm test` : tests (lanceur intégré à Node)
 - `cd <dossier> && npm run typecheck` : vérification des types
 - `make specs` : valider les exemples de `specs/` contre leurs schémas
+- `cd gateway && npm run bench -- bench/jeu-provisoire.jsonl` : mesurer le détecteur
 - `make check` : rejouer toute la CI en local
 
 ## Stack TypeScript
@@ -43,6 +44,12 @@ Chaque dossier applicatif est un paquet Node autonome, avec son `package.json`.
 - Imports relatifs avec l'extension `.ts`. Code dans `src/`, tests dans `test/`.
 - Versions exactes dans `package.json`, `package-lock.json` commité.
 - Toute nouvelle dépendance se justifie. Les schémas se valident avec `ajv`.
+
+## État du flux
+
+- Le contrat de `specs/02` (`IArgentVault`) n'existe pas encore : le relais tourne contre un faux coffre.
+- Le relais écrit dans un journal en mémoire et ses scènes passent par un faux portier : le branchement sur `response/` et `gateway/` reste à faire.
+- Ne présente jamais un chiffre de détection sans sa réserve : voir `gateway/bench/README.md`.
 
 ## Règles de sécurité
 
