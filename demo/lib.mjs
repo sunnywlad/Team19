@@ -197,6 +197,15 @@ export const service = (config, name) => {
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Comme run, sans bloquer : les services lancés par ce processus restent relevés à leur arrêt. */
+export function runAsync(command, args, options = {}) {
+  return new Promise((resolve) => {
+    const child = spawn(command, args, options);
+    child.once("error", () => resolve(1));
+    child.once("exit", (code) => resolve(code ?? 1));
+  });
+}
+
 export function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
   return { status: result.status ?? 1, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
@@ -216,9 +225,12 @@ function writePids(pids) {
 }
 
 // Date de début du processus : distingue notre processus d'un autre qui aurait
-// repris son numéro. Vide si le processus n'existe plus.
+// repris son numéro. Vide si le processus n'existe plus, ou s'il est terminé
+// sans avoir été relevé par son parent (zombie) : il n'écoute alors plus rien.
 function startedAt(pid) {
-  return run("ps", ["-o", "lstart=", "-p", String(pid)]).stdout.trim();
+  const line = run("ps", ["-o", "stat=", "-o", "lstart=", "-p", String(pid)]).stdout.trim();
+  const [state, ...started] = line.split(/\s+/);
+  return line === "" || state.startsWith("Z") ? "" : started.join(" ");
 }
 
 /** Vrai si le pid enregistré est encore le processus que la démo a lancé. */
@@ -308,7 +320,8 @@ export async function stopService(name) {
     if (isOurs(entry)) {
       signal("SIGKILL");
       outcome = "tué (SIGKILL)";
-      while (isOurs(entry)) await sleep(50);
+      for (let n = 0; isOurs(entry) && n < 40; n += 1) await sleep(50);
+      if (isOurs(entry)) throw new DemoError(`${name} : le processus ${entry.pid} ne s'arrête pas`);
     }
   }
   delete pids[name];

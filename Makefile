@@ -83,7 +83,7 @@ demo-stop:
 	node demo/run.mjs stop
 
 demo-status:
-	node demo/run.mjs status
+	@node demo/run.mjs status; true
 
 # Archive le journal, les rapports et les bases du relais, puis repart d'un
 # état neuf. Rien n'est effacé.
