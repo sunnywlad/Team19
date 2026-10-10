@@ -3,18 +3,18 @@ pragma solidity ^0.8.24;
 
 import {IVerificationMarket} from "./interfaces/IVerificationMarket.sol";
 
-/// @title VerificationMarket
-/// @notice Phase 1 : comité fixe de 3, commit puis reveal, agrégation 0/1/2, contestation.
-/// @dev Aucun appel externe, donc pas de garde de réentrance. Les frais restent dans le contrat.
-// Les frais restent captifs en phase 1 (partage par Rewards en phase 2) : pas de retrait, lint attendu.
+/// @title VerificationMarketBase
+/// @notice Logique commune des marchés : demande payée en CHK, commit puis reveal, agrégation 0/1/2,
+///         contestation. Le comité est lu par `_committee(requestId)`, surchargé par chaque marché.
+/// @dev Phase 1 (comité fixe) et phase 3 (comité tiré) partagent cette base. Aucun appel externe ici,
+///      donc pas de garde de réentrance ; les crochets d'extension gèrent la caution (phase 2 et 3).
+// Les frais restent captifs dans la base (partage par Rewards via les crochets) : pas de retrait, lint attendu.
 // forge-lint: disable-next-line(locked-ether)
-contract VerificationMarket is IVerificationMarket {
+abstract contract VerificationMarketBase is IVerificationMarket {
     // ---------------------------------------------------------------------
     // Erreurs propres au contrat
     // ---------------------------------------------------------------------
 
-    /// @notice Comité invalide : adresse nulle ou doublon.
-    error InvalidCommittee();
     /// @notice Fenêtre de durée nulle au déploiement.
     error InvalidWindow();
     /// @notice Frais supérieurs à type(uint96).max, non stockables.
@@ -25,10 +25,6 @@ contract VerificationMarket is IVerificationMarket {
     // ---------------------------------------------------------------------
     // Configuration immuable
     // ---------------------------------------------------------------------
-
-    address public immutable committee0;
-    address public immutable committee1;
-    address public immutable committee2;
 
     uint256 public immutable fee;
     uint64 public immutable commitWindow;
@@ -41,32 +37,15 @@ contract VerificationMarket is IVerificationMarket {
 
     uint256 public count;
 
-    mapping(uint256 => Request) private _requests;
-    mapping(uint256 => mapping(address => bytes32)) private _commitment;
-    mapping(uint256 => mapping(address => Reveal)) private _reveal;
+    mapping(uint256 => Request) internal _requests;
+    mapping(uint256 => mapping(address => bytes32)) internal _commitment;
+    mapping(uint256 => mapping(address => Reveal)) internal _reveal;
 
-    /// @notice Comité fixe de 3 adresses, frais et fenêtres figés au déploiement.
-    /// @dev Adresse nulle ou doublon : InvalidCommittee. Fenêtre nulle : InvalidWindow.
-    constructor(
-        address[3] memory committee,
-        uint256 fee_,
-        uint64 commitWindow_,
-        uint64 revealWindow_,
-        uint64 contestWindow_
-    ) {
-        if (committee[0] == address(0) || committee[1] == address(0) || committee[2] == address(0)) {
-            revert InvalidCommittee();
-        }
-        if (committee[0] == committee[1] || committee[0] == committee[2] || committee[1] == committee[2]) {
-            revert InvalidCommittee();
-        }
+    /// @dev Fenêtres figées au déploiement. Fenêtre nulle : InvalidWindow.
+    constructor(uint256 fee_, uint64 commitWindow_, uint64 revealWindow_, uint64 contestWindow_) {
         if (commitWindow_ == 0 || revealWindow_ == 0 || contestWindow_ == 0) {
             revert InvalidWindow();
         }
-
-        committee0 = committee[0];
-        committee1 = committee[1];
-        committee2 = committee[2];
         fee = fee_;
         commitWindow = commitWindow_;
         revealWindow = revealWindow_;
@@ -105,12 +84,7 @@ contract VerificationMarket is IVerificationMarket {
 
         emit RequestCreated(requestId, msg.sender, h, msg.value, commitDeadline, revealDeadline);
 
-        address[] memory c = new address[](3);
-        c[0] = committee0;
-        c[1] = committee1;
-        c[2] = committee2;
-        emit CommitteeDrawn(requestId, c);
-
+        _onCreated(requestId);
         _afterCreate(requestId);
     }
 
@@ -118,7 +92,7 @@ contract VerificationMarket is IVerificationMarket {
     function commitVerdict(uint256 requestId, bytes32 commitment) external {
         Request storage r = _requests[requestId];
         if (r.status == Status.None) revert UnknownRequest(requestId);
-        if (!_isMember(msg.sender)) revert NotCommitteeMember(requestId, msg.sender);
+        if (!_isMember(requestId, msg.sender)) revert NotCommitteeMember(requestId, msg.sender);
 
         Status s = _status(requestId);
         if (s != Status.Commit) revert WrongPhase(requestId, Status.Commit, s);
@@ -136,7 +110,7 @@ contract VerificationMarket is IVerificationMarket {
     function revealVerdict(uint256 requestId, Code vote, uint16 reasons, bytes32 detailHash, bytes32 salt) external {
         Request storage r = _requests[requestId];
         if (r.status == Status.None) revert UnknownRequest(requestId);
-        if (!_isMember(msg.sender)) revert NotCommitteeMember(requestId, msg.sender);
+        if (!_isMember(requestId, msg.sender)) revert NotCommitteeMember(requestId, msg.sender);
 
         Status s = _status(requestId);
         if (s != Status.Reveal) revert WrongPhase(requestId, Status.Reveal, s);
@@ -167,12 +141,13 @@ contract VerificationMarket is IVerificationMarket {
         Status s = _status(requestId);
         if (s != Status.Reveal) revert WrongPhase(requestId, Status.Reveal, s);
 
-        address[3] memory members = [committee0, committee1, committee2];
+        address[3] memory members = _committee(requestId);
 
         // Finalisation anticipée seulement si les 3 ont révélé.
+        // Comité non tiré (phase 3, members = adresses nulles) : aucun reveal, on attend revealDeadline.
         uint8 revealedCount = 0;
         for (uint256 i = 0; i < 3; i++) {
-            if (_reveal[requestId][members[i]].revealed) revealedCount++;
+            if (members[i] != address(0) && _reveal[requestId][members[i]].revealed) revealedCount++;
         }
         // dépendance au timestamp assumée.
         // forge-lint: disable-next-line(block-timestamp)
@@ -182,6 +157,7 @@ contract VerificationMarket is IVerificationMarket {
         uint8 humanCount = 0;
         uint8 acceptCount = 0;
         for (uint256 i = 0; i < 3; i++) {
+            if (members[i] == address(0)) continue;
             Reveal storage rev = _reveal[requestId][members[i]];
             if (!rev.committed) {
                 emit VerifierMissed(requestId, members[i], false);
@@ -250,13 +226,18 @@ contract VerificationMarket is IVerificationMarket {
         return r;
     }
 
-    /// @notice Rend les 3 adresses du comité, ou revert si la demande est inconnue.
+    /// @notice Rend les adresses du comité de la demande, ou revert si la demande est inconnue.
+    /// @dev Comité non encore tiré (phase 3) : tableau vide.
     function getCommittee(uint256 requestId) external view returns (address[] memory) {
         if (_requests[requestId].status == Status.None) revert UnknownRequest(requestId);
+        address[3] memory m = _committee(requestId);
+        if (m[0] == address(0) && m[1] == address(0) && m[2] == address(0)) {
+            return new address[](0);
+        }
         address[] memory c = new address[](3);
-        c[0] = committee0;
-        c[1] = committee1;
-        c[2] = committee2;
+        c[0] = m[0];
+        c[1] = m[1];
+        c[2] = m[2];
         return c;
     }
 
@@ -265,10 +246,10 @@ contract VerificationMarket is IVerificationMarket {
         return _reveal[requestId][verifier];
     }
 
-    /// @notice Vrai si l'adresse appartient au comité, false si la demande est inconnue.
+    /// @notice Vrai si l'adresse appartient au comité de la demande, false si la demande est inconnue.
     function isCommitteeMember(uint256 requestId, address account) external view returns (bool) {
         if (_requests[requestId].status == Status.None) return false;
-        return _isMember(account);
+        return _isMember(requestId, account);
     }
 
     /// @notice keccak256(abi.encode(facts, contentHash)).
@@ -303,21 +284,81 @@ contract VerificationMarket is IVerificationMarket {
         return r.status;
     }
 
-    /// @notice Appartenance au comité fixe.
-    function _isMember(address account) internal view returns (bool) {
-        return account == committee0 || account == committee1 || account == committee2;
+    /// @notice Appartenance au comité de la demande.
+    function _isMember(uint256 requestId, address account) internal view returns (bool) {
+        if (account == address(0)) return false;
+        address[3] memory m = _committee(requestId);
+        return account == m[0] || account == m[1] || account == m[2];
     }
 
+    /// @notice Source du comité d'une demande. Surchargée par chaque marché.
+    /// @dev Comité fixe (phase 1) : les 3 immutables. Comité tiré (phase 3) : stocké au tirage,
+    ///      adresses nulles tant que `drawCommittee` n'a pas eu lieu.
+    function _committee(uint256 requestId) internal view virtual returns (address[3] memory);
+
     // ---------------------------------------------------------------------
-    // Crochets d'extension (phase 2 : StakedVerificationMarket les surcharge)
+    // Crochets d'extension (phase 2 et 3 : caution, saisie, partage)
     // ---------------------------------------------------------------------
 
-    /// @notice Appelé à la fin de createRequest. Vide en phase 1.
+    /// @notice Appelé juste après l'émission de RequestCreated, avant `_afterCreate`.
+    /// @dev Comité fixe (phase 1) : émet CommitteeDrawn ici. Comité tiré (phase 3) : vide, l'événement
+    ///      sort au tirage. Séparé de `_afterCreate` pour que l'ordre d'événements de phase 1 soit intact.
+    function _onCreated(uint256 requestId) internal virtual {}
+
+    /// @notice Appelé à la fin de createRequest. Vide par défaut.
     function _afterCreate(uint256 requestId) internal virtual {}
 
-    /// @notice Appelé à la fin de finalize, avec les frais payés par la demande. Vide en phase 1.
+    /// @notice Appelé à la fin de finalize, avec les frais payés par la demande. Vide par défaut.
     function _afterFinalize(uint256 requestId, uint256 fee_) internal virtual {}
 
-    /// @notice Appelé à la fin de close. Vide en phase 1.
+    /// @notice Appelé à la fin de close. Vide par défaut.
     function _afterClose(uint256 requestId) internal virtual {}
+}
+
+/// @title VerificationMarket
+/// @notice Phase 1 : comité fixe de 3, commit puis reveal, agrégation 0/1/2, contestation.
+/// @dev Même constructeur et même comportement qu'en phase 1 : le comité est figé au déploiement.
+// Les frais restent captifs en phase 1 (partage par Rewards en phase 2) : pas de retrait, lint attendu.
+// forge-lint: disable-next-line(locked-ether)
+contract VerificationMarket is VerificationMarketBase {
+    /// @notice Comité invalide : adresse nulle ou doublon.
+    error InvalidCommittee();
+
+    address public immutable committee0;
+    address public immutable committee1;
+    address public immutable committee2;
+
+    /// @notice Comité fixe de 3 adresses, frais et fenêtres figés au déploiement.
+    /// @dev Adresse nulle ou doublon : InvalidCommittee. Fenêtre nulle : InvalidWindow.
+    constructor(
+        address[3] memory committee,
+        uint256 fee_,
+        uint64 commitWindow_,
+        uint64 revealWindow_,
+        uint64 contestWindow_
+    ) VerificationMarketBase(fee_, commitWindow_, revealWindow_, contestWindow_) {
+        if (committee[0] == address(0) || committee[1] == address(0) || committee[2] == address(0)) {
+            revert InvalidCommittee();
+        }
+        if (committee[0] == committee[1] || committee[0] == committee[2] || committee[1] == committee[2]) {
+            revert InvalidCommittee();
+        }
+        committee0 = committee[0];
+        committee1 = committee[1];
+        committee2 = committee[2];
+    }
+
+    /// @notice Comité fixe : les 3 immutables, quelle que soit la demande.
+    function _committee(uint256) internal view override returns (address[3] memory) {
+        return [committee0, committee1, committee2];
+    }
+
+    /// @notice Émet CommitteeDrawn à la création : le comité fixe est connu d'emblée (comportement phase 1).
+    function _onCreated(uint256 requestId) internal override {
+        address[] memory c = new address[](3);
+        c[0] = committee0;
+        c[1] = committee1;
+        c[2] = committee2;
+        emit CommitteeDrawn(requestId, c);
+    }
 }

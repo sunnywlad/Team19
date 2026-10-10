@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
-import {VerificationMarket} from "../src/VerificationMarket.sol";
+import {VerificationMarket, VerificationMarketBase} from "../src/VerificationMarket.sol";
 import {IVerificationMarket} from "../src/interfaces/IVerificationMarket.sol";
 
 /// @title Tests VerificationMarket phase 1
@@ -130,19 +130,19 @@ contract VerificationMarketTest is Test {
 
     function test_constructor_zeroCommitWindowReverts() public {
         address[3] memory committee = [C0, C1, C2];
-        vm.expectRevert(VerificationMarket.InvalidWindow.selector);
+        vm.expectRevert(VerificationMarketBase.InvalidWindow.selector);
         new VerificationMarket(committee, FEE, 0, REVEAL_WINDOW, CONTEST_WINDOW);
     }
 
     function test_constructor_zeroRevealWindowReverts() public {
         address[3] memory committee = [C0, C1, C2];
-        vm.expectRevert(VerificationMarket.InvalidWindow.selector);
+        vm.expectRevert(VerificationMarketBase.InvalidWindow.selector);
         new VerificationMarket(committee, FEE, COMMIT_WINDOW, 0, CONTEST_WINDOW);
     }
 
     function test_constructor_zeroContestWindowReverts() public {
         address[3] memory committee = [C0, C1, C2];
-        vm.expectRevert(VerificationMarket.InvalidWindow.selector);
+        vm.expectRevert(VerificationMarketBase.InvalidWindow.selector);
         new VerificationMarket(committee, FEE, COMMIT_WINDOW, REVEAL_WINDOW, 0);
     }
 
@@ -201,7 +201,7 @@ contract VerificationMarketTest is Test {
         VerificationMarket m = new VerificationMarket(committee, 0, COMMIT_WINDOW, REVEAL_WINDOW, CONTEST_WINDOW);
         vm.deal(REQUESTER, tooLarge);
         vm.prank(REQUESTER);
-        vm.expectRevert(VerificationMarket.FeeTooLarge.selector);
+        vm.expectRevert(VerificationMarketBase.FeeTooLarge.selector);
         m.createRequest{value: tooLarge}(H);
     }
 
@@ -334,7 +334,7 @@ contract VerificationMarketTest is Test {
         IVerificationMarket.Request memory r = market.getRequest(id);
         vm.warp(r.revealDeadline);
         vm.prank(C0);
-        vm.expectRevert(abi.encodeWithSelector(VerificationMarket.RevealWindowClosed.selector, id));
+        vm.expectRevert(abi.encodeWithSelector(VerificationMarketBase.RevealWindowClosed.selector, id));
         market.revealVerdict(id, IVerificationMarket.Code.Accept, 0, bytes32(0), salt);
     }
 

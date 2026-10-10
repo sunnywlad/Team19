@@ -9,8 +9,9 @@ import {Rewards} from "./Rewards.sol";
 /// @title StakedVerificationMarket
 /// @notice Phase 2 : marché de phase 1 cautionné. Verrouille la caution des membres à la création,
 ///         saisit les absents et partage les frais à la finalisation, déverrouille à la clôture.
-/// @dev Surcharge les trois crochets de VerificationMarket. Tous les appels externes visent nos propres
-///      contrats et interviennent après tout changement d'état (CEI, hérité du marché de phase 1).
+/// @dev Surcharge les trois crochets de VerificationMarket et lit le comité par `_committee(requestId)`
+///      (comité fixe en phase 2). Tous les appels externes visent nos propres contrats et interviennent
+///      après tout changement d'état (CEI, hérité de la base).
 contract StakedVerificationMarket is VerificationMarket {
     IVerifierRegistry public immutable registry;
     ISlashing public immutable slashing;
@@ -42,37 +43,40 @@ contract StakedVerificationMarket is VerificationMarket {
     /// @notice Verrouille la part de caution des 3 membres pour la mission.
     ///         Membre inactif : le revert du registre remonte, la demande échoue.
     function _afterCreate(uint256 requestId) internal override {
-        registry.lockStake(committee0, requestId);
-        registry.lockStake(committee1, requestId);
-        registry.lockStake(committee2, requestId);
+        address[3] memory m = _committee(requestId);
+        registry.lockStake(m[0], requestId);
+        registry.lockStake(m[1], requestId);
+        registry.lockStake(m[2], requestId);
     }
 
     /// @notice Saisit chaque membre absent (NoCommit ou NoReveal), puis partage les frais entre les reveals.
     function _afterFinalize(uint256 requestId, uint256 fee_) internal override {
+        address[3] memory m = _committee(requestId);
+
         // Lecture unique de l'état révélé des 3 membres (comité déroulé, pas d'appel externe en boucle).
-        bool r0 = this.getReveal(requestId, committee0).revealed;
-        bool r1 = this.getReveal(requestId, committee1).revealed;
-        bool r2 = this.getReveal(requestId, committee2).revealed;
+        bool r0 = this.getReveal(requestId, m[0]).revealed;
+        bool r1 = this.getReveal(requestId, m[1]).revealed;
+        bool r2 = this.getReveal(requestId, m[2]).revealed;
 
         // Saisie des absents.
-        if (!r0) slashing.slashMissed(requestId, committee0);
-        if (!r1) slashing.slashMissed(requestId, committee1);
-        if (!r2) slashing.slashMissed(requestId, committee2);
+        if (!r0) slashing.slashMissed(requestId, m[0]);
+        if (!r1) slashing.slashMissed(requestId, m[1]);
+        if (!r2) slashing.slashMissed(requestId, m[2]);
 
         // Liste des reveals valides, de taille exacte.
         uint256 count_ = (r0 ? 1 : 0) + (r1 ? 1 : 0) + (r2 ? 1 : 0);
         address[] memory revealers = new address[](count_);
         uint256 j = 0;
         if (r0) {
-            revealers[j] = committee0;
+            revealers[j] = m[0];
             j++;
         }
         if (r1) {
-            revealers[j] = committee1;
+            revealers[j] = m[1];
             j++;
         }
         if (r2) {
-            revealers[j] = committee2;
+            revealers[j] = m[2];
             j++;
         }
 
@@ -81,8 +85,9 @@ contract StakedVerificationMarket is VerificationMarket {
 
     /// @notice Déverrouille la part de caution des 3 membres.
     function _afterClose(uint256 requestId) internal override {
-        registry.unlockStake(committee0, requestId);
-        registry.unlockStake(committee1, requestId);
-        registry.unlockStake(committee2, requestId);
+        address[3] memory m = _committee(requestId);
+        registry.unlockStake(m[0], requestId);
+        registry.unlockStake(m[1], requestId);
+        registry.unlockStake(m[2], requestId);
     }
 }
