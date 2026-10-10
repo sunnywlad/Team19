@@ -83,7 +83,7 @@ export function isTuning(id: string): boolean {
   return parseInt(createHash("sha256").update(id, "utf8").digest("hex").slice(0, 8), 16) % 3 === 0;
 }
 
-const ratio = (a: number, b: number): number | null => (b === 0 ? null : Math.round((a / b) * 10_000) / 10_000);
+const ratio = (a: number, b: number): number | null => (b === 0 ? null : Math.round((a / b) * 1_000_000) / 1_000_000);
 
 function measure(scored: { sample: Sample; score: number }[], threshold: number): Metrics {
   let tp = 0;
