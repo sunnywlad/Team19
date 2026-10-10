@@ -169,5 +169,8 @@ function stub(): VaultClient {
     agentPaused: async () => false,
     blockNumber: async () => 0n,
     events: async () => [],
+    state: async () => {
+      throw new Error("bouchon");
+    },
   };
 }

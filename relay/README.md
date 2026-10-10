@@ -22,7 +22,7 @@ Les interfaces viennent de [../specs/](../specs/) et ne sont pas redéfinies ici
 | Bouchon | Fichier | À remplacer par |
 |---|---|---|
 | Porte d'entrée | [src/gateway-stub.ts](src/gateway-stub.ts) | `gateway/` (Loris). Le bouchon rend le verdict écrit dans la scène, il n'analyse rien |
-| Journal | `MemoryJournal` dans [src/journal.ts](src/journal.ts) | Le service de `response/`, derrière l'interface `JournalClient` |
+| Journal | `MemoryJournal` dans [src/journal.ts](src/journal.ts), seulement si `JOURNAL_URL` est absente | Avec `JOURNAL_URL`, [src/http-journal.ts](src/http-journal.ts) remet chaque entrée au service de `response/`. Sans réponse du service, rien n'entre en file et rien n'est soumis |
 | Alertes | `MemoryAlerts`, `stderrAlerts` | Le service de réponse, derrière `AlertSink` |
 | Pause hors chaîne | `StaticPauseSource` dans [src/pauses.ts](src/pauses.ts) | La liste tenue par le service de réponse, derrière `PauseSource` |
 | Contrat | `FakeVault`, et [test/fixtures/StubVault.sol](test/fixtures/StubVault.sol) sur anvil | Le contrat de `contracts/` (Wladimir), par `ChainVault` |
@@ -82,6 +82,7 @@ celle de `CLIENT_SIGNER` son `clientSigner()`.
 | `/decisions/<request_id>` | Décision courante d'une demande : son dernier événement |
 | `/events?name=&since_id=&limit=` | Tous les événements du contrat (`Paid`, `HoldPlaced`, pauses…) |
 | `/queue` | État de la file, sans le contenu des demandes ni leur signature |
+| `/vault` | Vues du coffre lues au même bloc (cash, dettes admises, réserve, bloqué, plaçable, seuil, pause). Une vue illisible vaut `null`. `503` si le coffre est injoignable |
 
 Chaque décision porte `tx_hash`, `log_index`, `block_number` et
 `block_timestamp`. `effective_decision` vaut 0 dès que le motif est inconnu.

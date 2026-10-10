@@ -20,12 +20,15 @@ npm run dev:sim                 # http://127.0.0.1:5173
 Scénarios servis : `1` à `8`, `6a` (approuvé), `6b` (délai dépassé), `scene`.
 Relancer le serveur de fixtures rejoue le script.
 
-Réel, contre l'API du relais (`cd ../relay && npm start`, port 8787) :
+Réel, contre l'API du relais (`cd ../relay && npm start`, port 8787) et le
+service de réponse (`cd ../response && npm start`, port 8790) :
 
 ```bash
-npm run dev:fixtures            # pour les points d'accès encore simulés
-npm run dev
+RELAY_HAS_VAULT=1 RESPONSE_API_URL=http://127.0.0.1:8790 npm run dev
 ```
+
+Sans ces deux variables, le coffre et le service de réponse restent simulés :
+lancer alors aussi `npm run dev:fixtures`.
 
 Variables : [.env.example](.env.example). Elles ne sont lues que par le proxy
 local de [vite.config.ts](vite.config.ts) ; rien n'entre dans le bundle.
@@ -45,8 +48,8 @@ aucune ressource externe).
 | Donnée | Source |
 |---|---|
 | Décisions, événements, file, état de l'indexeur | API de `relay/` |
-| Montant plaçable et ses termes | simulé : [API-NEEDS.md](API-NEEDS.md) § 1 |
-| Incidents, délais, journal, agents en pause, demandes arrêtées à la porte | simulé : [API-NEEDS.md](API-NEEDS.md) § 2 à 5 |
+| Montant plaçable et ses termes | `GET /vault` du relais avec `RELAY_HAS_VAULT=1`, simulé sinon |
+| Incidents, délais, journal, agents en pause, demandes arrêtées à la porte | `response/` avec `RESPONSE_API_URL`, simulé sinon |
 
 Chaque panneau porte son étiquette « réel » ou « simulation ».
 

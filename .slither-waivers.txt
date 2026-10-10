@@ -1,0 +1,20 @@
+# Dérogations slither, lues par scripts/check-contracts.sh.
+# Toute alerte de gravité HAUTE doit correspondre à une ligne active de ce
+# fichier, sinon le contrôle échoue. Les alertes moyennes et basses restent
+# informatives. (.audit-waivers.txt, lui, ne concerne que pip-audit.)
+#
+# Format, une alerte par ligne :
+#   DETECTEUR | fichier:fonction | raison | AAAA-MM-JJ
+#
+#   DETECTEUR : nom du détecteur slither (weak-prng, arbitrary-send-eth, ...)
+#   fichier   : chemin du .sol depuis la racine du dépôt
+#   fonction  : fonction signalée, sans ses paramètres
+#   raison    : pourquoi le risque est accepté, et par qui
+#   date      : dernier jour de validité. Passé ce jour, le contrôle échoue
+#               tant que la ligne n'est pas retirée ou le code corrigé.
+#
+# Une ligne mal formée fait aussi échouer le contrôle. Une ligne qui ne
+# correspond plus à aucune alerte est signalée : la retirer.
+# Aucune dérogation sans date : viser quelques jours.
+weak-prng | src/DrawnVerificationMarket.sol:drawCommittee | VerificationMarket hors chemin de démo, propriétaire Wladimir | 2026-10-11
+arbitrary-send-eth | src/VerifierRegistry.sol:_seize | VerificationMarket hors chemin de démo, propriétaire Wladimir | 2026-10-11

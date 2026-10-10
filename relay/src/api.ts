@@ -4,13 +4,14 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { Indexer } from "./indexer.ts";
 import type { Queue } from "./queue.ts";
 import type { Hex } from "./types.ts";
+import type { VaultClient } from "./vault.ts";
 
 export const API_HOST = "127.0.0.1";
 const BYTES32 = /^0x[0-9a-f]{64}$/;
 const EVENT_NAME = /^[A-Za-z]{1,40}$/;
 const MAX_LIMIT = 500;
 
-export type ApiDeps = { indexer: Indexer; queue?: Queue; confirmations: number };
+export type ApiDeps = { indexer: Indexer; queue?: Queue; confirmations: number; /** Absent : pas de route /vault. */ vault?: VaultClient };
 
 class BadRequest extends Error {}
 
@@ -84,8 +85,18 @@ export function createApi(deps: ApiDeps): Server {
     // 127.0.0.1 pour son propre domaine (rebinding DNS).
     const host = (req.headers.host ?? "").replace(/:\d+$/, "");
     if (host !== API_HOST && host !== "localhost") return send(res, 403, { error: "forbidden_host" });
+    const url = new URL(req.url ?? "/", `http://${API_HOST}`);
+    // État du coffre : seule route qui interroge la chaîne à chaque appel.
+    if (url.pathname === "/vault" && deps.vault) {
+      deps.vault.state().then(
+        (state) => send(res, 200, state),
+        // Coffre injoignable ou non configuré : aucune valeur, jamais un 0.
+        () => send(res, 503, { error: "vault_unavailable" }),
+      );
+      return;
+    }
     try {
-      const { status, body } = route(new URL(req.url ?? "/", `http://${API_HOST}`), deps);
+      const { status, body } = route(url, deps);
       send(res, status, body);
     } catch (error) {
       if (error instanceof BadRequest) return send(res, 400, { error: "bad_parameter", parameter: error.message });
