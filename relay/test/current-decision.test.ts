@@ -9,6 +9,7 @@ import { REASON } from "../src/config.ts";
 import type { IndexedDecision, IndexedEvent } from "../src/indexer.ts";
 import { Indexer } from "../src/indexer.ts";
 import { CLOSURES, pendingCase, summary, withApi } from "./cases.ts";
+import type { Hex, SignedRequest } from "../src/types.ts";
 import { makeStack } from "./world.ts";
 
 test("décision courante : cas 1 en attente puis rejeu, la demande reste en attente", async () => {
@@ -54,6 +55,57 @@ for (const closure of CLOSURES) {
     s.close();
   });
 }
+
+/** La même demande, sous le même request_id, avec une signature qui n'est pas celle du client. */
+function forged(request: SignedRequest): SignedRequest {
+  const flipped = request.signature[10] === "0" ? "1" : "0";
+  return { ...request, signature: `${request.signature.slice(0, 10)}${flipped}${request.signature.slice(11)}` as Hex };
+}
+
+test("décision courante : cas 1 en attente puis signature invalide forgée sous le même request_id, reste en attente ; puis la clôture", async () => {
+  const s = makeStack();
+  const { id, request } = await pendingCase(s);
+  await s.vault.submit(forged(request));
+  await s.vault.submit(request); // et un rejeu, pour mêler les deux motifs ignorés
+  await s.vault.submit(forged(request));
+  await s.index();
+
+  assert.deepEqual(s.indexer.decisions({ requestId: id }).map((d) => d.reason_name), ["ABOVE_THRESHOLD", "SIGNATURE_INVALID", "REQUEST_REPLAYED", "SIGNATURE_INVALID"]);
+  assert.deepEqual(summary(s.indexer.currentDecision(id)), [1, "ABOVE_THRESHOLD"]);
+  assert.equal(s.vault.totalHeld(), 30n * s.unit, "le montant est toujours bloqué");
+  await withApi(s, async (get) => {
+    const current = (await get(`/decisions/${id}`)).body as IndexedDecision;
+    assert.deepEqual([current.decision, current.reason], [1, REASON.ABOVE_THRESHOLD]);
+    const events = (await get("/events?name=Decision")).body as IndexedEvent[];
+    assert.equal(events.filter((e) => e.request_id === id && e.args.reason === REASON.SIGNATURE_INVALID).length, 2, "les refus restent dans /events");
+  });
+
+  // Puis la clôture : elle remplace le cas 1, et une nouvelle signature forgée ne la remplace pas.
+  s.vault.approve(id);
+  await s.vault.submit(forged(request));
+  await s.index();
+  assert.deepEqual(summary(s.indexer.currentDecision(id)), [2, "APPROVED"]);
+  s.close();
+});
+
+test("décision courante : seulement des signatures invalides, c'est la dernière d'entre elles", async () => {
+  const s = makeStack();
+  const played = await s.play("1"); // en file, jamais soumise telle quelle
+  const id = played.detector.request_id;
+  await s.vault.submit(forged(played.signed!.request));
+  await s.vault.submit(forged(played.signed!.request));
+  await s.index();
+  const current = s.indexer.currentDecision(id)!;
+  assert.deepEqual(summary(current), [0, "SIGNATURE_INVALID"]);
+  assert.equal(current.id, s.indexer.decisions({ requestId: id }).at(-1)!.id);
+
+  // Dès que la vraie demande est décidée, c'est elle qui compte.
+  await s.relay.tick();
+  await s.vault.submit(forged(played.signed!.request));
+  await s.index();
+  assert.deepEqual(summary(s.indexer.currentDecision(id)), [2, "NONE"]);
+  s.close();
+});
 
 test("décision courante : demande sans rejeu, inchangée", async () => {
   const s = makeStack();

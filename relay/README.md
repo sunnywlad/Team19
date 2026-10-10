@@ -110,7 +110,7 @@ Limites :
 | `/health` | État du service |
 | `/status` | Prochain bloc à lire, confirmations, nombre d'événements |
 | `/decisions?request_id=&since_id=&limit=` | Événements `Decision`, dans l'ordre d'indexation |
-| `/decisions/<request_id>` | Décision courante d'une demande : son dernier événement `Decision` qui n'est pas un refus de rejeu. Voir « Décision courante » |
+| `/decisions/<request_id>` | Décision courante d'une demande : son dernier événement `Decision` qui n'est ni un refus de rejeu ni une signature invalide. Voir « Décision courante » |
 | `/events?name=&since_id=&limit=` | Tous les événements du contrat (`Paid`, `HoldPlaced`, pauses…) |
 | `/queue` | État de la file, sans le contenu des demandes ni leur signature |
 | `/vault` | Vues du coffre lues au même bloc (cash, dettes admises, réserve, bloqué, plaçable, seuil, pause). Une vue illisible vaut `null`. `503` si le coffre est injoignable |
@@ -146,29 +146,31 @@ rejoué : le contrat émet alors un `Decision` 0 `REQUEST_REPLAYED` sous le mêm
 identifiant, et une demande en cas 1, dont le montant est toujours bloqué,
 s'afficherait refusée.
 
+Il en va de même d'un `SIGNATURE_INVALID` : quiconque tient la clé du relais peut
+en faire émettre un sous le `request_id` d'une demande déjà décidée, et
+`specs/02` § 8 le range avec les rejeux (« un même `requestId` peut porter
+plusieurs `SIGNATURE_INVALID` ou `REQUEST_REPLAYED` »).
+
 Règle appliquée ici, côté relais seulement :
 
 - La décision courante d'une demande est son dernier `Decision` dont le motif
-  n'est pas `REQUEST_REPLAYED` (code 3).
+  n'est ni `REQUEST_REPLAYED` (code 3) ni `SIGNATURE_INVALID` (code 4).
 - Une clôture de cas 1 (`APPROVED`, `APPROVAL_REFUSED`, `APPROVAL_TIMEOUT`) est
   un `Decision` ultérieur sous le même `request_id` : elle remplace le cas 1.
 - Seul `/decisions/<request_id>` change. Sa réponse garde la même forme, sans
-  champ ajouté. Les refus de rejeu restent dans `/decisions` et `/events`.
-- Si l'index ne connaît que des rejeux pour une demande (indexeur démarré après
-  la décision d'origine), la réponse est le dernier d'entre eux.
-
-Non traité, à trancher : un `SIGNATURE_INVALID` émis sous le `request_id` d'une
-demande déjà décidée la remplace encore. `specs/02` § 8 le range pourtant avec
-les rejeux (« un même `requestId` peut porter plusieurs `SIGNATURE_INVALID` ou
-`REQUEST_REPLAYED` »).
+  champ ajouté. Les refus ignorés restent dans `/decisions` et `/events`.
+- Si l'index ne connaît que des événements ignorés pour une demande (signature
+  invalide jamais suivie d'une soumission valable, ou indexeur démarré après la
+  décision d'origine), la réponse est le dernier d'entre eux.
 
 Phrase prête pour l'amendement de `specs/02` § 8 et du commentaire de
 l'événement `Decision` dans `IArgentVault.sol` :
 
 > La décision courante d'une demande est celle de son dernier événement
-> `Decision` dont le motif n'est pas `REQUEST_REPLAYED` : le refus d'un rejeu
-> juge la tentative de rejeu, pas la demande, et ne modifie ni son état ni un
-> montant bloqué.
+> `Decision` dont le motif n'est ni `REQUEST_REPLAYED` ni `SIGNATURE_INVALID` :
+> ces deux refus jugent une soumission, pas la demande, et ne modifient ni son
+> état ni un montant bloqué. Si une demande ne porte que de tels événements, sa
+> décision courante est le dernier d'entre eux.
 
 ## Forme des événements
 
