@@ -188,7 +188,8 @@ export class JournalStore {
     fsyncSync(this.#fd);
     this.#entries.push(entry);
     if (idempotencyKey !== undefined) {
-      writeSync(this.#keysFd, `${JSON.stringify({ key: idempotencyKey, seq: entry.seq })}\n`);
+      const keyLine = JSON.stringify({ key: idempotencyKey, seq: entry.seq });
+      writeSync(this.#keysFd, keyLine + "\n");
       fsyncSync(this.#keysFd);
       this.#keys.set(idempotencyKey, { seq: entry.seq, body: JournalStore.#bodyOf(entry) });
     }
