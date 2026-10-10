@@ -1,6 +1,6 @@
 // Banc de mesure du détecteur.
 //
-//   npm run bench -- <jeu.jsonl> [--threshold n] [--json]
+//   npm run bench -- <jeu.jsonl> [--threshold n] [--json] [--split]
 //                    [--min-recall r] [--max-false-positives n]
 //
 // Avec --min-recall ou --max-false-positives, le banc sort en code 1 si la
@@ -10,10 +10,15 @@
 //   { "id": "…", "label": "legit" | "attack", "family": "…",
 //     "action": "PAY_INVOICE" | "PLACE", "mandate": ["PAY_INVOICE"], "document": "…" }
 //
-// Un tiers du jeu sert au réglage du seuil, le reste à la mesure
-// (PROPOSITION § 6). La répartition dépend de l'identifiant seul : elle est la
-// même à chaque lancement. Les chiffres valent pour ce jeu synthétique, pas
-// pour le monde réel.
+// Par défaut, le banc mesure sur tout le fichier : c'est l'usage avec un jeu
+// déjà séparé en deux fichiers (data/jeu-factures : dev.jsonl pour le réglage,
+// test.jsonl pour la mesure).
+//
+// Avec --split, pour un jeu d'un seul fichier : un tiers sert au réglage du
+// seuil, le reste à la mesure (PROPOSITION § 6). La répartition dépend de
+// l'identifiant seul : elle est la même à chaque lancement.
+//
+// Les chiffres valent pour le jeu mesuré, synthétique, pas pour le monde réel.
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { ACTIONS, DEFAULT_POLICY } from "./config.ts";
@@ -110,7 +115,7 @@ function measure(scored: { sample: Sample; score: number }[], threshold: number)
   };
 }
 
-export function runBench(samples: Sample[], threshold: number = DEFAULT_POLICY.threshold): BenchReport {
+export function runBench(samples: Sample[], threshold: number = DEFAULT_POLICY.threshold, split = false): BenchReport {
   const durations: number[] = [];
   const scored = samples.map((sample) => {
     const start = performance.now();
@@ -119,8 +124,8 @@ export function runBench(samples: Sample[], threshold: number = DEFAULT_POLICY.t
     durations.push(performance.now() - start);
     return { sample, score };
   });
-  const tuning = scored.filter((s) => isTuning(s.sample.id));
-  const test = scored.filter((s) => !isTuning(s.sample.id));
+  const tuning = split ? scored.filter((s) => isTuning(s.sample.id)) : [];
+  const test = split ? scored.filter((s) => !isTuning(s.sample.id)) : scored;
 
   const families: Record<string, { attacks: number; detected: number }> = {};
   for (const { sample, score } of test) {
@@ -154,9 +159,13 @@ export function renderReport(report: BenchReport): string {
   const lines = [
     `Détecteur ${report.detector_version}`,
     "",
-    `Réglage (${report.tuning.samples} échantillons) : seuil -> rappel, précision, faux positifs`,
-    ...report.tuning.by_threshold.map((m) => `  ${m.threshold} -> ${pct(m.recall)}, ${pct(m.precision)}, ${m.false_positives}`),
-    "",
+    ...(report.tuning.samples === 0
+      ? []
+      : [
+          `Réglage (${report.tuning.samples} échantillons) : seuil -> rappel, précision, faux positifs`,
+          ...report.tuning.by_threshold.map((m) => `  ${m.threshold} -> ${pct(m.recall)}, ${pct(m.precision)}, ${m.false_positives}`),
+          "",
+        ]),
     `Mesure au seuil ${t.threshold} (${t.samples} échantillons : ${t.attacks} attaques, ${t.legit} légitimes)`,
     `  rappel            ${pct(t.recall)}  (${t.true_positives} détectées, ${t.false_negatives} manquées)`,
     `  précision         ${pct(t.precision)}`,
@@ -176,11 +185,13 @@ function main(argv: string[]): number {
   let file: string | undefined;
   let threshold = DEFAULT_POLICY.threshold;
   let json = false;
+  let split = false;
   let minRecall: number | undefined;
   let maxFalsePositives: number | undefined;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i] as string;
     if (arg === "--json") json = true;
+    else if (arg === "--split") split = true;
     else if (arg === "--min-recall") {
       minRecall = Number(argv[(i += 1)]);
       if (!(minRecall >= 0 && minRecall <= 1)) return usage();
@@ -203,7 +214,7 @@ function main(argv: string[]): number {
     console.error(`jeu illisible : ${(error as Error).message}`);
     return 2;
   }
-  const report = runBench(samples, threshold);
+  const report = runBench(samples, threshold, split);
   console.log(json ? JSON.stringify(report, null, 2) : renderReport(report));
   const failures: string[] = [];
   if (minRecall !== undefined && (report.test.recall ?? 0) < minRecall) {
@@ -217,7 +228,7 @@ function main(argv: string[]): number {
 }
 
 function usage(): number {
-  console.error("usage : bench <jeu.jsonl> [--threshold n] [--json] [--min-recall r] [--max-false-positives n]");
+  console.error("usage : bench <jeu.jsonl> [--threshold n] [--json] [--split] [--min-recall r] [--max-false-positives n]");
   return 64;
 }
 
