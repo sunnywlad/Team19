@@ -52,7 +52,6 @@ export function normalize(text: string): string {
 
 type Rule = { name: string; weight: number; pattern: RegExp };
 
-const VERB_PAY = "(?:paie|payez|payer|paye|regle|reglez|regler|vire|virez|virer|verse|versez|verser|transfere|transferez|transferer|envoie|envoyez|envoyer|pay|send|transfer|wire|remit)";
 
 // Une instruction adressée à celui qui lit, là où il ne devrait y avoir que des faits.
 const INSTRUCTION_RULES: Rule[] = [
@@ -65,7 +64,8 @@ const INSTRUCTION_RULES: Rule[] = [
   {
     name: "ordre-de-paiement-chiffre",
     weight: 45,
-    pattern: new RegExp(`\\b${VERB_PAY}\\b.{0,20}\\b\\d[\\d .,]*\\s?(?:eur|euros?|usd|\\$|€|avax|k)?\\s?(?:a|au|sur|vers|to|into)\\b`),
+    pattern:
+      /\b(?:paie|payez|payer|paye|regle|reglez|regler|vire|virez|virer|verse|versez|verser|transfere|transferez|transferer|envoie|envoyez|envoyer|pay|send|transfer|wire|remit)\b.{0,20}\b\d[\d .,]*\s?(?:eur|euros?|usd|\$|€|avax|k)?\s?(?:a|au|sur|vers|to|into)\b/,
   },
   {
     name: "destination-designee",
