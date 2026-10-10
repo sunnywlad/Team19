@@ -26,16 +26,23 @@ npm start
 |---|---|---|
 | `GATEWAY_PORT` | `8780` | Port d'écoute sur `127.0.0.1` |
 | `JOURNAL_URL` | `http://127.0.0.1:8790` | Service de journal (`response/`) |
-| `CLIENT_AI_URL` | absent | Où transmettre une demande acceptée. Absent : arrêt après l'étape 3 |
+| `CLIENT_AI_URL` | absent | Où transmettre une demande acceptée, par exemple `http://127.0.0.1:8770/accepted`. Absent : arrêt après l'étape 3 |
 | `GATEWAY_AGENTS_FILE` | `specs/examples/fixtures.json` | Agents à enrôler, avec leur mandat |
 | `GATEWAY_DATA_DIR` | `var/` | Jetons émis, quarantaine, sorties |
+| `AGENT_TOKEN_TTL_SECONDS` | `900` | Durée de vie d'un jeton d'agent, de 30 à 86 400 secondes |
+| `DEMO_MODE` | absent | `1` ouvre `POST /demo/reissue-tokens` |
 
-Aucune de ces variables n'est un secret.
+Aucune de ces variables n'est un secret. Les valeurs par défaut sont dans
+[.env.example](.env.example).
 
 Au démarrage, la porte émet un jeton par agent et écrit
 `var/agent-tokens.json`, où les agents scriptés lisent le leur. Ce fichier n'est
-jamais versionné. Les jetons valent 15 minutes : relancer la porte en émet de
-nouveaux. Le registre ne garde que l'empreinte de chaque jeton.
+jamais versionné. Les jetons valent 15 minutes par défaut : relancer la porte en
+émet de nouveaux. Le registre ne garde que l'empreinte de chaque jeton.
+
+En mode démo (`DEMO_MODE=1`), `POST /demo/reissue-tokens` révoque les jetons en
+cours et en émet de nouveaux, sans relancer la porte. Sans `DEMO_MODE`, cette
+route n'existe pas.
 
 ## Envoyer une demande
 
@@ -115,7 +122,9 @@ le journal :
 | `HUMAN_DECISION`, `AGENT_RESUMED` | La pause est levée |
 | `HUMAN_DECISION`, `TOKEN_REVOKED` | Les jetons de l'agent sont révoqués définitivement |
 
-Aucune route de la porte ne lève une pause.
+Aucune route de la porte ne lève une pause. Si le journal repart d'une chaîne
+neuve (remise à zéro de démo), la porte le voit à sa longueur et relit l'état
+depuis le début.
 
 ## Garanties
 

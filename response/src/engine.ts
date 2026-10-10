@@ -9,7 +9,7 @@
 // pause de l'agent, alerte. Aucune ne déplace de fonds. Une pause ne se lève
 // que par une décision humaine.
 import { randomBytes } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ValidateFunction } from "ajv/dist/2020.js";
 import { loadSchema } from "./chain.ts";
@@ -353,6 +353,24 @@ export class ResponseEngine {
         `ALERT_SENT:AVAILABILITY:${row.request_id}`,
       );
     }
+  }
+
+  // Mode démo uniquement, après l'archivage du journal : les rapports sont
+  // archivés eux aussi, et l'état repart de zéro comme le journal.
+  reset(stamp: string): string | null {
+    let archive: string | null = null;
+    const dir = this.#deps.reportsDir;
+    if (dir !== undefined && existsSync(dir)) {
+      archive = `${dir}.${stamp}.bak`;
+      renameSync(dir, archive);
+      mkdirSync(dir, { recursive: true });
+    }
+    this.#incidents.clear();
+    this.#reports.length = 0;
+    this.#pauses.clear();
+    this.#refusals.clear();
+    this.#invalidTokens = [];
+    return archive;
   }
 
   /** Pauses en vigueur, une ligne par niveau. */

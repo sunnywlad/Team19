@@ -27,6 +27,7 @@ npm start
 | `RESPONSE_AGENTS_FILE` | `specs/examples/fixtures.json` | Agents et mandats, pour la chaîne d'autorité des rapports |
 | `QUARANTINE_DIR` | `../gateway/var/quarantine` | Documents gelés par la porte d'entrée, lus pour l'extrait |
 | `RESPONSE_DATA_DIR` | `var/` | Rapports d'incident, dans `incidents/` |
+| `DEMO_MODE` | absent | `1` ouvre `POST /demo/reset` |
 
 Aucune de ces variables n'est un secret.
 
@@ -67,6 +68,7 @@ Avant une action qui ne se rattrape pas, par exemple soumettre au contrat :
 | `GET /journal/verification` | Tête courante et résultat de la vérification, relancée à chaque appel |
 | `GET /incidents` | `[{ report, quarantine_excerpt }]` : toutes les générations de rapports |
 | `GET /agents/paused` | Pauses en vigueur, une ligne par niveau |
+| `GET /health` | `{ ok, entries, demo_mode }` |
 
 `request_id=0x…` filtre les deux formes de `/journal/entries`.
 
@@ -119,6 +121,23 @@ Décisions : `FALSE_POSITIVE`, `ATTACK_CONFIRMED`, `AGENT_RESUMED`, `TOKEN_REVOK
 `APPROVER`. `AGENT_RESUMED` est le seul moyen de lever une pause. Une décision
 rattachée à un incident régénère son rapport, avec l'auteur.
 
+## Remise à zéro entre deux passages de démo
+
+```bash
+DEMO_MODE=1 npm run demo:reset
+```
+
+La commande demande au service d'archiver le journal et les rapports, puis de
+repartir d'une chaîne neuve, et à la porte d'entrée de réémettre les jetons.
+
+- Rien n'est effacé. Le journal devient `journal.jsonl.<horodatage>.bak`, sa tête
+  est écrite dans `journal.jsonl.<horodatage>.bak.head.json`, et les rapports
+  passent dans `incidents.<horodatage>.bak/`. L'archive se vérifie encore :
+  `npm run verify-journal -- <archive> --expect-head <tête>`.
+- La route `POST /demo/reset` n'existe que si le service a été lancé avec
+  `DEMO_MODE=1`. En dehors d'une démo, aucun appel ne peut vider le journal.
+- Les pauses et les incidents repartent de zéro avec la chaîne.
+
 ## Rapport d'incident
 
 Prérempli depuis le journal, validé contre le schéma gelé avant d'être publié,
@@ -126,6 +145,10 @@ Prérempli depuis le journal, validé contre le schéma gelé avant d'être publ
 forme canonique. Les tests rejouent le scénario 4 de `specs/examples/` : le
 service écrit les entrées 7 à 11 de `chaine-valide.jsonl` à l'octet près et
 produit le rapport `02-scenario-4-refus-du-contrat.json` à l'identique.
+
+La décision portée par le rapport est la dernière observée pour la demande, en
+ignorant les refus de rejeu (motif 3) : rejouer une demande ne masque pas ce que
+le contrat avait décidé.
 
 ## Depuis TypeScript
 
