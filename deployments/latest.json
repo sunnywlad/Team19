@@ -2,25 +2,25 @@
   "chainId": 191919,
   "rpc": "http://127.0.0.1:9654/ext/bc/bM7X3ju78mCF3i2dKcF9LKvkFCiHmcxzpm71xzpUQKemrQqvW/rpc",
   "admin": "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC",
-  "startBlock": 44,
-  "timestamp": "20261010-210703",
+  "startBlock": 740,
+  "timestamp": "20261010-221911",
   "phase1": {
-    "VerificationMarket": "0x5087a1e5d6d21c7dee1ef79776cab57b8b553970"
+    "VerificationMarket": "0xc5bdc1d96ce7035bc751ec6000f5cbb91848562a"
   },
   "phase2": {
-    "VerifierRegistry": "0x5b7ccee99327ce549815f92bc6056321978d903c",
-    "Slashing": "0xea1e5f74b8863d54cc5c85eab58b0918bf7fbe38",
-    "Rewards": "0x932678586ad9d8c908a94c10223d94b1f3894cee",
-    "StakedVerificationMarket": "0x6461948c492e1a75ce0c8a1ed33ef7101388d856"
+    "VerifierRegistry": "0x129b34b155b9efce0676fa255272602818c80516",
+    "Slashing": "0x489f75134ab29ab0d01fd85f724dcb408d1baddb",
+    "Rewards": "0x9e3aed7df7c7449a6709fd9a3ff481b81ce33f13",
+    "StakedVerificationMarket": "0x1faf7655253211ed82b36c1536f8b714a16b9d07"
   },
   "phase3": {
-    "VerifierRegistry": "0xcae41a35d2c0e526cbb27d7fa03b0535c2cd7a46",
-    "Slashing": "0x61f1bb6b7e00127efc7691e155b086805059f847",
-    "Rewards": "0x31590181756e5d815bfc1bb3d6fa81acb40fd0f4",
-    "DrawnVerificationMarket": "0x4c85a606c8f09d474809a8d324835f317dced031",
-    "AgentIdentityRegistry": "0xa287c878645c6e4417bd9f12d8f9e9f7bc6783fb",
-    "AgentReputationRegistry": "0x17ce660620cf813ec70b514d77b9360baf1edb32",
-    "AgentValidationRegistry": "0x6e8a5b7506be19c44978f7c357fcb8913fb1496c"
+    "VerifierRegistry": "0xd2537ac78e5e8a0cf208f0f01bf360d23099805c",
+    "Slashing": "0x3c7c71945ec85095f088d452bf977e6932b55dee",
+    "Rewards": "0x1124df67073297cf2ba99748fb0e11fd89728068",
+    "DrawnVerificationMarket": "0xe760a621668eb43920442777cb37a292c8f44b40",
+    "AgentIdentityRegistry": "0xf37d0d1d879a1b0ca2b8b5a1a403ee01fa2d2914",
+    "AgentReputationRegistry": "0xd22c6c6a717ad7dcd85dff9123ab9690932d257d",
+    "AgentValidationRegistry": "0x143b307d071d5aa13c5c081791b071abbd0385c8"
   },
   "verifiers": {
     "1": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
@@ -30,9 +30,9 @@
   },
   "params": {
     "FEE": "1000000000000000000",
-    "COMMIT_WINDOW": 20,
+    "COMMIT_WINDOW": 30,
     "REVEAL_WINDOW": 20,
-    "CONTEST_WINDOW": 20,
+    "CONTEST_WINDOW": 60,
     "MIN_STAKE": "100000000000000000000",
     "LOCK_BPS": 2000,
     "STRIKE_LIMIT": 3,
