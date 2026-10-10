@@ -1,5 +1,5 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
-.PHONY: setup check secrets contrat dependances specs relay gateway response dashboard offchain semgrep lint-ci scan-final
+.PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -7,7 +7,7 @@ setup:
 	scripts/setup-dev.sh
 
 # Bloquants d'abord, informatifs ensuite (préfixe « - » : n'arrête pas make).
-check: secrets contrat dependances specs relay gateway response dashboard lint-ci offchain semgrep
+check: secrets contrat dependances specs relay gateway response dashboard docs lint-ci offchain semgrep
 
 secrets:
 	$(PRE_COMMIT) run --all-files
@@ -39,6 +39,11 @@ response:
 # Lint de sécurité, types, tests et contrôle du bundle de dashboard/.
 dashboard:
 	dashboard/tools/check.sh
+
+# Livrables (README.md, docs/) : formules interdites, liens et chemins cités,
+# secrets, et fiche de défense égale à ce que donnent les fichiers de mesure.
+docs:
+	node docs/outils/verifier-docs.mjs
 
 # Tests de offchain/ (cache, passerelle, vérificateur). Informatif tant que
 # offchain/cache/server.ts n'est pas versionné.
