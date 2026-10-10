@@ -380,9 +380,9 @@ describe("interface HTTP et client", () => {
     await withServer(async (url) => {
       await post(url, JSON.stringify(enqueued("1")));
       await post(url, JSON.stringify(enqueued("2")));
-      const all = (await (await fetch(`${url}/journal/entries`)).json()) as { entries: Entry[] };
+      const all = (await (await fetch(`${url}/journal/entries?from_seq=0`)).json()) as { entries: Entry[] };
       assert.equal(all.entries.length, 2);
-      const one = (await (await fetch(`${url}/journal/entries?request_id=${ID("2")}`)).json()) as { entries: Entry[] };
+      const one = (await (await fetch(`${url}/journal/entries?from_seq=0&request_id=${ID("2")}`)).json()) as { entries: Entry[] };
       assert.deepEqual(one.entries.map((e) => e.seq), [1]);
       assert.equal((await fetch(`${url}/journal/entries?request_id=facture`)).status, 400);
       assert.equal((await fetch(`${url}/journal/entries?from_seq=-1`)).status, 400);

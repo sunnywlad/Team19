@@ -48,6 +48,7 @@ export class JournalStore {
   readonly #entries: Entry[];
   // Clé d'idempotence -> rang et contenu remis, pour reconnaître une répétition.
   readonly #keys = new Map<string, { seq: number; body: string }>();
+  readonly #listeners: ((entry: Entry) => void)[] = [];
   #fd: number;
   #keysFd: number;
   #closed = false;
@@ -193,7 +194,21 @@ export class JournalStore {
       fsyncSync(this.#keysFd);
       this.#keys.set(idempotencyKey, { seq: entry.seq, body: JournalStore.#bodyOf(entry) });
     }
+    // Les abonnés voient l'entrée une fois écrite. Une erreur d'abonné ne
+    // remet pas en cause l'écriture, déjà sur le disque.
+    for (const listener of this.#listeners) {
+      try {
+        listener(entry);
+      } catch (error) {
+        console.error("journal : erreur d'un abonné", error instanceof Error ? error.message : "");
+      }
+    }
     return { seq: entry.seq, hash: entry.hash, duplicate: false };
+  }
+
+  /** Appelle listener après chaque nouvelle entrée écrite (pas pour une répétition). */
+  subscribe(listener: (entry: Entry) => void): void {
+    this.#listeners.push(listener);
   }
 
   /** Empreinte de tête : avec seq, elle résume tout le journal. À conserver hors du journal. */
