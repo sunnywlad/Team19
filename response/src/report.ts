@@ -62,6 +62,8 @@ export function reportSha256(report: IncidentReport): string {
   return createHash("sha256").update(canonical(report), "utf8").digest("hex");
 }
 
+const REQUEST_REPLAYED = 3;
+
 const num = (value: unknown): number | null => (typeof value === "number" ? value : null);
 const str = (value: unknown): string | null => (typeof value === "string" ? value : null);
 
@@ -79,8 +81,11 @@ export function buildReport(incident: Incident, context: ReportContext): Inciden
   const rateLimited = first(ofRequest, "RATE_LIMITED");
   const signed = first(ofRequest, "REQUEST_SIGNED");
   const submitted = first(ofRequest, "SUBMITTED");
-  // La décision qui compte est la dernière observée : un cas 1 peut finir en 0 ou en 2.
-  const decision = last(ofRequest, "DECISION_OBSERVED");
+  // La décision qui compte est la dernière observée : un cas 1 peut finir en 0
+  // ou en 2. Un refus de rejeu (motif 3) ne remplace pas une décision antérieure :
+  // rejouer une demande ne doit pas masquer ce que le contrat avait décidé.
+  const decisions = ofRequest.filter((e) => e.type === "DECISION_OBSERVED");
+  const decision = decisions.findLast((e) => e.data["reason"] !== REQUEST_REPLAYED) ?? decisions.at(-1);
   const pausedOffchain = ofIncident.find((e) => e.type === "AGENT_PAUSED" && e.data["scope"] === "OFFCHAIN");
   const alerted = first(ofIncident, "ALERT_SENT");
   const human = last(ofIncident, "HUMAN_DECISION");

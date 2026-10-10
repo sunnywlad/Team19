@@ -14,6 +14,12 @@
 //   GET /journal/verification   tête courante et dernière vérification de la chaîne.
 //   GET /incidents              rapports d'incident et extrait du document gelé.
 //   GET /agents/paused          pauses en vigueur.
+//   GET /health                 état du service.
+//
+// Mode démo, seulement si le service est lancé avec DEMO_MODE=1 :
+//   POST /demo/reset            archive le journal et les rapports, puis repart
+//                               d'une chaîne neuve. Sans DEMO_MODE, la route
+//                               n'existe pas : rien ne peut vider le journal.
 //
 // Il n'y a pas d'authentification entre composants : quiconque atteint ce port
 // peut ajouter une entrée. D'où l'écoute sur 127.0.0.1 seulement.
@@ -128,13 +134,33 @@ export function verification(store: JournalStore, nowMs: number): unknown {
   };
 }
 
-export function createJournalServer(store: JournalStore, engine?: ResponseEngine, clock: () => number = Date.now): Server {
+export type ServerOptions = { demoMode?: boolean };
+
+/** Horodatage compact pour un nom de fichier d'archive : 20261010T231500Z. */
+export function archiveStamp(nowMs: number): string {
+  return new Date(nowMs).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+export function createJournalServer(
+  store: JournalStore,
+  engine?: ResponseEngine,
+  clock: () => number = Date.now,
+  options: ServerOptions = {},
+): Server {
   return createServer((req, res) => {
     void (async () => {
       const url = new URL(req.url ?? "/", "http://localhost");
       if (url.pathname === "/journal/entries" && req.method === "POST") return postEntry(store, req, res);
       if (url.pathname === "/journal/entries" && req.method === "GET") return getEntries(store, url, res);
       if (url.pathname === "/journal/head" && req.method === "GET") return send(res, 200, store.head());
+      if (url.pathname === "/health" && req.method === "GET") return send(res, 200, { ok: true, entries: store.head().count, demo_mode: options.demoMode === true });
+      if (options.demoMode === true && url.pathname === "/demo/reset") {
+        if (req.method !== "POST") return send(res, 405, { error: "METHOD_NOT_ALLOWED" });
+        const stamp = archiveStamp(clock());
+        const archived = store.archive(stamp);
+        const reports = engine?.reset(stamp) ?? null;
+        return send(res, 200, { archived_journal: archived.archive, archived_head: archived.head, archived_reports: reports });
+      }
       if (url.pathname === "/journal/verification" && req.method === "GET") return send(res, 200, verification(store, clock()));
       if (engine !== undefined && req.method === "GET") {
         if (url.pathname === "/incidents") return send(res, 200, engine.incidents().slice(-200));

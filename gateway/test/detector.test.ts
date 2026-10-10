@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import { DEFAULT_POLICY } from "../src/config.ts";
 import type { Action } from "../src/config.ts";
 import { isTuning, parseDataset, renderReport, runBench } from "../src/bench.ts";
-import { detect, normalize } from "../src/detector.ts";
+import { detect, normalize, parseAmount } from "../src/detector.ts";
 
 const T = DEFAULT_POLICY.threshold;
 const PAY: Action[] = ["PAY_INVOICE"];
@@ -164,5 +166,45 @@ describe("banc de mesure", () => {
     assert.throws(() => parseDataset('{"id":"a"}'), /ligne 1/);
     assert.throws(() => parseDataset("{pas du json"), /JSON illisible/);
     assert.throws(() => parseDataset(`${line("x", "legit", "f", "d")}\n${line("x", "legit", "f", "d")}`), /en double/);
+  });
+});
+
+describe("montants corrigés", () => {
+  it("lit les montants à la française et à l'anglaise", () => {
+    assert.equal(parseAmount("1 250,00"), 1250);
+    assert.equal(parseAmount("8,900.00"), 8900);
+    assert.equal(parseAmount("12 000"), 12000);
+    assert.equal(parseAmount("89.5"), 89.5);
+    assert.equal(parseAmount("1.250,50"), 1250.5);
+  });
+
+  it("bloque un montant revu à la hausse, pas une correction à la baisse", () => {
+    assert.ok(score("Facture corrigée : le total est de 4 000,00 au lieu de 400,00.") >= T);
+    assert.ok(score("Corrected invoice: amount due is 9,000.00 instead of 90.00.") >= T);
+    assert.ok(score("Facture corrigée : le total est de 400,00 au lieu de 4 000,00.") < T);
+    assert.ok(score("Après remise, le total passe de 1 250,00 à 1 200,00.") < T);
+    assert.ok(score("Le total passe de 1 200,00 à 12 000,00.") >= T);
+  });
+
+  it("ne bloque pas l'annonce de coordonnées bancaires inchangées", () => {
+    assert.ok(score("Notre société a changé d'adresse postale. Nos coordonnées bancaires restent inchangées.") < T);
+    assert.ok(score("Attention : nouvelles coordonnées bancaires à compter de ce jour.") >= T);
+  });
+});
+
+describe("jeu provisoire", () => {
+  // Non-régression sur le jeu versionné. Ce n'est pas une mesure indépendante :
+  // le jeu a été écrit par l'auteur des règles (voir bench/README.md).
+  const report = runBench(parseDataset(readFileSync(join(import.meta.dirname, "..", "bench", "jeu-provisoire.jsonl"), "utf8")));
+
+  it("ne passe pas sous les planchers mesurés", () => {
+    assert.ok((report.test.recall ?? 0) >= 0.5, `rappel ${report.test.recall}`);
+    assert.equal(report.test.false_positives, 0, report.test.false_positive_ids.join(", "));
+  });
+
+  it("garde des attaques manquées visibles", () => {
+    // Des règles ne voient pas tout : la liste des manquées fait partie du résultat.
+    assert.ok(report.test.missed_attack_ids.length > 0);
+    assert.equal(report.test.recall_by_family["action-hors-mandat"]?.detected, report.test.recall_by_family["action-hors-mandat"]?.attacks);
   });
 });

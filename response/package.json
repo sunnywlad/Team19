@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "start": "node --disable-warning=ExperimentalWarning src/main.ts",
     "verify-journal": "node --disable-warning=ExperimentalWarning src/verify-journal.ts",
-    "human": "node --disable-warning=ExperimentalWarning src/human.ts"
+    "human": "node --disable-warning=ExperimentalWarning src/human.ts",
+    "demo:reset": "node --disable-warning=ExperimentalWarning src/demo-reset.ts"
   },
   "dependencies": {
     "ajv": "8.20.0"

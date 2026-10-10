@@ -38,7 +38,7 @@ export const DEFAULT_POLICY: Policy = {
   rateWindowS: 10,
   maxBodyBytes: 16 * 1024,
   tokenTtlS: 900,
-  detectorVersion: "regles-0.1",
+  detectorVersion: "regles-0.2",
 };
 
 /** specs/schemas/detector-output.schema.json */

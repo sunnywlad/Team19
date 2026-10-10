@@ -26,16 +26,23 @@ npm start
 |---|---|---|
 | `GATEWAY_PORT` | `8780` | Port d'écoute sur `127.0.0.1` |
 | `JOURNAL_URL` | `http://127.0.0.1:8790` | Service de journal (`response/`) |
-| `CLIENT_AI_URL` | absent | Où transmettre une demande acceptée. Absent : arrêt après l'étape 3 |
+| `CLIENT_AI_URL` | absent | Où transmettre une demande acceptée, par exemple `http://127.0.0.1:8770/accepted`. Absent : arrêt après l'étape 3 |
 | `GATEWAY_AGENTS_FILE` | `specs/examples/fixtures.json` | Agents à enrôler, avec leur mandat |
 | `GATEWAY_DATA_DIR` | `var/` | Jetons émis, quarantaine, sorties |
+| `AGENT_TOKEN_TTL_SECONDS` | `900` | Durée de vie d'un jeton d'agent, de 30 à 86 400 secondes |
+| `DEMO_MODE` | absent | `1` ouvre `POST /demo/reissue-tokens` |
 
-Aucune de ces variables n'est un secret.
+Aucune de ces variables n'est un secret. Les valeurs par défaut sont dans
+[.env.example](.env.example).
 
 Au démarrage, la porte émet un jeton par agent et écrit
 `var/agent-tokens.json`, où les agents scriptés lisent le leur. Ce fichier n'est
-jamais versionné. Les jetons valent 15 minutes : relancer la porte en émet de
-nouveaux. Le registre ne garde que l'empreinte de chaque jeton.
+jamais versionné. Les jetons valent 15 minutes par défaut : relancer la porte en
+émet de nouveaux. Le registre ne garde que l'empreinte de chaque jeton.
+
+En mode démo (`DEMO_MODE=1`), `POST /demo/reissue-tokens` révoque les jetons en
+cours et en émet de nouveaux, sans relancer la porte. Sans `DEMO_MODE`, cette
+route n'existe pas.
 
 ## Envoyer une demande
 
@@ -85,7 +92,7 @@ Un signal figure dans `reason_codes` à partir de 20, même sous le seuil.
 ## Mesurer
 
 ```bash
-npm run bench -- ../data/jeu-factures.jsonl
+npm run bench -- bench/jeu-provisoire.jsonl
 ```
 
 Une ligne du jeu :
@@ -97,7 +104,12 @@ Une ligne du jeu :
 `label` vaut `legit` ou `attack`. Le banc réserve un tiers du jeu au réglage du
 seuil et mesure sur le reste : rappel, précision, faux positifs, rappel par
 famille, attaques manquées, temps de détection. `--threshold n` change le seuil,
-`--json` sort le rapport pour la fiche de défense.
+`--json` sort le rapport pour la fiche de défense, `--min-recall` et
+`--max-false-positives` en font un contrôle de non-régression.
+
+Premiers chiffres, sur un jeu provisoire écrit par l'auteur des règles : 54,3 %
+des attaques détectées, aucune facture légitime bloquée, sur 77 échantillons.
+Détail, réserves et attaques manquées : [bench/README.md](bench/README.md).
 
 ## Pause d'un agent
 
@@ -110,7 +122,9 @@ le journal :
 | `HUMAN_DECISION`, `AGENT_RESUMED` | La pause est levée |
 | `HUMAN_DECISION`, `TOKEN_REVOKED` | Les jetons de l'agent sont révoqués définitivement |
 
-Aucune route de la porte ne lève une pause.
+Aucune route de la porte ne lève une pause. Si le journal repart d'une chaîne
+neuve (remise à zéro de démo), la porte le voit à sa longueur et relit l'état
+depuis le début.
 
 ## Garanties
 
@@ -124,8 +138,8 @@ Aucune route de la porte ne lève une pause.
 - Des règles ne voient que ce qu'elles décrivent. Une attaque formulée autrement
   passe : c'est le scénario 4, que le contrat arrête ensuite. Les attaques
   manquées se lisent dans la sortie du banc.
-- Aucun chiffre de détection n'existe tant que le banc n'a pas tourné sur
-  `data/jeu-factures`. Les tests ne couvrent que quelques textes écrits à la main.
+- Les seuls chiffres de détection viennent d'un jeu provisoire écrit par l'auteur
+  des règles. La mesure à présenter attend le jeu de `data/`.
 - Doublon et rafale sont comptés en mémoire : un redémarrage les oublie.
 - La porte n'authentifie pas le service de journal et n'écoute que sur `127.0.0.1`.
 - Un corps au-delà de 16 Ko est tronqué avant analyse, puis rejeté.
