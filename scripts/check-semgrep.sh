@@ -30,5 +30,9 @@ for ruleset in "${RULESETS[@]}"; do
   configs+=(--config "$RULES/$ruleset")
 done
 
+# Règle exclue : jsx-not-internationalized demande i18next pour chaque texte
+# JSX. L'interface n'existe qu'en français ; la règle noyait les autres constats.
 semgrep scan --metrics=off --disable-version-check --error --quiet \
-  --exclude .tools "${configs[@]}" .
+  --exclude .tools \
+  --exclude-rule tools.semgrep-rules.typescript.react.portability.i18next.jsx-not-internationalized \
+  "${configs[@]}" .

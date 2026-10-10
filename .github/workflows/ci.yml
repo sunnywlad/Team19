@@ -191,6 +191,74 @@ jobs:
         working-directory: relay
         run: npm test
 
+  gateway:
+    name: gateway
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      # Le script installe depuis le lockfile, sans script tiers, puis vérifie.
+      - name: Types et tests de la porte d'entrée
+        run: make gateway
+
+  response:
+    name: response
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      # Le script installe depuis le lockfile, sans script tiers, puis vérifie.
+      - name: Types et tests du journal et de la réponse
+        run: make response
+
+  dashboard:
+    name: dashboard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      # Le script installe depuis le lockfile, sans script tiers, puis vérifie.
+      - name: Lint de sécurité, types, tests et contrôle du bundle
+        run: make dashboard
+
+  offchain:
+    name: offchain
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # TODO : rendre bloquant quand offchain/cache/server.ts sera versionné. Le
+    # fichier était ignoré par une règle « cache/ » du .gitignore : quatre
+    # fichiers de test échouent tant qu'il manque.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      # Les tests d'intégration lancent anvil, forge et cast.
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.8.5
+      - name: Tests du cache, de la passerelle et du vérificateur
+        run: make offchain
+
   detecteur:
     name: detecteur
     # TODO : bloquant une fois le seuil de rappel fixé par Loris.

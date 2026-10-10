@@ -1,9 +1,11 @@
 # Points d'accès dont le dashboard a besoin et que l'API réelle n'offre pas
 
-Le dashboard ne lit que par `GET`. Aujourd'hui, seule l'API de `relay/` existe
-(`/status`, `/decisions`, `/events`, `/queue`). Tout le reste est servi par le
-serveur de fixtures (`npm run dev:fixtures`) et porte l'étiquette « simulation »
-à l'écran. Chaque forme proposée ci-dessous a un schéma dans
+Le dashboard ne lit que par `GET`. État au 10 octobre : les § 1 à 5 existent.
+`relay/` sert `/vault` (§ 1) et `response/` sert les § 2 à 5 ; leurs réponses
+passent les schémas ci-dessous. Restent ouverts le § 6 et, pour le § 1, l'essai
+contre un vrai contrat : `/vault` n'a tourné que sur le faux coffre de `relay/`.
+Sans les variables de « Brancher », ces points restent servis par le serveur de
+fixtures (`npm run dev:fixtures`) et portent l'étiquette « simulation » à l'écran. Chaque forme proposée ci-dessous a un schéma dans
 [schemas/](schemas/), déjà appliqué aux réponses simulées : le jour où le vrai
 point d'accès existe, il suffit de le brancher (voir « Brancher » en bas).
 
