@@ -1,6 +1,10 @@
 // Banc de mesure du détecteur.
 //
 //   npm run bench -- <jeu.jsonl> [--threshold n] [--json]
+//                    [--min-recall r] [--max-false-positives n]
+//
+// Avec --min-recall ou --max-false-positives, le banc sort en code 1 si la
+// mesure passe sous le plancher : c'est le contrôle de non-régression de la CI.
 //
 // Une ligne du jeu, en JSON :
 //   { "id": "…", "label": "legit" | "attack", "family": "…",
@@ -79,7 +83,7 @@ export function isTuning(id: string): boolean {
   return parseInt(createHash("sha256").update(id, "utf8").digest("hex").slice(0, 8), 16) % 3 === 0;
 }
 
-const ratio = (a: number, b: number): number | null => (b === 0 ? null : Math.round((a / b) * 10_000) / 10_000);
+const ratio = (a: number, b: number): number | null => (b === 0 ? null : Math.round((a / b) * 1_000_000) / 1_000_000);
 
 function measure(scored: { sample: Sample; score: number }[], threshold: number): Metrics {
   let tp = 0;
@@ -172,9 +176,18 @@ function main(argv: string[]): number {
   let file: string | undefined;
   let threshold = DEFAULT_POLICY.threshold;
   let json = false;
+  let minRecall: number | undefined;
+  let maxFalsePositives: number | undefined;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i] as string;
     if (arg === "--json") json = true;
+    else if (arg === "--min-recall") {
+      minRecall = Number(argv[(i += 1)]);
+      if (!(minRecall >= 0 && minRecall <= 1)) return usage();
+    } else if (arg === "--max-false-positives") {
+      maxFalsePositives = Number(argv[(i += 1)]);
+      if (!Number.isInteger(maxFalsePositives) || maxFalsePositives < 0) return usage();
+    }
     else if (arg === "--threshold") {
       const value = Number(argv[(i += 1)]);
       if (!Number.isInteger(value) || value < 0 || value > 100) return usage();
@@ -192,11 +205,19 @@ function main(argv: string[]): number {
   }
   const report = runBench(samples, threshold);
   console.log(json ? JSON.stringify(report, null, 2) : renderReport(report));
-  return 0;
+  const failures: string[] = [];
+  if (minRecall !== undefined && (report.test.recall ?? 0) < minRecall) {
+    failures.push(`rappel ${report.test.recall} sous le plancher ${minRecall}`);
+  }
+  if (maxFalsePositives !== undefined && report.test.false_positives > maxFalsePositives) {
+    failures.push(`${report.test.false_positives} faux positifs, plafond ${maxFalsePositives}`);
+  }
+  for (const failure of failures) console.error(`RÉGRESSION : ${failure}`);
+  return failures.length === 0 ? 0 : 1;
 }
 
 function usage(): number {
-  console.error("usage : bench <jeu.jsonl> [--threshold n] [--json]");
+  console.error("usage : bench <jeu.jsonl> [--threshold n] [--json] [--min-recall r] [--max-false-positives n]");
   return 64;
 }
 
