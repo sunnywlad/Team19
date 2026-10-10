@@ -1,0 +1,13 @@
+# Activation : scripts/setup-dev.sh
+# gitleaks est lancé via scripts/gitleaks.sh : binaire épinglé (version et
+# SHA-256), identique à celui de la CI. Pas de hook distant, donc aucune
+# référence flottante à maintenir ici.
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secrets dans les changements indexés)
+        entry: scripts/gitleaks.sh git --pre-commit --staged --redact --no-banner --config .gitleaks.toml
+        language: system
+        pass_filenames: false
+        always_run: true

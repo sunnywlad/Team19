@@ -1,0 +1,5 @@
+# Le job « detecteur » est désactivé exprès par « if: false » (stub en attente).
+paths:
+  .github/workflows/ci.yml:
+    ignore:
+      - 'constant expression "false" in condition'

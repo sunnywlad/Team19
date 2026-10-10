@@ -1,0 +1,16 @@
+title = "Argent Intelligent - détection de secrets"
+
+# Règles par défaut de gitleaks, sans en retirer aucune.
+[extend]
+useDefault = true
+
+# Seule exception : les lignes « NOM= » sans valeur de .env.example.
+# Les deux critères sont requis (AND) : ce n'est PAS une exemption du fichier,
+# une valeur renseignée dans .env.example reste détectée.
+# Ne pas ajouter d'allowlist de dossier entier.
+[[allowlists]]
+description = "Valeurs vides de .env.example"
+condition = "AND"
+paths = ['''^\.env\.example$''']
+regexTarget = "line"
+regexes = ['''^\s*(export\s+)?[A-Za-z_][A-Za-z0-9_]*=\s*(#.*)?$''']

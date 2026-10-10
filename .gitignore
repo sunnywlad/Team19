@@ -1,0 +1,17 @@
+# --- Secrets : ne jamais retirer d'entrée de ce bloc ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+keystore/
+broadcast/
+
+# --- Outils locaux installés par scripts/ (binaires épinglés, venv) ---
+.tools/
+
+# --- Dépendances installées ---
+node_modules/
