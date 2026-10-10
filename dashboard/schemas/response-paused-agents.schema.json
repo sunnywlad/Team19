@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:response-paused-agents:1",
+  "title": "PROPOSÉ (API-NEEDS.md) : GET /agents/paused, pauses en vigueur tenues par le service de réponse",
+  "type": "array",
+  "maxItems": 200,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["agent_id", "scope", "incident_id", "paused_at_ms"],
+    "properties": {
+      "agent_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "scope": { "enum": ["OFFCHAIN", "ONCHAIN"] },
+      "incident_id": { "oneOf": [{ "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" }, { "type": "null" }] },
+      "paused_at_ms": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/unixMillis" }
+    }
+  }
+}

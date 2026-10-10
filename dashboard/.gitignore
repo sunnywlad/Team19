@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# Validateurs ajv précompilés : régénérés par « npm run gen » depuis schemas/ et specs/schemas/.
+src/generated/

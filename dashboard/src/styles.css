@@ -1,0 +1,400 @@
+/* Aucune ressource externe : polices du système, icônes en SVG en ligne.
+   Aucun style en attribut : la CSP n'autorise que cette feuille. */
+:root {
+  color-scheme: light dark;
+  --fond: #f4f5f7;
+  --surface: #ffffff;
+  --texte: #16202c;
+  --discret: #566273;
+  --trait: #d3d9e1;
+  --accent: #1d4f91;
+  --refuse: #a3162a;
+  --refuse-fond: #fdecee;
+  --humain: #8a5200;
+  --humain-fond: #fff3dc;
+  --accepte: #17663a;
+  --accepte-fond: #e6f5ec;
+  --simulation: #6b3fa0;
+  --simulation-fond: #f1eafa;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #10151c;
+    --surface: #19212b;
+    --texte: #e7ecf2;
+    --discret: #9dabbb;
+    --trait: #33404f;
+    --accent: #8ab8f5;
+    --refuse: #ff9aa6;
+    --refuse-fond: #3d1a20;
+    --humain: #ffc766;
+    --humain-fond: #3b2c10;
+    --accepte: #7fdba3;
+    --accepte-fond: #143424;
+    --simulation: #c9a8f5;
+    --simulation-fond: #2c2140;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fond: #10151c;
+  --surface: #19212b;
+  --texte: #e7ecf2;
+  --discret: #9dabbb;
+  --trait: #33404f;
+  --accent: #8ab8f5;
+  --refuse: #ff9aa6;
+  --refuse-fond: #3d1a20;
+  --humain: #ffc766;
+  --humain-fond: #3b2c10;
+  --accepte: #7fdba3;
+  --accepte-fond: #143424;
+  --simulation: #c9a8f5;
+  --simulation-fond: #2c2140;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font: 15px/1.45 var(--sans);
+}
+
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px 20px 32px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+p {
+  margin: 0.4em 0;
+}
+
+code,
+.identifiant,
+.non-fiable {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.identifiant {
+  white-space: nowrap;
+}
+
+/* Contenu non fiable : inerte, monospace, sens d'écriture figé. */
+.non-fiable {
+  unicode-bidi: plaintext;
+  overflow-wrap: anywhere;
+  background: var(--fond);
+  border: 1px dashed var(--trait);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+.discret {
+  color: var(--discret);
+}
+
+.indisponible,
+.hors-format {
+  color: var(--discret);
+  font-style: italic;
+}
+
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+}
+
+.lecture-seule {
+  margin: 0;
+  color: var(--discret);
+}
+
+.fraicheur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+}
+
+.fraicheur-nom {
+  font-weight: 600;
+}
+
+.source,
+.horloge {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.source-reel {
+  color: var(--accepte);
+}
+
+.source-simulation {
+  color: var(--simulation);
+  background: var(--simulation-fond);
+}
+
+.horloge {
+  color: var(--accent);
+}
+
+.bandeau {
+  margin: 0 0 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+.bandeau-erreur {
+  color: var(--refuse);
+  background: var(--refuse-fond);
+  border-color: var(--refuse);
+}
+
+.bandeau-alerte {
+  color: var(--humain);
+  background: var(--humain-fond);
+  border-color: var(--humain);
+}
+
+.panneau {
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+.panneau-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.grille-haut,
+.grille-bas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.placable {
+  margin: 4px 0 2px;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.placable .unite {
+  font-size: 0.35em;
+  font-weight: 500;
+  color: var(--discret);
+}
+
+.placable .indisponible {
+  font-size: 0.45em;
+  font-weight: 600;
+}
+
+.formule {
+  color: var(--discret);
+  font-size: 0.88rem;
+}
+
+.termes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.termes div {
+  border: 1px solid var(--trait);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.termes dt {
+  color: var(--discret);
+  font-size: 0.8rem;
+}
+
+.termes dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Valeurs périmées : lisibles, mais visiblement plus à jour. */
+.perime .montant,
+.perime td,
+.perime dd,
+.perime .synthese,
+.perime .placable,
+.perime li {
+  color: var(--discret);
+  opacity: 0.55;
+}
+
+.perime-note,
+.fraicheur .perime {
+  color: var(--refuse);
+  font-weight: 600;
+}
+
+.erreur {
+  color: var(--refuse);
+  background: var(--refuse-fond);
+  border-left: 4px solid var(--refuse);
+  padding: 6px 10px;
+}
+
+.alerte-ligne {
+  color: var(--humain);
+  background: var(--humain-fond);
+  border-left: 4px solid var(--humain);
+  padding: 6px 10px;
+}
+
+.chargement,
+.vide {
+  color: var(--discret);
+  padding: 10px 0;
+}
+
+.defilement {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+caption {
+  text-align: left;
+  color: var(--discret);
+  padding-bottom: 6px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 7px 10px 7px 0;
+  border-bottom: 1px solid var(--trait);
+}
+
+thead th {
+  color: var(--discret);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+tbody th {
+  font-weight: 500;
+}
+
+.duree {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.decision {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.decision svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.decision-refuse {
+  color: var(--refuse);
+  background: var(--refuse-fond);
+}
+
+.decision-humain {
+  color: var(--humain);
+  background: var(--humain-fond);
+}
+
+.decision-accepte {
+  color: var(--accepte);
+  background: var(--accepte-fond);
+}
+
+.synthese {
+  font-weight: 600;
+}
+
+.hors-contrat {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hors-contrat li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--trait);
+}
+
+.pied {
+  margin-top: 8px;
+  color: var(--discret);
+  font-size: 0.85rem;
+}
