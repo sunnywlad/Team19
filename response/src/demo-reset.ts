@@ -54,7 +54,8 @@ async function main(): Promise<number> {
     console.error(`porte d'entrée : refus (${gateway.status}). Est-elle lancée avec DEMO_MODE=1 ?`);
     return 1;
   }
-  console.log(`jetons réémis : ${(gateway.body as { agents: number }).agents} agents`);
+  const reissued = gateway.body as { agents: number };
+  console.log(`jetons réémis : ${reissued.agents} agents`);
   return 0;
 }
 
