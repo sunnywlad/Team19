@@ -193,6 +193,8 @@ make check
 
 Rejoue la CI en local : secrets, contrats, dépendances, specs, tests de chaque
 dossier, livrables.
+Deux étapes informatives, `offchain` et `semgrep`, échouent aujourd'hui
+sans arrêter la commande : le `Makefile` dit pourquoi pour la première.
 
 ```bash
 make docs
@@ -266,6 +268,10 @@ Détail : [fiche de défense](docs/fiche-defense.md), « Limites ».
 | [docs/fiche-defense.md](docs/fiche-defense.md) | Fiche de défense d'une page, métriques |
 | [docs/playbook.md](docs/playbook.md) | Playbook de réponse, état de chaque étape |
 | [docs/conformite.md](docs/conformite.md) | Contenu de la slide conformité |
+| [docs/pitch/questions-reponses.md](docs/pitch/questions-reponses.md) | Réponses aux questions du jury, et ce que nous ne disons pas |
+| [docs/demo/script-video.md](docs/demo/script-video.md) | Script de la vidéo de démo |
+| [docs/deck/plan.md](docs/deck/plan.md) | Plan du deck en huit slides |
+| [docs/mesures/](docs/mesures/README.md) | Fichiers de mesure et leur format |
 
 ## Équipe
 
