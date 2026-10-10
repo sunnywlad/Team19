@@ -9,6 +9,7 @@ fusionnée, toute modification de ce dossier se décide à quatre.
 | [01-demande.md](01-demande.md) | Demande signée | Loris, Joseph, Wladimir |
 | [02-contrat.md](02-contrat.md) | Contrat : rôles, fonctions, événements, motifs | Wladimir, Joseph |
 | [03-detecteur.md](03-detecteur.md) | Sortie de la porte d'entrée | Loris, Joseph, Nicolas |
+| [03-detecteur.md](03-detecteur.md) § 2 | Demande reçue par la porte d'entrée (sixième interface, point i) | Loris, Joseph |
 | [04-journal.md](04-journal.md) | Entrée de journal et vérification | Loris, Joseph |
 | [05-incident.md](05-incident.md) | Rapport d'incident et réactions automatiques | Loris, Nicolas |
 | [acceptance/scenarios.md](acceptance/scenarios.md) | Les huit scénarios et les invariants | Tous |
