@@ -92,3 +92,57 @@ test("journal coupé : rien n'entre en file (pas d'entrée de journal, pas d'ent
     s.close();
   }
 });
+
+test("retry : une tentative restée sans réponse, puis la reprise, portent la même clé d'idempotence", async () => {
+  // Le service reçoit la première remise et ne répond jamais ; il répond à la seconde.
+  const keys: (string | undefined)[] = [];
+  const bodies: string[] = [];
+  const server = createServer((req, res) => {
+    let raw = "";
+    req.on("data", (chunk) => (raw += chunk));
+    req.on("end", () => {
+      const key = req.headers["idempotency-key"];
+      keys.push(typeof key === "string" ? key : undefined);
+      bodies.push(raw);
+      if (keys.length === 1) return; // silence : le client abandonne à son délai
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end("{}");
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  const journal = new HttpJournal(`http://127.0.0.1:${typeof address === "object" && address ? address.port : 0}`, 150);
+  try {
+    const entry = submitted("11");
+    await assert.rejects(journal.append(entry), (error: unknown) => error instanceof JournalError && error.message === "service de journal injoignable");
+    await journal.append(entry);
+    assert.equal(keys.length, 2, "le service a vu les deux remises");
+    assert.equal(keys[0], idempotencyKey(entry));
+    assert.equal(keys[1], keys[0], "même clé : le service n'écrit qu'une entrée");
+    assert.equal(bodies[1], bodies[0], "même corps : pas de conflit d'idempotence (409)");
+  } finally {
+    server.closeAllConnections();
+    server.close();
+  }
+});
+
+test("retry par la file : la demande refusée faute de journal, remise telle quelle, redonne la même clé ENQUEUED", async () => {
+  let status = 503;
+  const service = await journalService(() => status);
+  const s = makeStack();
+  try {
+    const { Queue } = await import("../src/queue.ts");
+    const { MemoryAlerts } = await import("../src/alerts.ts");
+    const queue = new Queue({ path: ":memory:", policy: s.policy, clock: s.clock.now, journal: new HttpJournal(service.url), alerts: new MemoryAlerts() });
+    const raw = JSON.stringify(await s.client.emit({ request_id: ID, agent_id: s.ids["A-DEM-1"]!, action: "PAY_INVOICE", ref_id: s.ids["F-001"]! }));
+    await assert.rejects(queue.enqueue(raw), JournalError);
+    status = 201;
+    assert.equal((await queue.enqueue(raw)).status, "accepted");
+    assert.deepEqual(service.seen.map((call) => call.key), [service.seen[0]!.key, service.seen[0]!.key]);
+    assert.match(service.seen[0]!.key ?? "", /^ENQUEUED:0x(ab){32}:[0-9a-f]{24}$/);
+    queue.close();
+  } finally {
+    service.server.close();
+    s.close();
+  }
+});
