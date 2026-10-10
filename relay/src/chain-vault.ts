@@ -41,6 +41,28 @@ function normalize(value: unknown): string | number | boolean {
   return String(value).toLowerCase();
 }
 
+// Champs uint64 de chaque événement (échéances et durées, en secondes).
+const UINT64_FIELDS = new Map<string, Set<string>>();
+for (const item of argentVaultAbi) {
+  if (item.type !== "event") continue;
+  UINT64_FIELDS.set(item.name, new Set(item.inputs.filter((input) => input.type === "uint64").map((input) => input.name)));
+}
+
+/**
+ * Arguments décodés d'un événement, sous la forme d'EventArgs : les entiers
+ * 256 bits en chaîne décimale, les uint64 (HoldPlaced.deadline, délais) en
+ * nombre, comme block_timestamp et comme FakeVault. Un uint64 hors des entiers
+ * sûrs reste une chaîne plutôt que de perdre en précision.
+ */
+export function eventArgs(eventName: string, decoded: Record<string, unknown>): EventArgs {
+  const seconds = UINT64_FIELDS.get(eventName);
+  const args: EventArgs = {};
+  for (const [key, value] of Object.entries(decoded)) {
+    args[key] = typeof value === "bigint" && seconds?.has(key) && value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : normalize(value);
+  }
+  return args;
+}
+
 export class ChainVault implements VaultClient {
   readonly #client: PublicClient;
   readonly #config: ChainVaultConfig;
@@ -130,8 +152,7 @@ export class ChainVault implements VaultClient {
       } catch {
         continue; // Événement hors de l'interface gelée : ignoré.
       }
-      const args: EventArgs = {};
-      for (const [key, value] of Object.entries((decoded.args ?? {}) as Record<string, unknown>)) args[key] = normalize(value);
+      const args = eventArgs(decoded.eventName, (decoded.args ?? {}) as Record<string, unknown>);
       out.push({
         name: decoded.eventName,
         txHash: log.transactionHash,

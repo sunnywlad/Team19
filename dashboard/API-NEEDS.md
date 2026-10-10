@@ -109,7 +109,19 @@ répétition).
 |---|---|
 | `/decisions` et `/events` renvoient les **premiers** événements, par `id` croissant. Le dashboard s'interdit de construire une URL à partir d'une donnée reçue : il n'utilise donc pas `since_id`, et au-delà de 500 événements il afficherait les plus anciens. Il le signale (« affichage tronqué »). | `order=desc` : les `limit` derniers, URL fixe. |
 | Le délai restant d'un cas en attente compare une échéance en heure de bloc à l'horloge locale du navigateur. | `head_block_number` et `head_block_timestamp` dans `/status`. |
-| `HoldPlaced.deadline` est un nombre avec `FakeVault` et une chaîne décimale avec `ChainVault` (`uint64` → `bigint`). Le dashboard accepte les deux. | Une seule forme. |
+| `HoldPlaced.deadline` était un nombre avec `FakeVault` et une chaîne décimale avec `ChainVault` (`uint64` → `bigint`). | Fait côté relais : tout `uint64` est un nombre de secondes. Le dashboard accepte toujours les deux formes. |
+
+### Décision courante : aucun schéma ne change
+
+Le relais applique une règle dérivée de `specs/02` § 8 (`relay/README.md`,
+« Décision courante ») : la décision courante d'une demande est son dernier
+`Decision` dont le motif n'est ni `REQUEST_REPLAYED` (3) ni `SIGNATURE_INVALID`
+(4). Sans cela, un rejeu ou une signature forgée sous le même `request_id`
+ferait passer pour refusé un cas 1 dont le montant est toujours bloqué.
+
+- Seul l'événement rendu par `GET /decisions/<request_id>` change. Sa forme reste celle d'une ligne de `/decisions` : `relay-decisions.schema.json` et `relay-events.schema.json` sont inchangés.
+- Les refus ignorés restent dans `/decisions` et `/events`, avec leur motif.
+- Le dashboard n'appelle pas `/decisions/<request_id>` : il ne construit aucune URL à partir d'une donnée reçue. Il déduit les cas en attente de `/decisions`, et ne ferme un cas que sur `APPROVED`, `APPROVAL_REFUSED` ou `APPROVAL_TIMEOUT` : il suit déjà la même règle.
 
 ## Brancher un vrai point d'accès
 

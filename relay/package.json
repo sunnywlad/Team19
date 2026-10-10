@@ -12,6 +12,7 @@
     "test:anvil": "node --test --disable-warning=ExperimentalWarning test/anvil.test.ts",
     "typecheck": "tsc --noEmit",
     "start": "node --disable-warning=ExperimentalWarning src/main.ts",
+    "start:client-ia": "node --disable-warning=ExperimentalWarning src/client-ia.ts",
     "scene": "node --disable-warning=ExperimentalWarning src/scene-cli.ts"
   },
   "dependencies": {

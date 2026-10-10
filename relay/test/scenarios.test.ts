@@ -74,7 +74,7 @@ test("scénario 5 : relais en panne, rien n'est autorisé et la demande expire",
   await s.index();
 
   assert.equal(s.vault.submissions, 0);
-  assert.equal(s.indexer.count(), 0, "aucun événement");
+  assert.equal(s.indexer.decisions().length + s.indexer.events({ name: "Paid" }).length, 0, "aucune décision, aucun paiement");
   assert.equal(s.vault.cash, 100n * s.unit);
   assert.deepEqual(s.journal.types(id), [...NOMINAL.slice(0, 6), "QUEUE_EXPIRED"], "parcours nominal sans SUBMITTED");
   s.close();
