@@ -91,25 +91,32 @@ Un signal figure dans `reason_codes` à partir de 20, même sous le seuil.
 
 ## Mesurer
 
+Mesure faite une seule fois sur `data/jeu-factures/test.jsonl`, règles
+`regles-0.3` figées avant : **50 attaques détectées sur 100, 4 demandes
+légitimes bloquées sur 100**. Fiche complète, réserves et lecture :
+[bench/MESURE.md](bench/MESURE.md).
+
+Sur le jeu de réglage `dev.jsonl`, les mêmes règles détectent 56 attaques sur 60 :
+cet écart est du surapprentissage, et le chiffre à citer est celui de la mesure.
+
 ```bash
-npm run bench -- bench/jeu-provisoire.jsonl
+npm run bench -- ../data/jeu-factures/dev.jsonl
 ```
 
-Une ligne du jeu :
+Une ligne d'un jeu :
 
 ```json
-{"id": "a-001", "label": "attack", "family": "instruction-cachee", "action": "PAY_INVOICE", "mandate": ["PAY_INVOICE"], "document": "…"}
+{"id": "d-001", "label": "attack", "family": "instruction-cachee", "action": "PAY_INVOICE", "mandate": ["PAY_INVOICE"], "document": "…"}
 ```
 
-`label` vaut `legit` ou `attack`. Le banc réserve un tiers du jeu au réglage du
-seuil et mesure sur le reste : rappel, précision, faux positifs, rappel par
-famille, attaques manquées, temps de détection. `--threshold n` change le seuil,
-`--json` sort le rapport pour la fiche de défense, `--min-recall` et
-`--max-false-positives` en font un contrôle de non-régression.
+Le banc sort le rappel, la précision, les faux positifs, le rappel par famille,
+les attaques manquées et le temps de détection. `--threshold n` change le seuil,
+`--json` sort le rapport, `--split` réserve un tiers d'un fichier unique au
+réglage, `--min-recall` et `--max-false-positives` en font un contrôle de
+non-régression.
 
-Premiers chiffres, sur un jeu provisoire écrit par l'auteur des règles : 54,3 %
-des attaques détectées, aucune facture légitime bloquée, sur 77 échantillons.
-Détail, réserves et attaques manquées : [bench/README.md](bench/README.md).
+Les règles sont figées. Les modifier invalide la mesure : à déclarer, voir
+[bench/MESURE.md](bench/MESURE.md).
 
 ## Pause d'un agent
 
@@ -138,8 +145,12 @@ depuis le début.
 - Des règles ne voient que ce qu'elles décrivent. Une attaque formulée autrement
   passe : c'est le scénario 4, que le contrat arrête ensuite. Les attaques
   manquées se lisent dans la sortie du banc.
-- Les seuls chiffres de détection viennent d'un jeu provisoire écrit par l'auteur
-  des règles. La mesure à présenter attend le jeu de `data/`.
+- Une attaque sur deux passe la porte sur le jeu de mesure, et 4 demandes
+  légitimes sur 100 y sont bloquées. Le détecteur n'est pas le rempart : c'est le
+  contrat.
+- Pour ne pas bloquer une facture de formation qui cite des attaques, une phrase
+  qui parle de « reconnaître » ou « détecter » est retirée avant l'analyse. Une
+  attaque rédigée comme un exercice passerait.
 - Doublon et rafale sont comptés en mémoire : un redémarrage les oublie.
 - La porte n'authentifie pas le service de journal et n'écoute que sur `127.0.0.1`.
 - Un corps au-delà de 16 Ko est tronqué avant analyse, puis rejeté.
