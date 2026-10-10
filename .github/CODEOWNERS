@@ -1,0 +1,19 @@
+# Relectures obligatoires. La dernière règle qui correspond l'emporte.
+# TODO : remplacer chaque @TODO-... par le handle GitHub réel. Tant que ce
+# n'est pas fait, GitHub signale le fichier en erreur et n'impose rien.
+
+# Contrats : relus par Loris.
+/contracts/                 @TODO-loris
+
+# Clés, secrets, CI et socle de sécurité : relus par le DevSecOps.
+/.github/                   @TODO-devsecops
+/scripts/                   @TODO-devsecops
+/Makefile                   @TODO-devsecops
+/.gitignore                 @TODO-devsecops
+/.gitleaks.toml             @TODO-devsecops
+/.pre-commit-config.yaml    @TODO-devsecops
+.env*                       @TODO-devsecops
+*.pem                       @TODO-devsecops
+*.key                       @TODO-devsecops
+*keystore*                  @TODO-devsecops
+*secret*                    @TODO-devsecops
