@@ -14,9 +14,9 @@ import type { Facts } from '../lib/payload.ts';
 // Clés dérivées depuis le helper (jamais de littéraux en clair)
 import { ANVIL_KEYS, CHAIN_ID, freePort, startAnvil, deployMockMarket } from './helpers/chain.ts';
 
-const FORGE = process.env['FORGE'] ?? '/home/wladimir/.foundry/bin/forge';
-const ANVIL  = process.env['ANVIL']  ?? '/home/wladimir/.foundry/bin/anvil';
-const CAST   = process.env['CAST']   ?? '/home/wladimir/.foundry/bin/cast';
+const FORGE = process.env['FORGE'] ?? 'forge';
+const ANVIL  = process.env['ANVIL']  ?? 'anvil';
+const CAST   = process.env['CAST']   ?? 'cast';
 
 // ─── helpers cast ─────────────────────────────────────────────────────────────
 

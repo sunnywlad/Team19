@@ -9,8 +9,8 @@ import { toHex } from 'viem';
 import type { Hex } from 'viem';
 import { publicClient as makePublicClient, walletClient as makeWalletClient } from '../../lib/chain.ts';
 
-export const FORGE = process.env['FORGE'] ?? '/home/wladimir/.foundry/bin/forge';
-export const ANVIL  = process.env['ANVIL']  ?? '/home/wladimir/.foundry/bin/anvil';
+export const FORGE = process.env['FORGE'] ?? 'forge';
+export const ANVIL  = process.env['ANVIL']  ?? 'anvil';
 
 export const MNEMONIC = 'test test test test test test test test test test test junk';
 export const CHAIN_ID = 191919;
