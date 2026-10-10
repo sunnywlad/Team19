@@ -7,11 +7,16 @@ import type { ActionName } from "./config.ts";
 import { loadSchema } from "./schema.ts";
 import type { Clock, Hex } from "./types.ts";
 
-type ReasonCode = "INSTRUCTION_IN_DATA" | "AUTHORITY_VIOLATION" | "PAYMENT_ANOMALY" | "SCHEMA_INVALID" | "TOKEN_INVALID" | "RATE_LIMITED";
+export type ReasonCode = "INSTRUCTION_IN_DATA" | "AUTHORITY_VIOLATION" | "PAYMENT_ANOMALY" | "SCHEMA_INVALID" | "TOKEN_INVALID" | "RATE_LIMITED";
 
 /** Types et données de specs/04 § 3 que relay/ et ses bouchons écrivent. */
 export type JournalData = {
   REQUEST_RECEIVED: { received_at_ms: number; document_sha256: string };
+  AUTH_REJECTED: {
+    received_at_ms: number;
+    cause: "TOKEN_MISSING" | "TOKEN_EXPIRED" | "TOKEN_REVOKED" | "TOKEN_UNKNOWN" | "AGENT_MISMATCH";
+    claimed_agent_id: Hex | null;
+  };
   DETECTION: {
     score: number;
     threshold: number;
