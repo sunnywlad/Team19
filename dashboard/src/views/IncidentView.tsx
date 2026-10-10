@@ -192,7 +192,8 @@ function Report({ item, chainPause }: { item: IncidentItem; chainPause: number |
   );
 }
 
-export function IncidentView({ relay, response, sources, now }: ViewProps) {
+export function IncidentView({ view }: { view: ViewProps }) {
+  const { relay, response, sources, now } = view;
   const [selected, setSelected] = useState<string | null>(null);
   const linked = sameWorld(sources);
   return (

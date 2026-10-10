@@ -9,7 +9,8 @@ import { chainPauseTimestamp } from "../domain/delays.ts";
 import { readDecision } from "../domain/reasons.ts";
 import { makeReactionFor, sameWorld, type ViewProps } from "./shared.ts";
 
-export function DecisionsView({ relay, vault, response, sources, now }: ViewProps) {
+export function DecisionsView({ view }: { view: ViewProps }) {
+  const { relay, vault, response, sources, now } = view;
   const reactionFor = makeReactionFor(sources, response.data);
   const linked = sameWorld(sources);
   return (

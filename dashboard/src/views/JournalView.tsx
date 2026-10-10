@@ -56,7 +56,8 @@ function Verdict({ state }: { state: JournalVerification }) {
   );
 }
 
-export function JournalView({ response, sources, now }: ViewProps) {
+export function JournalView({ view }: { view: ViewProps }) {
+  const { response, sources, now } = view;
   return (
     <>
       <Panel title="Journal chaîné" id="titre-journal" source={sources.response} snapshot={response} now={now}>

@@ -11,7 +11,8 @@ import type { ViewProps } from "./shared.ts";
  * justification rédigée par un agent n'est jamais affichée, et rien ici ne
  * permet d'approuver ou de refuser.
  */
-export function PendingView({ relay, sources, now }: ViewProps) {
+export function PendingView({ view }: { view: ViewProps }) {
+  const { relay, sources, now } = view;
   return (
     <Panel title="Cas en attente d'une validation humaine" id="titre-attente" source={sources.relay} snapshot={relay} now={now}>
       {(data) => {

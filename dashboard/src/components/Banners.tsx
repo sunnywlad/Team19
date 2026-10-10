@@ -7,7 +7,8 @@ import { SourceTag } from "./atoms.tsx";
 const NAMES = { relay: "relais", vault: "coffre", response: "service de réponse" } as const;
 
 /** Heure de la dernière lecture réussie de chaque famille de données. */
-export function Freshness({ relay, vault, response, sources, now }: ViewProps) {
+export function Freshness({ view }: { view: ViewProps }) {
+  const { relay, vault, response, sources, now } = view;
   const rows = [
     { key: "relay" as const, snapshot: relay },
     { key: "vault" as const, snapshot: vault },
@@ -27,7 +28,8 @@ export function Freshness({ relay, vault, response, sources, now }: ViewProps) {
   );
 }
 
-export function Banners({ relay, vault, response, sources, now }: ViewProps) {
+export function Banners({ view }: { view: ViewProps }) {
+  const { relay, vault, response, sources, now } = view;
   const stale = [
     isStale(relay, now) ? NAMES.relay : null,
     isStale(vault, now) ? NAMES.vault : null,

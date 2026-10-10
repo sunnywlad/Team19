@@ -78,7 +78,7 @@ export function App({ client }: { client: ApiClient }) {
           <h1>Argent Intelligent</h1>
           <p className="lecture-seule">Tableau de bord en lecture seule</p>
         </div>
-        <Freshness {...view} />
+        <Freshness view={view} />
         <button type="button" className="theme" data-ui="affichage" onClick={nextTheme}>
           Thème : {THEME_LABELS[theme]}
         </button>
@@ -98,12 +98,12 @@ export function App({ client }: { client: ApiClient }) {
           </button>
         ))}
       </nav>
-      <Banners {...view} />
+      <Banners view={view} />
       <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
-        {current === "decisions" && <DecisionsView {...view} />}
-        {current === "incident" && <IncidentView {...view} />}
-        {current === "journal" && <JournalView {...view} />}
-        {current === "attente" && <PendingView {...view} />}
+        {current === "decisions" && <DecisionsView view={view} />}
+        {current === "incident" && <IncidentView view={view} />}
+        {current === "journal" && <JournalView view={view} />}
+        {current === "attente" && <PendingView view={view} />}
       </main>
       <footer className="pied">
         <p>

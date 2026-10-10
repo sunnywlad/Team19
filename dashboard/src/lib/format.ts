@@ -50,7 +50,8 @@ export function formatDateTime(ms: number): string {
 /** Durée mesurée sur une horloge en millisecondes. */
 export function formatDurationMs(ms: number): string {
   if (ms < 1000) return `${ms} ms`;
-  return `${(ms / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} s`;
+  const seconds = (ms / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+  return `${seconds} s`;
 }
 
 /** Durée mesurée sur l'horloge des blocs : précision d'une seconde, pas mieux. */

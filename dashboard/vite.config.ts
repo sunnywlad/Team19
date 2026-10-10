@@ -26,17 +26,16 @@ function apiUrl(name: string, raw: string | undefined, fallback: string): string
   return url.origin;
 }
 
-function csp(dev: { nonce: string; port: number } | null): string {
+function csp(dev: { nonce: string } | null): string {
   const style = dev ? `'self' 'nonce-${dev.nonce}'` : "'self'";
-  // En développement seulement : le canal de rechargement de Vite.
-  const connect = dev ? `'self' ws://${HOST}:${dev.port}` : "'self'";
   return [
     "default-src 'none'",
     "script-src 'self'",
     `style-src ${style}`,
     "img-src 'self'",
     "font-src 'self'",
-    `connect-src ${connect}`,
+    // 'self' couvre aussi le canal de rechargement de Vite (WebSocket de même origine).
+    "connect-src 'self'",
     "base-uri 'none'",
     "form-action 'none'",
     "frame-ancestors 'none'",
@@ -129,7 +128,7 @@ export default defineConfig(({ mode, command, isPreview }) => {
       port: devPort,
       strictPort: true,
       proxy,
-      headers: securityHeaders(csp({ nonce, port: devPort })),
+      headers: securityHeaders(csp({ nonce })),
       fs: { strict: true, allow: [root] },
     },
     preview: { host: HOST, port: 4173, strictPort: true, proxy, headers: securityHeaders(csp(null)) },
