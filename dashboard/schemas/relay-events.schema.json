@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:relay-events:1",
+  "title": "GET /events du relais : IndexedEvent[] (relay/src/indexer.ts)",
+  "type": "array",
+  "maxItems": 500,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "name", "tx_hash", "log_index", "block_number", "block_timestamp", "request_id", "args"],
+    "properties": {
+      "id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "name": { "type": "string", "pattern": "^[A-Za-z]{1,40}$" },
+      "tx_hash": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "log_index": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "block_number": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "block_timestamp": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/blockTimestamp" },
+      "request_id": { "oneOf": [{ "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" }, { "type": "null" }] },
+      "args": {
+        "description": "EventArgs : arguments décodés, entiers 256 bits en chaîne décimale.",
+        "type": "object",
+        "maxProperties": 16,
+        "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9]{0,39}$" },
+        "additionalProperties": {
+          "oneOf": [
+            { "type": "string", "pattern": "^(0x[0-9a-f]{1,64}|[0-9]{1,78})$" },
+            { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+            { "type": "boolean" }
+          ]
+        }
+      }
+    }
+  }
+}

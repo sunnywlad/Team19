@@ -1,0 +1,14 @@
+# Dérogations d'audit de dépendances, lues par scripts/check-deps.sh.
+# Chaque ligne active est passée à pip-audit en --ignore-vuln.
+# (npm audit n'a pas d'équivalent : une vulnérabilité npm se corrige.)
+#
+# Format, un identifiant par ligne :
+#   IDENTIFIANT | raison | AAAA-MM-JJ
+#
+#   IDENTIFIANT : tel qu'affiché par pip-audit (PYSEC-..., GHSA-..., CVE-...)
+#   raison      : pourquoi le risque est accepté, et par qui
+#   date        : dernier jour de validité. Passé ce jour, le contrôle échoue
+#                 tant que la ligne n'est pas retirée ou la dépendance corrigée.
+#
+# Une ligne mal formée fait aussi échouer le contrôle. Aucune dérogation
+# sans date : viser quelques jours, pas la fin du hackathon par défaut.

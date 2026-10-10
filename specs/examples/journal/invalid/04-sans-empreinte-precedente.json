@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "seq": 0,
+  "ts_ms": 1791662520001,
+  "type": "REQUEST_RECEIVED",
+  "component": "GATEWAY",
+  "request_id": "0xea1d6b7c791a1e6b0b1c104aa848a7f8ef9ee0b23e093e2e2a9b8325bdb1b86a",
+  "agent_id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+  "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+  "data": {
+    "received_at_ms": 1791662520000,
+    "document_sha256": "6a5f9ec096b975def798de0894577fc627ece4ddc3dfb7742f7f8ad680df267e"
+  },
+  "hash": "66c02ba034815f6bf7dc0b8b41f2a0736f7260562505acd6a232fb8d22f8f1e4"
+}

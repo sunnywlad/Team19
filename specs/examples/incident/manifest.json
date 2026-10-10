@@ -1,0 +1,38 @@
+{
+  "schema": "../../schemas/incident-report.schema.json",
+  "cases": [
+    {
+      "file": "valid/01-scenario-3-porte-entree.json",
+      "expect": "valid",
+      "why": "Arrêt à la porte d'entrée : contract = null."
+    },
+    {
+      "file": "valid/02-scenario-4-refus-du-contrat.json",
+      "expect": "valid",
+      "why": "Cohérent avec examples/journal/chaine-valide.jsonl (tête = entrée 10)."
+    },
+    {
+      "file": "valid/03-qualifie-par-un-humain.json",
+      "expect": "valid"
+    },
+    {
+      "file": "invalid/01-sans-empreinte-du-journal.json",
+      "expect": "schema-invalid"
+    },
+    {
+      "file": "invalid/02-montant-en-nombre.json",
+      "expect": "schema-invalid",
+      "why": "Montants en chaîne décimale, jamais en nombre JSON."
+    },
+    {
+      "file": "invalid/03-pause-avant-detection.json",
+      "expect": "rule-invalid",
+      "rule": "TIME_ORDER"
+    },
+    {
+      "file": "invalid/04-justification-de-l-agent.json",
+      "expect": "schema-invalid",
+      "why": "Faits bruts seulement : aucun champ libre rédigé par un agent."
+    }
+  ]
+}

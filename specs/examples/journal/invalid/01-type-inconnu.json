@@ -1,0 +1,13 @@
+{
+  "v": 1,
+  "seq": 3,
+  "ts_ms": 1791662520052,
+  "type": "PAYMENT_SENT",
+  "component": "GATEWAY",
+  "request_id": "0xea1d6b7c791a1e6b0b1c104aa848a7f8ef9ee0b23e093e2e2a9b8325bdb1b86a",
+  "agent_id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+  "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+  "data": {},
+  "prev_hash": "758d65ce06d496970ec9fed829524c035ecf0d3a98583a59ca7bc0f3ff81d437",
+  "hash": "8d8ec48d48df9cfacbf581ff7bd7d473a4d39bb908608ba4086d925e9dd4512e"
+}
