@@ -3,7 +3,7 @@
 // lui remettent type, component, les trois identifiants et data.
 //
 // Stockage : un fichier, une entrée JSON par ligne, dans l'ordre de seq.
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, unlinkSync, writeSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync, writeSync } from "node:fs";
 import { dirname } from "node:path";
 import { GENESIS_HASH, canonical, entryHash, journalEntryValidator, serialize } from "./chain.ts";
 import type { Entry, Head, NewEntry } from "./chain.ts";
@@ -223,6 +223,25 @@ export class JournalStore {
       (e) => e.seq >= from && (filter.requestId === undefined || e.request_id === filter.requestId),
     );
     return filter.limit === undefined ? selected : selected.slice(0, filter.limit);
+  }
+
+  // Mode démo uniquement : archive le journal et repart d'une chaîne neuve.
+  // Rien n'est effacé : le fichier est renommé, et sa tête est écrite à côté,
+  // pour pouvoir encore le vérifier avec --expect-head.
+  archive(stamp: string): { archive: string; head: Head } {
+    if (this.#closed) throw new Error("journal fermé");
+    const head = this.head();
+    closeSync(this.#fd);
+    closeSync(this.#keysFd);
+    const archive = `${this.#path}.${stamp}.bak`;
+    renameSync(this.#path, archive);
+    if (existsSync(this.#keysPath)) renameSync(this.#keysPath, `${archive}.keys`);
+    writeFileSync(`${archive}.head.json`, JSON.stringify(head), "utf8");
+    this.#entries.length = 0;
+    this.#keys.clear();
+    this.#fd = openSync(this.#path, "a");
+    this.#keysFd = openSync(this.#keysPath, "a");
+    return { archive, head };
   }
 
   get path(): string {

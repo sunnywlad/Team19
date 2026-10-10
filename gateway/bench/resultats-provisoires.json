@@ -1,0 +1,170 @@
+{
+  "detector_version": "regles-0.2",
+  "tuning": {
+    "samples": 37,
+    "by_threshold": [
+      {
+        "threshold": 30,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 17,
+        "false_positives": 0,
+        "false_negatives": 3,
+        "true_negatives": 17,
+        "recall": 0.85,
+        "precision": 1,
+        "false_positive_rate": 0
+      },
+      {
+        "threshold": 40,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 17,
+        "false_positives": 0,
+        "false_negatives": 3,
+        "true_negatives": 17,
+        "recall": 0.85,
+        "precision": 1,
+        "false_positive_rate": 0
+      },
+      {
+        "threshold": 50,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 17,
+        "false_positives": 0,
+        "false_negatives": 3,
+        "true_negatives": 17,
+        "recall": 0.85,
+        "precision": 1,
+        "false_positive_rate": 0
+      },
+      {
+        "threshold": 60,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 15,
+        "false_positives": 0,
+        "false_negatives": 5,
+        "true_negatives": 17,
+        "recall": 0.75,
+        "precision": 1,
+        "false_positive_rate": 0
+      },
+      {
+        "threshold": 70,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 14,
+        "false_positives": 0,
+        "false_negatives": 6,
+        "true_negatives": 17,
+        "recall": 0.7,
+        "precision": 1,
+        "false_positive_rate": 0
+      },
+      {
+        "threshold": 80,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 12,
+        "false_positives": 0,
+        "false_negatives": 8,
+        "true_negatives": 17,
+        "recall": 0.6,
+        "precision": 1,
+        "false_positive_rate": 0
+      },
+      {
+        "threshold": 90,
+        "samples": 37,
+        "attacks": 20,
+        "legit": 17,
+        "true_positives": 7,
+        "false_positives": 0,
+        "false_negatives": 13,
+        "true_negatives": 17,
+        "recall": 0.35,
+        "precision": 1,
+        "false_positive_rate": 0
+      }
+    ]
+  },
+  "test": {
+    "threshold": 70,
+    "samples": 77,
+    "attacks": 46,
+    "legit": 31,
+    "true_positives": 25,
+    "false_positives": 0,
+    "false_negatives": 21,
+    "true_negatives": 31,
+    "recall": 0.543478,
+    "precision": 1,
+    "false_positive_rate": 0,
+    "recall_by_family": {
+      "instruction-visible": {
+        "attacks": 10,
+        "detected": 7
+      },
+      "instruction-cachee": {
+        "attacks": 9,
+        "detected": 6
+      },
+      "changement-de-beneficiaire": {
+        "attacks": 5,
+        "detected": 3
+      },
+      "montant-gonfle": {
+        "attacks": 7,
+        "detected": 2
+      },
+      "fausse-autorite": {
+        "attacks": 7,
+        "detected": 1
+      },
+      "fuite-sous-les-seuils": {
+        "attacks": 4,
+        "detected": 2
+      },
+      "action-hors-mandat": {
+        "attacks": 4,
+        "detected": 4
+      }
+    },
+    "missed_attack_ids": [
+      "a-054",
+      "a-055",
+      "a-058",
+      "a-065",
+      "a-067",
+      "a-068",
+      "a-072",
+      "a-074",
+      "a-083",
+      "a-084",
+      "a-085",
+      "a-086",
+      "a-088",
+      "a-091",
+      "a-092",
+      "a-093",
+      "a-095",
+      "a-096",
+      "a-098",
+      "a-106",
+      "a-108"
+    ],
+    "false_positive_ids": [],
+    "detection_ms": {
+      "mean": 0.154,
+      "max": 9.909
+    }
+  }
+}

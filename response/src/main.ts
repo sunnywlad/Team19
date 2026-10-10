@@ -7,6 +7,7 @@
 //   RESPONSE_AGENTS_FILE  agents et mandats (défaut : specs/examples/fixtures.json)
 //   QUARANTINE_DIR        documents gelés par la porte (défaut : ../gateway/var/quarantine)
 //   RESPONSE_DATA_DIR     rapports d'incident (défaut : var/)
+//   DEMO_MODE             1 pour ouvrir POST /demo/reset (archive et chaîne neuve)
 //
 // Aucune de ces variables n'est un secret : ce service ne tient aucune clé.
 import { readFileSync } from "node:fs";
@@ -49,7 +50,8 @@ function notify(alert: Alert): void {
 
 const store = JournalStore.open(file);
 const engine = new ResponseEngine({ store, clock: Date.now, mandates, quarantineDir, reportsDir: join(dataDir, "incidents"), notify });
-const server = createJournalServer(store, engine);
+const demoMode = process.env["DEMO_MODE"] === "1";
+const server = createJournalServer(store, engine, Date.now, { demoMode });
 const relay = new RelayWatch(relayUrl, engine);
 
 // Décisions du contrat : chaque seconde. File : toutes les 5 secondes.
@@ -78,4 +80,5 @@ server.listen(port, "127.0.0.1", () => {
   console.log(`journal : ${file}`);
   console.log(`écoute sur http://127.0.0.1:${port}, ${head.count} entrées, tête ${head.hash}`);
   console.log(`relais lu sur ${relayUrl}, ${mandates.size} agents connus`);
+  if (demoMode) console.log("MODE DÉMO : POST /demo/reset archive le journal et repart d'une chaîne neuve");
 });
