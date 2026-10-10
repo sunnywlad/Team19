@@ -1,0 +1,75 @@
+{
+  "report_version": 1,
+  "incident_id": "0x37a0f65f2c1d1cd57e8e4c3d0c8734bc63bc41cb91d61a636924342fc316b5ce",
+  "generated_at_ms": 1791663120100,
+  "trigger": "CONTRACT_REFUSAL",
+  "request_ids": [
+    "0xea1d6b7c791a1e6b0b1c104aa848a7f8ef9ee0b23e093e2e2a9b8325bdb1b86a"
+  ],
+  "authority_chain": {
+    "agent_id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+    "agent_mandate": [
+      "PAY_INVOICE"
+    ],
+    "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+    "client_signer": "0x2294022049feaae4987f70d940af08735d4af542",
+    "request_digest": "0xd97df330fd213133e0a3656e54b8392b116cc2fdbb9bf7ed920c1da59dd60fae",
+    "relay_tx_hash": "0x6cd5c5d6ab76509a6ef07d2a4c04ca4a07c6c3ab8c3689fcfd4d7cee127fb64a"
+  },
+  "timestamps": {
+    "received_at_ms": 1791662520000,
+    "detected_at_ms": 1791662523000,
+    "observed_at_ms": 1791662524480,
+    "paused_at_ms": 1791662524491,
+    "alerted_at_ms": 1791662524502
+  },
+  "detector": {
+    "score": 12,
+    "threshold": 70,
+    "reason_codes": []
+  },
+  "contract": {
+    "decision": 0,
+    "reason": 1,
+    "tx_hash": "0x6cd5c5d6ab76509a6ef07d2a4c04ca4a07c6c3ab8c3689fcfd4d7cee127fb64a",
+    "block_number": 1042,
+    "block_timestamp": 1791662523
+  },
+  "amounts": {
+    "exposed_wei": null,
+    "out_wei": "0"
+  },
+  "automatic_actions": [
+    {
+      "action": "QUARANTINE",
+      "at_ms": 1791662524486,
+      "journal_seq": 8
+    },
+    {
+      "action": "AGENT_PAUSE_OFFCHAIN",
+      "at_ms": 1791662524491,
+      "journal_seq": 9
+    },
+    {
+      "action": "ALERT",
+      "at_ms": 1791662524502,
+      "journal_seq": 10
+    },
+    {
+      "action": "REPORT",
+      "at_ms": 1791662524520,
+      "journal_seq": 11
+    }
+  ],
+  "human_decision": {
+    "decision": "ATTACK_CONFIRMED",
+    "author_role": "ANALYST",
+    "author_id": "0xdd8c2bc6d65aa1cde9616ff31fbabc6e17f7229396de9ff9098cc4063a225304",
+    "at_ms": 1791663120000,
+    "journal_seq": 13
+  },
+  "journal_head": {
+    "seq": 13,
+    "hash": "4cbe3006a0c31e6f7427dd58660c5f0a4a1ede0b24a6d3797cee1c61017e27a8"
+  }
+}
