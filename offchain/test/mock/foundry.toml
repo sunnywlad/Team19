@@ -1,0 +1,7 @@
+[profile.default]
+src        = "."
+out        = "out"
+cache_path = "cache"
+libs       = ["../../../lib"]
+remappings = ["src/=../../../src/"]
+allow_paths = ["../../../src"]

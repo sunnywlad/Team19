@@ -20,8 +20,8 @@ defaults:
 
 # Actions épinglées par SHA de commit complet (tag en commentaire).
 # Outils épinglés par version exacte ; gitleaks en plus par SHA-256
-# (scripts/gitleaks.sh). Chaque job rejoue un script de scripts/, que
-# « make check » lance à l'identique en local.
+# (scripts/gitleaks.sh). Chaque job rejoue ce que « make check » lance en
+# local : un script de scripts/, ou la cible make du dossier concerné.
 
 jobs:
   secrets:
@@ -111,6 +111,85 @@ jobs:
         run: python -m pip install --disable-pip-version-check semgrep==1.153.1
       - name: semgrep (règles figées, --metrics=off)
         run: scripts/check-semgrep.sh
+
+  specs:
+    name: specs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Y a-t-il des specs ?
+        id: detect
+        run: |
+          if [ -f specs/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "specs : dossier absent, rien à valider"
+          fi
+      - if: steps.detect.outputs.present == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      - if: steps.detect.outputs.present == 'true'
+        name: Installer le validateur (lockfile, aucun script tiers)
+        working-directory: specs
+        run: npm ci --ignore-scripts --no-fund --no-audit
+      - if: steps.detect.outputs.present == 'true'
+        name: Chaque exemple validé contre son schéma
+        run: make specs
+
+  relay:
+    name: relay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Y a-t-il un relais ?
+        id: detect
+        run: |
+          if [ -f relay/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "relay : dossier absent, rien à tester"
+          fi
+      - if: steps.detect.outputs.present == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.21.1"
+      # Le test sur chaîne locale a besoin d'anvil et de forge. Si Foundry ne
+      # s'installe pas, le job continue : ce test s'ignore de lui-même.
+      - if: steps.detect.outputs.present == 'true'
+        name: Installer Foundry (facultatif)
+        continue-on-error: true
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
+        with:
+          version: v1.8.5
+      - if: steps.detect.outputs.present == 'true'
+        name: Le test sur anvil tournera-t-il ?
+        run: |
+          if command -v anvil >/dev/null 2>&1 && command -v forge >/dev/null 2>&1; then
+            echo "relay : test sur anvil activé"
+          else
+            echo "::notice title=relay::anvil ou forge indisponible, test sur chaîne locale ignoré"
+          fi
+      - if: steps.detect.outputs.present == 'true'
+        name: Installer les dépendances (lockfile, aucun script tiers)
+        working-directory: relay
+        run: npm ci --ignore-scripts --no-fund --no-audit
+      - if: steps.detect.outputs.present == 'true'
+        name: Types
+        working-directory: relay
+        run: npm run typecheck
+      - if: steps.detect.outputs.present == 'true'
+        name: Tests (scénarios 1, 5 et 8, idempotence, reprise)
+        working-directory: relay
+        run: npm test
 
   detecteur:
     name: detecteur

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:relay-decisions:1",
+  "title": "GET /decisions du relais : IndexedDecision[] (relay/src/indexer.ts)",
+  "type": "array",
+  "maxItems": 500,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id", "request_id", "agent_id", "client_id", "action", "decision", "reason", "reason_name",
+      "effective_decision", "ref_id", "tx_hash", "log_index", "block_number", "block_timestamp"
+    ],
+    "properties": {
+      "id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "request_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "agent_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "client_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "action": { "type": "integer", "minimum": 0, "maximum": 255 },
+      "decision": { "type": "integer", "minimum": 0, "maximum": 255 },
+      "reason": { "type": "integer", "minimum": 0, "maximum": 255 },
+      "reason_name": { "oneOf": [{ "type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,39}$" }, { "type": "null" }] },
+      "effective_decision": { "enum": [0, 1, 2] },
+      "ref_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "tx_hash": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "log_index": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "block_number": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "block_timestamp": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/blockTimestamp" }
+    }
+  }
+}

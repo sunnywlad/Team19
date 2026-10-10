@@ -1,0 +1,3 @@
+# Dépendances et données locales de response/ : jamais versionnées.
+node_modules/
+var/

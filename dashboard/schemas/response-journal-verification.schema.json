@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:response-journal-verification:1",
+  "title": "PROPOSÉ (API-NEEDS.md) : GET /journal/verification, tête et dernière vérification (specs/04 § 5)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["head", "verification"],
+  "properties": {
+    "head": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seq", "hash"],
+          "properties": {
+            "seq": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+            "hash": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/sha256" }
+          }
+        }
+      ]
+    },
+    "verification": {
+      "description": "null : aucune vérification n'a tourné.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verified_at_ms", "result", "defect", "defect_seq", "entries", "head_seq", "head_hash", "expected_head_checked"],
+          "properties": {
+            "verified_at_ms": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/unixMillis" },
+            "result": { "description": "Codes de sortie 0, 1, 2, 3 de verify-journal.", "enum": ["OK", "BROKEN", "FORMAT", "HEAD_MISMATCH"] },
+            "defect": { "enum": [null, "SEQ_MISMATCH", "PREV_MISMATCH", "HASH_MISMATCH", "FORMAT", "HEAD_MISMATCH"] },
+            "defect_seq": { "oneOf": [{ "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" }, { "type": "null" }] },
+            "entries": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+            "head_seq": { "oneOf": [{ "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" }, { "type": "null" }] },
+            "head_hash": { "oneOf": [{ "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/sha256" }, { "type": "null" }] },
+            "expected_head_checked": { "description": "true si la vérification a comparé la tête à une référence conservée hors du journal (--expect-head).", "type": "boolean" }
+          }
+        }
+      ]
+    }
+  }
+}
