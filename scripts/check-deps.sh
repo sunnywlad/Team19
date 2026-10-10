@@ -3,6 +3,7 @@
 #   - package.json sans lockfile                      -> échec
 #   - package-lock.json : npm ci + npm audit --audit-level=high
 #   - requirements*.txt : toute ligne doit être figée par « == », puis pip-audit
+#   - .audit-waivers.txt : dérogations pip-audit datées ; expirée -> échec
 # Usage : scripts/check-deps.sh [--detect]
 #   --detect : affiche « node=true|false » et « python=true|false » (pour la CI).
 set -euo pipefail
@@ -73,6 +74,41 @@ while IFS= read -r pkg; do
   fi
 done <<< "$packages"
 
+# Dérogations : « identifiant | raison | AAAA-MM-JJ » (voir .audit-waivers.txt).
+# Validées même sans requirements*.txt, pour qu'une dérogation périmée ou
+# mal formée ne reste jamais en place sans bruit.
+WAIVERS="$ROOT/.audit-waivers.txt"
+trim() {
+  local s="$1"
+  s="${s#"${s%%[![:space:]]*}"}"
+  s="${s%"${s##*[![:space:]]}"}"
+  printf '%s' "$s"
+}
+ignore_args=()
+if [ -f "$WAIVERS" ]; then
+  today="$(date -u +%Y-%m-%d)"
+  id_re='^[A-Za-z0-9._-]+$'
+  date_re='^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+  lineno=0
+  while IFS= read -r line || [ -n "$line" ]; do
+    lineno=$((lineno + 1))
+    line="$(trim "$line")"
+    case "$line" in "" | "#"*) continue ;; esac
+    IFS='|' read -r id reason expiry extra <<< "$line"
+    id="$(trim "$id")"
+    reason="$(trim "$reason")"
+    expiry="$(trim "$expiry")"
+    if ! [[ $id =~ $id_re ]] || [ -z "$reason" ] || ! [[ $expiry =~ $date_re ]] || [ -n "$extra" ]; then
+      fail ".audit-waivers.txt:$lineno : attendu « identifiant | raison | AAAA-MM-JJ »"
+    elif [[ $expiry < $today ]]; then
+      fail ".audit-waivers.txt:$lineno : dérogation $id expirée le $expiry"
+    else
+      echo "dérogation active : $id jusqu'au $expiry ($reason)"
+      ignore_args+=(--ignore-vuln "$id")
+    fi
+  done < "$WAIVERS"
+fi
+
 while IFS= read -r req; do
   [ -n "$req" ] || continue
   echo "==> $req : versions figées + pip-audit"
@@ -101,8 +137,10 @@ while IFS= read -r req; do
     fail "$req : pip-audit introuvable, audit impossible"
     continue
   fi
-  # pip-audit ne filtre pas par gravité : toute vulnérabilité connue bloque.
-  pip-audit --requirement "$req" --progress-spinner off < /dev/null ||
+  # pip-audit ne filtre pas par gravité : toute vulnérabilité connue bloque,
+  # sauf dérogation en cours de validité.
+  pip-audit --requirement "$req" --progress-spinner off \
+    ${ignore_args[@]+"${ignore_args[@]}"} < /dev/null ||
     fail "$req : pip-audit"
 done <<< "$requirements"
 

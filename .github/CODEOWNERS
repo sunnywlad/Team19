@@ -11,6 +11,7 @@
 /Makefile                   @TODO-devsecops
 /.gitignore                 @TODO-devsecops
 /.gitleaks.toml             @TODO-devsecops
+/.audit-waivers.txt         @TODO-devsecops
 /.pre-commit-config.yaml    @TODO-devsecops
 .env*                       @TODO-devsecops
 *.pem                       @TODO-devsecops
