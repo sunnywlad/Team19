@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:relay-status:1",
+  "title": "GET /status du relais (relay/src/api.ts)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["next_block", "confirmations", "events"],
+  "properties": {
+    "next_block": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$" },
+    "confirmations": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+    "events": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" }
+  }
+}
