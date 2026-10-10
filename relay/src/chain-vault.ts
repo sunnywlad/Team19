@@ -114,7 +114,9 @@ export class ChainVault implements VaultClient {
   }
 
   async blockNumber(): Promise<bigint> {
-    return this.#client.getBlockNumber();
+    // Sans cache : viem garde sinon le dernier numéro quelques secondes, et
+    // l'indexeur croirait la chaîne arrêtée.
+    return this.#client.getBlockNumber({ cacheTime: 0 });
   }
 
   async events(fromBlock: bigint, toBlock: bigint): Promise<VaultEvent[]> {

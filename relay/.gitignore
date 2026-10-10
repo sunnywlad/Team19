@@ -1,0 +1,7 @@
+# Dépendances et données locales de relay/ : jamais versionnées.
+node_modules/
+var/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
