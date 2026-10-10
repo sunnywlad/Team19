@@ -398,3 +398,162 @@ tbody th {
   color: var(--discret);
   font-size: 0.85rem;
 }
+
+/* --- Navigation et écrans Incident, Journal, En attente --- */
+h3 {
+  margin: 16px 0 6px;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--discret);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.onglets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--trait);
+}
+
+.onglets button {
+  padding: 8px 14px;
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  color: var(--discret);
+}
+
+.onglets button[aria-current="page"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.fiche,
+.compteurs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 18px;
+  margin: 0;
+}
+
+.fiche dt,
+.compteurs dt {
+  color: var(--discret);
+  font-size: 0.8rem;
+}
+
+.fiche dd,
+.compteurs dd {
+  margin: 0;
+}
+
+.compteurs dd {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.selecteur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.selecteur button {
+  padding: 5px 10px;
+  background: var(--fond);
+  border: 1px solid var(--trait);
+  border-radius: 6px;
+}
+
+.selecteur button[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.jeton {
+  margin-right: 8px;
+}
+
+.actions {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.extrait {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px dashed var(--refuse);
+  border-radius: 6px;
+}
+
+.extrait figcaption {
+  color: var(--refuse);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.extrait .non-fiable {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.empreinte {
+  overflow-wrap: anywhere;
+}
+
+.verdict {
+  padding: 8px 12px;
+  border-left: 4px solid;
+  border-radius: 0 6px 6px 0;
+}
+
+.verdict-ok {
+  color: var(--accepte);
+  background: var(--accepte-fond);
+}
+
+.verdict-ko {
+  color: var(--refuse);
+  background: var(--refuse-fond);
+}
+
+.verdict-inconnu {
+  color: var(--humain);
+  background: var(--humain-fond);
+}
+
+.limite {
+  border: 1px solid var(--trait);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.cas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cas li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--trait);
+}
+
+.cas dd {
+  font-size: 1.1rem;
+}

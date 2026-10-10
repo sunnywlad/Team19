@@ -66,8 +66,13 @@ describe("lecture seule", () => {
     await screen.findAllByTestId("decision");
     await tour();
     expect(document.querySelectorAll("form, input, textarea, select")).toHaveLength(0);
-    for (const button of screen.queryAllByRole("button")) {
-      expect(button.textContent ?? "").not.toMatch(/approuv|pay|pause|refus|reprendre|valider/i);
+    // Les seuls boutons sont de navigation : changer d'écran, choisir un incident.
+    const buttons = screen.queryAllByRole("button");
+    expect(buttons.length).toBeGreaterThanOrEqual(4);
+    for (const button of buttons) {
+      expect(button.getAttribute("data-nav")).toBe("true");
+      expect(button.textContent ?? "").not.toMatch(/^(approuver|payer|refuser|reprendre|valider|mettre en pause|lever)/i);
     }
+    expect(document.querySelectorAll("a[href]")).toHaveLength(0);
   });
 });
