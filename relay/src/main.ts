@@ -1,9 +1,10 @@
 // Lance le relais, l'indexeur et l'API en lecture seule dans un seul processus.
 //   npm start        (variables : voir relay/.env.example)
 import { createApi, listen, API_HOST } from "./api.ts";
-import { intEnv } from "./config.ts";
+import { intEnv, readEnv } from "./config.ts";
+import { HttpJournal } from "./http-journal.ts";
 import { Indexer } from "./indexer.ts";
-import { MemoryJournal } from "./journal.ts";
+import { MemoryJournal, type JournalClient } from "./journal.ts";
 import { StaticPauseSource, VaultPauseSource, anyPause } from "./pauses.ts";
 import { Queue } from "./queue.ts";
 import { Relay } from "./relay.ts";
@@ -14,10 +15,13 @@ const policy = policyFromEnv();
 const { vault, note } = vaultFromEnv();
 console.error(`[relay] ${note}`);
 
-// BOUCHONS, à remplacer par feat/reponse-journal : le journal reste en mémoire
-// et la liste des pauses hors chaîne est vide.
-const journal = new MemoryJournal(systemClock);
-console.error("[relay] journal : bouchon en mémoire, rien n'est conservé");
+// Journal : le service de response/ si JOURNAL_URL est posée. Il devient alors
+// obligatoire : sans réponse de sa part, rien n'entre en file et rien n'est
+// soumis. Sans JOURNAL_URL, bouchon en mémoire, pour un essai isolé.
+// BOUCHON restant : la liste des pauses hors chaîne est vide.
+const journalUrl = readEnv("JOURNAL_URL");
+const journal: JournalClient = journalUrl === undefined ? new MemoryJournal(systemClock) : new HttpJournal(journalUrl);
+console.error(journalUrl === undefined ? "[relay] journal : bouchon en mémoire, rien n'est conservé (JOURNAL_URL absente)" : "[relay] journal : service de journal (JOURNAL_URL)");
 
 const queue = new Queue({ path: dbPath("QUEUE_DB", "var/queue.db"), policy, clock: systemClock, journal, alerts: stderrAlerts });
 const relay = new Relay({
@@ -36,7 +40,7 @@ const indexer = new Indexer({
   confirmations: policy.confirmations,
 });
 
-const port = await listen(createApi({ indexer, queue, confirmations: policy.confirmations }), intEnv("API_PORT", 8787));
+const port = await listen(createApi({ indexer, queue, confirmations: policy.confirmations, vault }), intEnv("API_PORT", 8787));
 console.error(`[relay] API en lecture seule sur http://${API_HOST}:${port}`);
 
 // Un tour à la fois : jamais deux soumissions concurrentes de la même file.

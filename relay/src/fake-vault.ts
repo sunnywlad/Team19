@@ -6,7 +6,7 @@ import type { Address } from "viem";
 import { ACTION, DECISION, REASON, type ActionName, type Policy } from "./config.ts";
 import { recoverRequestSigner, type Domain } from "./signer.ts";
 import { toSeconds, type Clock, type Hex, type SignedRequest } from "./types.ts";
-import type { EventArgs, SubmitOutcome, VaultClient, VaultEvent } from "./vault.ts";
+import type { EventArgs, SubmitOutcome, VaultClient, VaultEvent, VaultState } from "./vault.ts";
 
 type RefStatus = "Admitted" | "Held" | "Settled" | "Cancelled";
 type Ref = { beneficiaryId: Hex; amount: bigint; status: RefStatus };
@@ -119,6 +119,22 @@ export class FakeVault implements VaultClient {
   async events(fromBlock: bigint, toBlock: bigint): Promise<VaultEvent[]> {
     if (this.fault === "down") throw new Error("RPC injoignable (simulé)");
     return this.#events.filter((e) => e.blockNumber >= fromBlock && e.blockNumber <= toBlock);
+  }
+
+  async state(): Promise<VaultState> {
+    if (this.fault === "down") throw new Error("RPC injoignable (simulé)");
+    return {
+      block_number: Number(this.#block),
+      block_timestamp: this.#now(),
+      cash_wei: this.cash.toString(),
+      admitted_debts_wei: this.admittedDebts().toString(),
+      safety_reserve_wei: this.#init.safetyReserve.toString(),
+      total_held_wei: this.totalHeld().toString(),
+      held_placements_wei: this.heldPlacements().toString(),
+      placeable_wei: this.placeable().toString(),
+      threshold_wei: this.#init.threshold.toString(),
+      vault_paused: this.vaultPaused,
+    };
   }
 
   async submit(request: SignedRequest): Promise<SubmitOutcome> {

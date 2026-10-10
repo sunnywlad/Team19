@@ -112,6 +112,7 @@ export const ENV_NAMES = [
   "CONFIRMATIONS",
   "API_PORT",
   "POLL_INTERVAL_MS",
+  "JOURNAL_URL",
 ] as const;
 export type EnvName = (typeof ENV_NAMES)[number];
 

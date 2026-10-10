@@ -28,6 +28,26 @@ export type VaultEvent = {
   args: EventArgs;
 };
 
+/**
+ * Vues de specs/02 § 4, lues au même bloc, sans aucun calcul ici. Une vue qui
+ * n'a pas pu être lue vaut null : le lecteur affiche « non disponible », jamais
+ * 0. Forme attendue par le dashboard (dashboard/API-NEEDS.md § 1). Montants en
+ * wei, chaîne décimale.
+ */
+export type VaultState = {
+  block_number: number;
+  /** Horodatage du bloc, en secondes. */
+  block_timestamp: number;
+  cash_wei: string | null;
+  admitted_debts_wei: string | null;
+  safety_reserve_wei: string | null;
+  total_held_wei: string | null;
+  held_placements_wei: string | null;
+  placeable_wei: string | null;
+  threshold_wei: string | null;
+  vault_paused: boolean | null;
+};
+
 export interface VaultClient {
   submit(request: SignedRequest): Promise<SubmitOutcome>;
   /** Lève une erreur si le coffre est injoignable : l'appelant échoue fermé. */
@@ -35,6 +55,8 @@ export interface VaultClient {
   blockNumber(): Promise<bigint>;
   /** Événements du coffre sur l'intervalle de blocs, bornes incluses, dans l'ordre. */
   events(fromBlock: bigint, toBlock: bigint): Promise<VaultEvent[]>;
+  /** Lève une erreur si le bloc de référence ne peut pas être lu. */
+  state(): Promise<VaultState>;
 }
 
 /**
@@ -56,6 +78,9 @@ export class ClosedVault implements VaultClient {
     throw new Error(this.#cause);
   }
   async events(): Promise<VaultEvent[]> {
+    throw new Error(this.#cause);
+  }
+  async state(): Promise<VaultState> {
     throw new Error(this.#cause);
   }
 }
