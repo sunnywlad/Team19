@@ -31,8 +31,24 @@ function fail(msg) {
   console.error("ECHEC " + msg);
   failures += 1;
 }
+// Les chemins lus viennent des manifestes versionnés, pas d'une entrée
+// extérieure. On vérifie quand même qu'ils restent sous specs/ : un manifeste
+// qui remonterait avec « ../ » fait échouer le contrôle au lieu d'être suivi.
+function inside(file) {
+  // C'est ici que le chemin est validé : la ligne suivante le borne à specs/.
+  // nosemgrep: tools.semgrep-rules.javascript.lang.security.audit.path-traversal.path-join-resolve-traversal
+  const abs = path.resolve(file);
+  if (abs !== ROOT && !abs.startsWith(ROOT + path.sep)) {
+    throw new Error("chemin hors de specs/ : " + file);
+  }
+  return abs;
+}
+function readText(file) {
+  // nosemgrep: tools.semgrep-rules.javascript.lang.security.audit.detect-non-literal-fs-filename
+  return fs.readFileSync(inside(file), "utf8");
+}
 function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  return JSON.parse(readText(file));
 }
 
 // --- Règles hors schéma ------------------------------------------------------
@@ -113,8 +129,11 @@ function verifyChain(lines, validate) {
 // --- Parcours des manifestes -------------------------------------------------
 
 function listJson(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter((f) => f.endsWith(".json")).sort();
+  const safe = inside(dir);
+  // nosemgrep: tools.semgrep-rules.javascript.lang.security.audit.detect-non-literal-fs-filename
+  if (!fs.existsSync(safe)) return [];
+  // nosemgrep: tools.semgrep-rules.javascript.lang.security.audit.detect-non-literal-fs-filename
+  return fs.readdirSync(safe).filter((f) => f.endsWith(".json")).sort();
 }
 
 for (const name of fs.readdirSync(EXAMPLES).sort()) {
@@ -170,7 +189,13 @@ for (const name of fs.readdirSync(EXAMPLES).sort()) {
   for (const c of manifest.chains || []) {
     checked += 1;
     const label = `${name}/${c.file}`;
-    const lines = fs.readFileSync(path.join(dir, c.file), "utf8").split("\n").filter((l) => l !== "");
+    let lines;
+    try {
+      lines = readText(path.join(dir, c.file)).split("\n").filter((l) => l !== "");
+    } catch (e) {
+      fail(`${label} : illisible (${e.message})`);
+      continue;
+    }
     const res = verifyChain(lines, validate);
     if (res.code !== c.expect) {
       fail(`${label} : attendu ${c.expect}, obtenu ${res.code} à l'entrée ${res.at}`);
