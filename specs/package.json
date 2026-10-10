@@ -1,0 +1,12 @@
+{
+  "name": "argent-intelligent-specs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Outillage de validation des exemples de specs/ contre leurs schémas. Aucun code applicatif.",
+  "scripts": {
+    "check": "node tools/validate.js"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
+  }
+}

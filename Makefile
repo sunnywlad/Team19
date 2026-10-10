@@ -1,5 +1,5 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
-.PHONY: setup check secrets contrat dependances semgrep lint-ci scan-final
+.PHONY: setup check secrets contrat dependances specs semgrep lint-ci scan-final
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -7,7 +7,7 @@ setup:
 	scripts/setup-dev.sh
 
 # Bloquants d'abord, informatifs ensuite (préfixe « - » : n'arrête pas make).
-check: secrets contrat dependances lint-ci semgrep
+check: secrets contrat dependances specs lint-ci semgrep
 
 secrets:
 	$(PRE_COMMIT) run --all-files
@@ -19,6 +19,10 @@ contrat:
 
 dependances:
 	scripts/check-deps.sh
+
+# Chaque exemple de specs/examples validé contre son schéma (ajv épinglé).
+specs:
+	specs/tools/check.sh
 
 semgrep:
 	-scripts/check-semgrep.sh
