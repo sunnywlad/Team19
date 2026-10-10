@@ -9,10 +9,12 @@ Les interfaces viennent de [../specs/](../specs/) et ne sont pas redéfinies ici
 
 | Fichier | Rôle |
 |---|---|
-| [src/signer.ts](src/signer.ts) | Bouchon de l'IA du client : construit et signe la demande (EIP-712) |
+| [src/signer.ts](src/signer.ts) | Signataire du client : construit et signe la demande (EIP-712) |
+| [src/client-ia.ts](src/client-ia.ts) | Service « IA du client » : reçoit une demande acceptée, la signe, la dépose dans la file |
 | [src/agents.ts](src/agents.ts) | Agents scriptés des huit scénarios, un agent demandeur par scène |
 | [src/queue.ts](src/queue.ts) | File SQLite : schéma strict à l'entrée, idempotente, ne modifie jamais une demande |
 | [src/relay.ts](src/relay.ts) | Relais : soumet avec la clé `RELAYER`, échoue fermé |
+| [src/pauses.ts](src/pauses.ts) | Sources de pause d'un agent : service de réponse (HTTP) et contrat. En pause dès qu'une le dit |
 | [src/indexer.ts](src/indexer.ts), [src/api.ts](src/api.ts) | Indexeur idempotent et API en lecture seule sur `127.0.0.1` |
 | [src/vault.ts](src/vault.ts) | `VaultClient` : [fake-vault.ts](src/fake-vault.ts) pour les tests, [chain-vault.ts](src/chain-vault.ts) pour la chaîne |
 | [src/config.ts](src/config.ts) | Constantes des points de `specs/00-a-trancher.md` et noms des variables d'environnement |
@@ -24,7 +26,8 @@ Les interfaces viennent de [../specs/](../specs/) et ne sont pas redéfinies ici
 | Porte d'entrée | [src/gateway-stub.ts](src/gateway-stub.ts) | `gateway/` (Loris). Le bouchon rend le verdict écrit dans la scène, il n'analyse rien |
 | Journal | `MemoryJournal` dans [src/journal.ts](src/journal.ts), seulement si `JOURNAL_URL` est absente | Avec `JOURNAL_URL`, [src/http-journal.ts](src/http-journal.ts) remet chaque entrée au service de `response/`. Sans réponse du service, rien n'entre en file et rien n'est soumis |
 | Alertes | `MemoryAlerts`, `stderrAlerts` | Le service de réponse, derrière `AlertSink` |
-| Pause hors chaîne | `StaticPauseSource` dans [src/pauses.ts](src/pauses.ts) | La liste tenue par le service de réponse, derrière `PauseSource` |
+| Pause hors chaîne | `StaticPauseSource` dans [src/pauses.ts](src/pauses.ts), seulement si `PAUSE_SOURCE_URL` est absente | Avec `PAUSE_SOURCE_URL`, `HttpPauseSource` lit `GET /agents/paused` du service de `response/`. Sans réponse lisible, rien n'est soumis |
+| IA du client | [src/client-ia.ts](src/client-ia.ts) signe tout ce qui est conforme, sans modèle | Un vrai jugement avant signature |
 | Contrat | `FakeVault`, et [test/fixtures/StubVault.sol](test/fixtures/StubVault.sol) sur anvil | Le contrat de `contracts/` (Wladimir), par `ChainVault` |
 
 ## Vérifier
@@ -63,12 +66,40 @@ npm start
 npm run scene -- 1
 ```
 
-`npm start` lance le relais, l'indexeur et l'API. `npm run scene` joue une scène
-dans la même file. Sans `RPC_URL`, sans `VAULT_ADDRESS` ou sans `RELAYER`, le
+```bash
+npm run start:client-ia
+```
+
+`npm start` lance le relais, l'indexeur et l'API. `npm run start:client-ia` lance
+le service « IA du client » sur la même file. `npm run scene` joue une scène
+dans la même file, sans passer par ce service. Sans `RPC_URL`, sans `VAULT_ADDRESS` ou sans `RELAYER`, le
 relais ne soumet rien et les demandes expirent.
 
 Sur anvil, l'adresse de `RELAYER` doit être celle du rôle relais du contrat, et
 celle de `CLIENT_SIGNER` son `clientSigner()`.
+
+## Service « IA du client »
+
+`POST /accepted` sur `127.0.0.1`, port `CLIENT_IA_PORT` (8770 par défaut). La
+porte d'entrée y transmet chaque demande acceptée, avec
+`CLIENT_AI_URL=http://127.0.0.1:8770/accepted`. Il lui faut `CLIENT_SIGNER`,
+`VAULT_ADDRESS`, `CHAIN_ID` et la même `QUEUE_DB` que le relais.
+
+Corps JSON, `content-type: application/json`, 4 Ko au plus : `request_id`,
+`agent_id`, `client_id`, `action` (`PAY_INVOICE` ou `PLACE`), `ref_id`. Rien
+d'autre : un montant, un bénéficiaire ou un document font rejeter la demande.
+
+| Réponse | Sens |
+|---|---|
+| `202` `{ status: "accepted", request_id, duplicate }` | Signée, journalisée (`REQUEST_SIGNED`) et en file. `duplicate: true` : déjà en file, rien n'a été refait |
+| `400` `{ error }` | Hors schéma (`invalid_body`), client autre que celui de la clé (`unknown_client`), ou `request_id` déjà en file avec un autre contenu (`request_id_conflict`) |
+| `502` `{ error: "queue_unavailable" }` | Journal ou file injoignable : rien n'est pris en compte, la porte peut réessayer |
+
+Limites :
+
+- Aucun modèle : tout ce qui est conforme est signé. La signature ne prouve pas que la demande est légitime (scénario 4).
+- Aucune authentification : quiconque atteint le port obtient une demande signée. Le service n'écoute que sur `127.0.0.1` et refuse un appel venu d'une page web (`403`).
+- Une demande refusée par un `502` après l'écriture de `REQUEST_SIGNED` laisse cette entrée au journal ; la reprise en écrit une seconde, pour une nouvelle signature.
 
 ## API en lecture seule
 
@@ -86,7 +117,9 @@ celle de `CLIENT_SIGNER` son `clientSigner()`.
 
 Chaque décision porte `tx_hash`, `log_index`, `block_number` et
 `block_timestamp`. `effective_decision` vaut 0 dès que le motif est inconnu.
-Pour suivre les nouveautés, relire avec `since_id` égal au dernier `id` reçu.
+Pour suivre les nouveautés, relire avec `since_id` égal au dernier `id` reçu :
+seules les lignes d'`id` strictement supérieur sont rendues. La clôture d'un cas 1
+arrive ainsi comme une ligne à part, sous le `request_id` d'origine.
 
 ## Décision courante
 
@@ -132,5 +165,5 @@ l'événement `Decision` dans `IArgentVault.sol` :
 
 - **Rejeu.** La file déduplique par `request_id` : une demande remise en file telle quelle n'est soumise qu'une fois. `queueDedupByRequestId` à `false` redonne le scénario 8 a de `specs/` : le rejeu est soumis et le contrat le refuse.
 - **Dans le doute.** Si la réponse du nœud se perd pendant l'envoi, ou si le processus s'arrête en pleine soumission, la demande passe à `IN_DOUBT`. Elle n'est jamais renvoyée automatiquement : son identifiant a pu être consommé. L'index dit ce qui s'est passé.
-- **Agent en pause.** Le relais écarte la demande (`REJECTED`, `AGENT_PAUSED`). S'il ne peut pas lire l'état de pause, il n'envoie rien.
+- **Agent en pause.** Le relais écarte la demande (`REJECTED`, `AGENT_PAUSED`), que la pause vienne du service de réponse ou du contrat. S'il ne peut pas lire l'état de pause, il n'envoie rien : la demande attend, puis expire. La liste du service est gardée 2 s au plus ; 200 lignes ou plus valent « illisible », car le service coupe sa liste à 200.
 - **Confirmations.** L'indexeur n'écrit un événement qu'après `CONFIRMATIONS` blocs. Les délais mesurés en aval l'incluent.
