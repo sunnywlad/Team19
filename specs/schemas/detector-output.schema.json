@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:schema:detector-output:1",
+  "title": "Sortie de la porte d'entrée (specs/03-detecteur.md)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "agent_id",
+    "score",
+    "threshold",
+    "verdict",
+    "reason_codes",
+    "received_at_ms",
+    "detected_at_ms",
+    "detector_version"
+  ],
+  "properties": {
+    "request_id": { "$ref": "#/$defs/bytes32" },
+    "agent_id": {
+      "description": "Agent authentifié par son jeton. null si le jeton est invalide.",
+      "oneOf": [{ "$ref": "#/$defs/bytes32" }, { "type": "null" }]
+    },
+    "score": {
+      "description": "null uniquement si le détecteur n'a pas tourné (jeton invalide ou débit dépassé).",
+      "oneOf": [{ "type": "integer", "minimum": 0, "maximum": 100 }, { "type": "null" }]
+    },
+    "threshold": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "verdict": { "enum": ["PASS", "BLOCK"] },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 6,
+      "items": {
+        "enum": [
+          "INSTRUCTION_IN_DATA",
+          "AUTHORITY_VIOLATION",
+          "PAYMENT_ANOMALY",
+          "SCHEMA_INVALID",
+          "TOKEN_INVALID",
+          "RATE_LIMITED"
+        ]
+      }
+    },
+    "received_at_ms": { "$ref": "#/$defs/unixMillis" },
+    "detected_at_ms": { "$ref": "#/$defs/unixMillis" },
+    "detector_version": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,31}$" }
+  },
+  "allOf": [
+    {
+      "description": "BLOCK porte au moins un code.",
+      "if": { "properties": { "verdict": { "const": "BLOCK" } } },
+      "then": { "properties": { "reason_codes": { "type": "array", "minItems": 1 } } }
+    },
+    {
+      "description": "PASS ne porte que des signaux du détecteur, jamais un code bloquant.",
+      "if": { "properties": { "verdict": { "const": "PASS" } } },
+      "then": {
+        "properties": {
+          "reason_codes": {
+            "type": "array",
+            "items": { "enum": ["INSTRUCTION_IN_DATA", "AUTHORITY_VIOLATION", "PAYMENT_ANOMALY"] }
+          }
+        }
+      }
+    },
+    {
+      "description": "Arrêt avant le détecteur : un seul code, pas de score.",
+      "if": {
+        "properties": {
+          "reason_codes": { "type": "array", "contains": { "enum": ["TOKEN_INVALID", "RATE_LIMITED"] } }
+        }
+      },
+      "then": {
+        "properties": { "score": { "type": "null" }, "reason_codes": { "type": "array", "maxItems": 1 } }
+      },
+      "else": { "properties": { "score": { "type": "integer" } } }
+    },
+    {
+      "description": "Jeton invalide : l'agent n'est pas authentifié.",
+      "if": { "properties": { "reason_codes": { "type": "array", "contains": { "const": "TOKEN_INVALID" } } } },
+      "then": { "properties": { "agent_id": { "type": "null" } } },
+      "else": { "properties": { "agent_id": { "type": "string" } } }
+    }
+  ],
+  "$defs": {
+    "bytes32": {
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{64}$",
+      "not": { "const": "0x0000000000000000000000000000000000000000000000000000000000000000" }
+    },
+    "unixMillis": {
+      "description": "Millisecondes Unix, entier.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295999
+    }
+  }
+}

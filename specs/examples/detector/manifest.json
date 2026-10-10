@@ -1,0 +1,47 @@
+{
+  "schema": "../../schemas/detector-output.schema.json",
+  "cases": [
+    {
+      "file": "valid/01-pass.json",
+      "expect": "valid"
+    },
+    {
+      "file": "valid/02-block-instruction.json",
+      "expect": "valid"
+    },
+    {
+      "file": "valid/03-jeton-invalide.json",
+      "expect": "valid",
+      "why": "Détecteur non lancé : score null, agent null."
+    },
+    {
+      "file": "valid/04-schema-rejete.json",
+      "expect": "valid",
+      "why": "Score bas, mais rejet à l'étape 3."
+    },
+    {
+      "file": "invalid/01-code-inconnu.json",
+      "expect": "schema-invalid",
+      "why": "Code hors de la liste fermée."
+    },
+    {
+      "file": "invalid/02-score-hors-borne.json",
+      "expect": "schema-invalid"
+    },
+    {
+      "file": "invalid/03-block-sans-code.json",
+      "expect": "schema-invalid"
+    },
+    {
+      "file": "invalid/04-pass-au-dessus-du-seuil.json",
+      "expect": "rule-invalid",
+      "rule": "SCORE_VERDICT",
+      "why": "score 80 >= seuil 70 et verdict PASS."
+    },
+    {
+      "file": "invalid/05-jeton-invalide-avec-agent.json",
+      "expect": "schema-invalid",
+      "why": "Un agent non authentifié ne porte pas d'agent_id."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "request_id": "0xdc82a69c1999d7350703be235f3c0c2862a913ea2072a8ba54b202c38d43974c",
+  "agent_id": null,
+  "score": null,
+  "threshold": 70,
+  "verdict": "BLOCK",
+  "reason_codes": [
+    "TOKEN_INVALID"
+  ],
+  "received_at_ms": 1791662430000,
+  "detected_at_ms": 1791662430002,
+  "detector_version": "regles-0.1"
+}
