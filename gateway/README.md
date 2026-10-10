@@ -85,7 +85,7 @@ Un signal figure dans `reason_codes` à partir de 20, même sous le seuil.
 ## Mesurer
 
 ```bash
-npm run bench -- ../data/jeu-factures.jsonl
+npm run bench -- bench/jeu-provisoire.jsonl
 ```
 
 Une ligne du jeu :
@@ -97,7 +97,12 @@ Une ligne du jeu :
 `label` vaut `legit` ou `attack`. Le banc réserve un tiers du jeu au réglage du
 seuil et mesure sur le reste : rappel, précision, faux positifs, rappel par
 famille, attaques manquées, temps de détection. `--threshold n` change le seuil,
-`--json` sort le rapport pour la fiche de défense.
+`--json` sort le rapport pour la fiche de défense, `--min-recall` et
+`--max-false-positives` en font un contrôle de non-régression.
+
+Premiers chiffres, sur un jeu provisoire écrit par l'auteur des règles : 54,3 %
+des attaques détectées, aucune facture légitime bloquée, sur 77 échantillons.
+Détail, réserves et attaques manquées : [bench/README.md](bench/README.md).
 
 ## Pause d'un agent
 
@@ -124,8 +129,8 @@ Aucune route de la porte ne lève une pause.
 - Des règles ne voient que ce qu'elles décrivent. Une attaque formulée autrement
   passe : c'est le scénario 4, que le contrat arrête ensuite. Les attaques
   manquées se lisent dans la sortie du banc.
-- Aucun chiffre de détection n'existe tant que le banc n'a pas tourné sur
-  `data/jeu-factures`. Les tests ne couvrent que quelques textes écrits à la main.
+- Les seuls chiffres de détection viennent d'un jeu provisoire écrit par l'auteur
+  des règles. La mesure à présenter attend le jeu de `data/`.
 - Doublon et rafale sont comptés en mémoire : un redémarrage les oublie.
 - La porte n'authentifie pas le service de journal et n'écoute que sur `127.0.0.1`.
 - Un corps au-delà de 16 Ko est tronqué avant analyse, puis rejeté.

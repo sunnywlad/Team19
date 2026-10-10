@@ -50,8 +50,8 @@ export function normalize(text: string): string {
     .trim();
 }
 
-type Rule = { name: string; weight: number; pattern: RegExp };
-
+// « unless » : si ce motif est présent, la règle ne s'applique pas.
+type Rule = { name: string; weight: number; pattern: RegExp; unless?: RegExp };
 
 // Une instruction adressée à celui qui lit, là où il ne devrait y avoir que des faits.
 const INSTRUCTION_RULES: Rule[] = [
@@ -114,30 +114,123 @@ const INSTRUCTION_RULES: Rule[] = [
     pattern:
       /\b(?:deja|already|precedemment|previously)\b.{0,30}\b(?:valide|validee|approuve|approuvee|autorise|autorisee|approved|validated|authorized)\b/,
   },
+  {
+    name: "autorite-invoquee",
+    weight: 40,
+    pattern:
+      /\b(?:per|as instructed by|on behalf of|on the orders? of|sur (?:instruction|ordre|demande) d[eu]|a la demande d[eu]|de la part d[eu])\b.{0,25}\b(?:cfo|ceo|pdg|daf|directeur financier|directrice financiere|direction|tresorier|treasurer|head of [a-z]+|finance director|owner|proprietaire|comite)\b/,
+  },
+  {
+    name: "controle-reporte",
+    weight: 40,
+    pattern:
+      /\b(?:verifications?|controles?|validations?|paperwork|sign-?off|approval|compte rendu|justificatifs?)\b.{0,40}\b(?:apres coup|plus tard|ulterieurement|suivra|suivront|will follow|later|afterwards)\b/,
+  },
+  {
+    name: "accord-non-trace",
+    weight: 35,
+    pattern: /\b(?:oralement|verbalement|accord verbal|par telephone|verbally|over the phone|by phone)\b/,
+  },
 ];
 
 // Ce qui change la destination ou le montant d'un paiement.
 const ANOMALY_RULES: Rule[] = [
   {
+    // Un changement de coordonnées bancaires se vérifie toujours par un autre
+    // canal : seul, il suffit à bloquer.
     name: "changement-de-coordonnees",
-    weight: 50,
+    weight: 70,
     pattern:
       /\b(?:nouveau|nouvel|nouvelle|nouvelles|nouveaux|changement|modification|mise a jour|remplace|new|updated?|changed?|replaces?)\b.{0,40}\b(?:rib|iban|bic|coordonnees bancaires|compte bancaire|compte|beneficiaire|domiciliation|bank details|account|beneficiary|payee)\b/,
+    unless: /\b(?:inchange[es]{0,2}|unchanged|restent les memes|remains? the same|ne changent? pas)\b/,
+  },
+  {
+    name: "compte-de-substitution",
+    weight: 70,
+    pattern:
+      /\b(?:compte|account|iban|rib)\b.{0,30}\b(?:gele|cloture|bloque|ferme|suspendu|frozen|closed|blocked|suspended)\b|\b(?:compte|account) (?:de secours|temporaire|provisoire|alternatif|de remplacement|backup|temporary|alternative)\b/,
+  },
+  {
+    name: "beneficiaire-substitue",
+    weight: 70,
+    pattern:
+      /\b(?:en lieu et place|a la place) d[eu]s? (?:fournisseur|beneficiaire)\b|\b(?:instead of|in place of) (?:the )?(?:supplier|vendor|usual)\b|\b(?:beneficiaire|payee)\b.{0,30}\b(?:filiale|partenaire|affacturage|tiers|partner|subsidiary|third party)\b/,
   },
   { name: "iban-dans-le-document", weight: 30, pattern: /\b[a-z]{2}\d{2}(?: ?[a-z0-9]{4}){3,7}(?: ?[a-z0-9]{1,3})?\b/ },
   { name: "adresse-de-portefeuille", weight: 35, pattern: /\b0x[0-9a-f]{40}\b/ },
   {
-    name: "montant-rectifie",
-    weight: 35,
+    name: "frais-ajoutes",
+    weight: 40,
     pattern:
-      /\b(?:au lieu de|et non|rectifie|rectification|corrige|correction|majore|majoration|instead of|rather than|corrected|revised)\b.{0,40}\d/,
+      /\b(?:frais|honoraires|couts?|charges?|fees?)\b.{0,30}\b(?:ajoutes?|supplementaires?|complementaires?|exceptionnels?|additional|extra|en sus)\b/,
+  },
+  { name: "total-revise", weight: 40, pattern: /\b(?:nouveau total|total revise|new total|revised total|majoration|majore)\b/ },
+  {
+    name: "evitement-des-seuils",
+    weight: 60,
+    pattern:
+      /\b(?:sous|en dessous|au-dessous|below|under)\b.{0,25}\b(?:seuils?|plafonds?|limites?|thresholds?|limits?)\b|\ben dessous de \d+ par (?:operation|transaction|paiement|virement)\b/,
+  },
+  {
+    name: "fractionnement",
+    weight: 45,
+    pattern:
+      /\b(?:fractionne[rz]?|fractionnement|scinde[rz]?|decoupe[rz]?|split)\b|\ben (?:plusieurs|[a-z]+|\d+) (?:versements|virements|paiements)\b|\binto (?:several|multiple|\d+) (?:transfers|payments)\b/,
+  },
+  {
+    name: "evitement-des-controles",
+    weight: 60,
+    pattern:
+      /\b(?:eviter|evite[rz]?|contourner|avoid|evade|without triggering|so that no|pour ne pas declencher)\b.{0,40}\b(?:controles?|verifications?|validations?|review|checks?|alertes?|approval)\b/,
+  },
+  {
+    name: "repetition-jusqu-au-plafond",
+    weight: 50,
+    pattern: /\b(?:tant que|as often as|as long as|until|jusqu'a ce que)\b.{0,40}\b(?:plafond|budget|limite|limit|cap|seuil)\b/,
   },
 ];
+
+const AMOUNT = String.raw`(\d[\d .,]*\d|\d)`;
+const RAISED: { pattern: RegExp; newFirst: boolean }[] = [
+  { pattern: new RegExp(AMOUNT + String.raw`\s*(?:eur|euros?|usd|€)?\s*(?:au lieu de|et non(?: pas)?|instead of|rather than)\s*` + AMOUNT, "g"), newFirst: true },
+  { pattern: new RegExp(String.raw`\b(?:passe|passant|goes|rises?) (?:de |from )?` + AMOUNT + String.raw`\s*(?:a|to)\s*` + AMOUNT, "g"), newFirst: false },
+];
+
+/** Lit un montant écrit à la française (1 250,00) ou à l'anglaise (1,250.00). */
+export function parseAmount(text: string): number {
+  let t = text.replace(/\s/g, "");
+  const comma = t.lastIndexOf(",");
+  const dot = t.lastIndexOf(".");
+  const decimal = Math.max(comma, dot);
+  // Le dernier séparateur est décimal s'il est suivi d'un ou deux chiffres.
+  if (decimal >= 0 && t.length - decimal - 1 <= 2) {
+    t = `${t.slice(0, decimal).replace(/[.,]/g, "")}.${t.slice(decimal + 1)}`;
+  } else {
+    t = t.replace(/[.,]/g, "");
+  }
+  return Number(t);
+}
+
+// Un montant corrigé : à la hausse, c'est le signal d'une facture gonflée ;
+// à la baisse, une rectification ordinaire.
+function amountRevision(text: string): "raised" | "lowered" | null {
+  let lowered = false;
+  for (const { pattern, newFirst } of RAISED) {
+    for (const match of text.matchAll(pattern)) {
+      const first = parseAmount(match[1] as string);
+      const second = parseAmount(match[2] as string);
+      if (!Number.isFinite(first) || !Number.isFinite(second) || first === second) continue;
+      if ((newFirst ? first : second) > (newFirst ? second : first)) return "raised";
+      lowered = true;
+    }
+  }
+  return lowered ? "lowered" : null;
+}
 
 function applyRules(text: string, rules: Rule[], prefix: string, fired: Set<string>): number {
   let total = 0;
   for (const rule of rules) {
-    if (rule.pattern.test(text)) {
+    if (rule.pattern.test(text) && !(rule.unless?.test(text) ?? false)) {
       total += rule.weight;
       fired.add(`${prefix}:${rule.name}`);
     }
@@ -180,6 +273,10 @@ export function detect(input: DetectionInput): Detection {
 
   let instruction = applyRules(visible, INSTRUCTION_RULES, "instruction", fired);
   let anomaly = applyRules(visible, ANOMALY_RULES, "anomalie", fired);
+  if (amountRevision(visible) === "raised") {
+    anomaly += 70;
+    fired.add("anomalie:montant-revu-a-la-hausse");
+  }
 
   // Du contenu caché est déjà suspect ; s'il porte une instruction, davantage.
   for (const mark of hidden.marks) {
