@@ -38,8 +38,33 @@ recalcule la règle sans nous faire confiance.
 
 **Limite.** Ce contrat n'est pas écrit : il existe une interface gelée
 (`specs/contract/IArgentVault.sol`) et un faux coffre. Seuls les fonds détenus
-par le contrat seraient protégés, pas un compte bancaire. Montants et adresses
-de paiement sont publics sur une chaîne.
+par le contrat seraient protégés, pas un compte bancaire : avec un connecteur
+bancaire, envisagé et non construit, cette garantie ne s'applique plus.
+Montants et adresses de paiement sont publics sur une chaîne.
+
+## « Sur réseau de test, le contrat paie. Et en production ? »
+
+**Démontré, sur réseau de test.** Le coffre détient des fonds de test et paie
+dans la transaction de décision : événement `Paid`, suivi d'un transfert natif.
+
+**Envisagé, non construit.** En production, `Paid` serait l'autorisation qu'un
+connecteur bancaire consomme. Dans ce mode, le contrat ne détient plus les
+fonds : la garantie « seuls les fonds détenus par le contrat sont protégés » ne
+s'applique plus, et le connecteur devient un composant de confiance à concevoir
+(finalité, rejeu, montant et bénéficiaire lus dans l'événement). Ce connecteur
+n'existe pas : ni code, ni spec.
+
+**État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](../../specs/02-contrat.md) § 1
+et § 8) et de l'interface gelée. Aucun contrat n'est écrit ni déployé : il est
+rejoué par un faux coffre, sans fonds. « Démontré » vaudra le jour où le contrat
+tournera sur le réseau de test.
+
+À l'oral : « sur réseau de test, le contrat paie dans la transaction de
+décision ; en production, nous envisageons qu'un connecteur bancaire exécute
+ce que le contrat autorise, et ce connecteur reste à concevoir ».
+
+**Limite.** Dans le mode envisagé, nous ne protégeons plus des fonds : nous
+produisons une autorisation. Tout dépend alors d'un connecteur qui n'existe pas.
 
 ## « Êtes-vous en règle avec DORA ? »
 
@@ -101,3 +126,6 @@ Nous ne disons pas non plus :
   ([specs/00-a-trancher.md](../../specs/00-a-trancher.md), point e).
 - un chiffre de détection sans sa réserve, ni aucun chiffre du jeu provisoire.
 - « l'alerte est envoyée » : elle est affichée et journalisée.
+- « le contrat paie » sans « sur réseau de test ».
+- le connecteur bancaire comme une fonction existante : il est envisagé, non
+  construit.
