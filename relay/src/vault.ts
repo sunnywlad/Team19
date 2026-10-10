@@ -24,7 +24,10 @@ export type VaultEvent = {
   blockNumber: bigint;
   /** Horodatage du bloc, en secondes. */
   blockTimestamp: number;
-  /** Arguments décodés ; les entiers 256 bits sont en chaîne décimale. */
+  /**
+   * Arguments décodés. Entiers 256 bits (montants) en chaîne décimale ; uint64
+   * (HoldPlaced.deadline, délais, en secondes) et uint8 en nombre.
+   */
   args: EventArgs;
 };
 

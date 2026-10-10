@@ -79,7 +79,7 @@ celle de `CLIENT_SIGNER` son `clientSigner()`.
 | `/health` | État du service |
 | `/status` | Prochain bloc à lire, confirmations, nombre d'événements |
 | `/decisions?request_id=&since_id=&limit=` | Événements `Decision`, dans l'ordre d'indexation |
-| `/decisions/<request_id>` | Décision courante d'une demande : son dernier événement |
+| `/decisions/<request_id>` | Décision courante d'une demande : son dernier événement `Decision` qui n'est pas un refus de rejeu. Voir « Décision courante » |
 | `/events?name=&since_id=&limit=` | Tous les événements du contrat (`Paid`, `HoldPlaced`, pauses…) |
 | `/queue` | État de la file, sans le contenu des demandes ni leur signature |
 | `/vault` | Vues du coffre lues au même bloc (cash, dettes admises, réserve, bloqué, plaçable, seuil, pause). Une vue illisible vaut `null`. `503` si le coffre est injoignable |
@@ -87,6 +87,46 @@ celle de `CLIENT_SIGNER` son `clientSigner()`.
 Chaque décision porte `tx_hash`, `log_index`, `block_number` et
 `block_timestamp`. `effective_decision` vaut 0 dès que le motif est inconnu.
 Pour suivre les nouveautés, relire avec `since_id` égal au dernier `id` reçu.
+
+## Décision courante
+
+`specs/02` § 8 et `IArgentVault.sol` disent : « la décision courante est celle du
+dernier événement ». Pris à la lettre, c'est faux dès qu'un `request_id` est
+rejoué : le contrat émet alors un `Decision` 0 `REQUEST_REPLAYED` sous le même
+identifiant, et une demande en cas 1, dont le montant est toujours bloqué,
+s'afficherait refusée.
+
+Règle appliquée ici, côté relais seulement :
+
+- La décision courante d'une demande est son dernier `Decision` dont le motif
+  n'est pas `REQUEST_REPLAYED` (code 3).
+- Une clôture de cas 1 (`APPROVED`, `APPROVAL_REFUSED`, `APPROVAL_TIMEOUT`) est
+  un `Decision` ultérieur sous le même `request_id` : elle remplace le cas 1.
+- Seul `/decisions/<request_id>` change. Sa réponse garde la même forme, sans
+  champ ajouté. Les refus de rejeu restent dans `/decisions` et `/events`.
+- Si l'index ne connaît que des rejeux pour une demande (indexeur démarré après
+  la décision d'origine), la réponse est le dernier d'entre eux.
+
+Non traité, à trancher : un `SIGNATURE_INVALID` émis sous le `request_id` d'une
+demande déjà décidée la remplace encore. `specs/02` § 8 le range pourtant avec
+les rejeux (« un même `requestId` peut porter plusieurs `SIGNATURE_INVALID` ou
+`REQUEST_REPLAYED` »).
+
+Phrase prête pour l'amendement de `specs/02` § 8 et du commentaire de
+l'événement `Decision` dans `IArgentVault.sol` :
+
+> La décision courante d'une demande est celle de son dernier événement
+> `Decision` dont le motif n'est pas `REQUEST_REPLAYED` : le refus d'un rejeu
+> juge la tentative de rejeu, pas la demande, et ne modifie ni son état ni un
+> montant bloqué.
+
+## Forme des événements
+
+- `HoldPlaced.deadline`, comme tout `uint64` (`ApprovalDelayChanged`), est un
+  nombre de secondes, avec `FakeVault` comme avec `ChainVault`. Les montants
+  (`uint256`) restent des chaînes décimales.
+- `FakeVault` émet `InvoiceRegistered` à l'inscription d'une facture. Il n'émet
+  pas encore `PlacementRegistered`, `BeneficiaryRegistered` ni `AgentRegistered`.
 
 ## Comportements à connaître
 

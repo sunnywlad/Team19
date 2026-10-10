@@ -63,6 +63,7 @@ export class FakeVault implements VaultClient {
     if (!this.#beneficiaries.has(beneficiaryId)) throw new Error("UnknownBeneficiary");
     if (this.#invoices.has(id)) throw new Error("AlreadyRegistered");
     this.#invoices.set(id, { beneficiaryId, amount, status: "Admitted" });
+    this.#emitBlock([["InvoiceRegistered", { invoiceId: id, beneficiaryId, amount: amount.toString() }]]);
   }
   registerPlacement(id: Hex, beneficiaryId: Hex, amount: bigint): void {
     if (!this.#beneficiaries.has(beneficiaryId)) throw new Error("UnknownBeneficiary");

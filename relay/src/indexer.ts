@@ -1,7 +1,7 @@
 // Indexeur : copie les événements du coffre dans une base durable. Il ne
 // décide de rien : si la base tombe, aucune décision n'est faussée.
 import { DatabaseSync } from "node:sqlite";
-import { effectiveDecision, reasonName } from "./config.ts";
+import { REASON, effectiveDecision, reasonName } from "./config.ts";
 import type { Hex } from "./types.ts";
 import type { EventArgs, VaultClient } from "./vault.ts";
 
@@ -160,11 +160,23 @@ export class Indexer {
     return rows.map((row) => toDecision(toEvent(row)));
   }
 
-  /** Décision courante d'une demande : celle de son dernier événement (specs/02 § 8). */
+  /**
+   * Décision courante d'une demande : son dernier événement Decision dont le
+   * motif n'est pas REQUEST_REPLAYED. specs/02 § 8 dit « celle du dernier »,
+   * mais le rejeu d'un request_id émet un refus qui, pris à la lettre,
+   * effacerait un cas 1 en attente : ce refus juge la tentative de rejeu, pas
+   * la demande. Une clôture de cas 1 (APPROVED, APPROVAL_REFUSED,
+   * APPROVAL_TIMEOUT) reste le dernier événement retenu. Si la demande n'a que
+   * des rejeux dans l'index, c'est le dernier d'entre eux. Règle dérivée, côté
+   * relais seulement : voir README, « Décision courante ».
+   */
   currentDecision(requestId: Hex): IndexedDecision | null {
     const row = this.#db
-      .prepare("SELECT * FROM events WHERE name = 'Decision' AND request_id = ? ORDER BY block_number DESC, log_index DESC LIMIT 1")
-      .get(requestId) as Row | undefined;
+      .prepare(
+        `SELECT * FROM events WHERE name = 'Decision' AND request_id = ?
+         ORDER BY (CAST(json_extract(args, '$.reason') AS INTEGER) = ?), block_number DESC, log_index DESC LIMIT 1`,
+      )
+      .get(requestId, REASON.REQUEST_REPLAYED) as Row | undefined;
     return row ? toDecision(toEvent(row)) : null;
   }
 
