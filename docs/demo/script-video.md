@@ -70,7 +70,10 @@ Les formules écartées et leurs remplacements sont dans
 [questions-reponses.md](../pitch/questions-reponses.md), « Ce que nous ne disons pas ».
 Dans la vidéo en particulier : pas de chiffre de détection à l'oral tant que la
 fiche affiche « à mesurer », et pas de « le contrat refuse » sans « rejoué par
-un faux coffre » tant qu'il n'est pas déployé.
+un faux coffre » tant qu'il n'est pas déployé. Une fois déployé : jamais « le
+contrat paie » sans « sur réseau de test ». Le connecteur bancaire envisagé
+pour la production n'est pas montré et n'est jamais présenté comme existant
+([README](../../README.md), « Cadrage du paiement »).
 
 ## Repli
 

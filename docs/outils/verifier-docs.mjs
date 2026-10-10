@@ -7,7 +7,8 @@
 //   1. une formule interdite apparaît hors d'un bloc « ce que nous ne disons pas » ;
 //   2. un lien relatif ou un chemin cité entre accents graves n'existe pas ;
 //   3. un motif de secret ou de coordonnée bancaire est présent ;
-//   4. la fiche de défense porte un chiffre qui ne sort pas d'un fichier de
+//   4. « le contrat paie » est écrit sans « réseau de test » dans le même paragraphe ;
+//   5. la fiche de défense porte un chiffre qui ne sort pas d'un fichier de
 //      mesure, ou un pourcentage est écrit ailleurs que dans ses blocs générés.
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -98,6 +99,15 @@ function controler(fichier) {
   const hors = sansBlocsAutorises(texte, signaler);
   for (const [formule, motif] of FORMULES) {
     for (const trouve of hors.matchAll(motif)) signaler(ligneDe(hors, trouve.index), `formule interdite hors bloc autorisé : « ${formule} »`);
+  }
+
+  // Cadrage du paiement : le contrat ne paie que sur réseau de test.
+  let debut = 0;
+  for (const paragraphe of texte.split(/\n[ \t]*\n/)) {
+    if (/contrat\s+paie/iu.test(paragraphe) && !/réseau\s+de\s+test/iu.test(paragraphe)) {
+      signaler(ligneDe(texte, debut + paragraphe.search(/contrat\s+paie/iu)), "« le contrat paie » sans « sur réseau de test » dans le même paragraphe");
+    }
+    debut += paragraphe.length + 2;
   }
 
   // 2. Liens relatifs et chemins cités.

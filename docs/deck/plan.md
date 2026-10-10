@@ -43,6 +43,9 @@ montant et le bénéficiaire sont ceux déjà inscrits. Deux : deux filets, un
 détecteur à l'entrée, une règle de paiement derrière. Trois : la réponse est
 automatique mais ne fait que bloquer ; lever une pause est un geste humain.
 Dire que nous n'empêchons pas l'injection : nous en bornons les conséquences.
+Cadrage du paiement ([README](../../README.md)) : sur réseau de test, le
+contrat paie avec des fonds de test ; en production, un connecteur bancaire
+consommerait son autorisation, et ce connecteur est envisagé, non construit.
 
 ## 4. Comment ça marche
 
