@@ -1,0 +1,23 @@
+{
+  "name": "argent-intelligent-response",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Journal chaîné (écrivain unique), script de vérification, réactions automatiques et rapport d'incident. Aucune action ne déplace de fonds.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test --disable-warning=ExperimentalWarning \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "start": "node --disable-warning=ExperimentalWarning src/main.ts",
+    "verify-journal": "node --disable-warning=ExperimentalWarning src/verify-journal.ts"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "7.0.2"
+  }
+}

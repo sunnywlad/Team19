@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["response", "relay", "dashboard"]
+  "include": ["src", "test"]
 }

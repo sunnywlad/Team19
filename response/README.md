@@ -1,73 +1,107 @@
-# response/ : journal chaîné et rapport d'incident
+# response/ : journal chaîné
 
-Chaque étape du flux écrit une entrée dans le journal. Chaque entrée contient
-l'empreinte de la précédente : modifier ou supprimer une entrée casse la chaîne.
-Le rapport d'incident est généré depuis ce journal.
+Implémentation de [specs/04-journal.md](../specs/04-journal.md) : le service de
+journal (écrivain unique) et le script de vérification. Les réactions
+automatiques et le rapport d'incident (specs/05) arrivent dans la branche suivante.
 
-## Utilisation
+## Lancer le service
+
+```bash
+npm ci --ignore-scripts
+```
+
+```bash
+npm start
+```
+
+| Variable | Défaut | Sens |
+|---|---|---|
+| `JOURNAL_FILE` | `var/journal.jsonl` | Fichier du journal, une entrée JSON par ligne |
+| `JOURNAL_PORT` | `8790` | Port d'écoute sur `127.0.0.1` |
+
+## Écrire une entrée
+
+`POST /journal/entries`, corps de 64 Ko au plus. Le composant remet `type`,
+`component`, `request_id`, `agent_id`, `client_id` et `data`. Le service attribue
+`v`, `seq`, `ts_ms`, `prev_hash` et `hash` : un appelant qui les fournit est rejeté.
+
+| Réponse | Sens |
+|---|---|
+| `201` `{ seq, hash, duplicate: false }` | Entrée écrite et synchronisée sur le disque |
+| `200` `{ seq, hash, duplicate: true }` | Déjà écrite avec cette clé d'idempotence |
+| `400` `{ error: "INVALID_ENTRY", error_count }` | Non conforme au schéma gelé. Le contenu reçu n'est jamais renvoyé |
+| `409` `{ error: "IDEMPOTENCY_CONFLICT" }` | Clé déjà utilisée pour une autre entrée |
+| `413` | Corps trop volumineux |
+
+### Idempotence
+
+En-tête `Idempotency-Key`, fourni par l'appelant, 200 caractères au plus. Il n'est
+pas écrit dans le journal. `type + ":" + request_id` suffit pour un type écrit une
+fois par demande. Les types qui se répètent pour une même demande
+(`DECISION_OBSERVED`, `AGENT_PAUSED`, `ALERT_SENT`, `SCHEMA_REJECTED`,
+`INCIDENT_REPORT_GENERATED`) demandent une clé plus précise.
+
+### Journal avant action
+
+Avant une action qui ne se rattrape pas, par exemple soumettre au contrat :
+`GET /journal/head`. Pas de réponse, pas d'action.
+
+## Lire
+
+| Route | Réponse |
+|---|---|
+| `GET /journal/head` | `{ count, seq, hash }`, l'empreinte de tête |
+| `GET /journal/entries?request_id=0x…&from_seq=n&limit=m` | `{ entries, head }`, 200 entrées par défaut, 1000 au plus |
+
+## Depuis TypeScript
 
 ```ts
-import { Journal } from "../response/journal.ts";
+import { HttpJournalClient } from "../../response/src/client.ts";
 
-const journal = new Journal("var/journal.db");
-journal.append({
-  step: "7_FILE_ENTREE",
-  actor: "file",
-  request_id: "req-123",
-  data: { agent: "p_3f9a…" },
-});
+const journal = new HttpJournalClient("http://127.0.0.1:8790");
+await journal.append({ type: "ENQUEUED", component: "QUEUE", request_id, agent_id, client_id, data: { expires_at } });
+```
+
+`append()` a la forme de l'interface `JournalClient` de `relay/`. Il lève
+`JournalUnavailableError` si le service ne répond pas et `JournalRejectedError`
+si l'entrée est refusée.
+
+## Vérifier un journal
+
+```bash
+npm run verify-journal -- var/journal.jsonl
 ```
 
 ```bash
-npm run journal -- verify var/journal.db
+npm run verify-journal -- var/journal.jsonl --expect-head <empreinte> --expect-seq <n>
 ```
 
-```bash
-npm run journal -- report var/journal.db req-123
-```
-
-`verify` sort avec le code 1 si la chaîne est rompue. `report` accepte `--json`.
-
-## Format d'une entrée
-
-| Champ | Contenu |
+| Code | Sens |
 |---|---|
-| `seq` | Numéro, à partir de 1, sans trou |
-| `ts` | Horodatage ISO 8601 en UTC |
-| `step` | Étape, dans la liste fermée `STEPS` de `journal.ts` |
-| `actor` | Composant qui écrit : `entree`, `porte`, `file`, `relais`, `reponse`… |
-| `request_id` | Identifiant de la demande, ou `null` |
-| `data` | Objet JSON libre, sans donnée identifiante |
-| `prev_hash` | Empreinte de l'entrée précédente, 64 zéros pour la première |
-| `hash` | SHA-256 de tous les champs ci-dessus, sérialisés clés triées |
+| 0 | Chaîne intègre, et tête conforme si elle était demandée |
+| 1 | Chaîne rompue : `SEQ_MISMATCH`, `PREV_MISMATCH` ou `HASH_MISMATCH` |
+| 2 | Fichier illisible ou entrée non conforme au schéma : `FORMAT` |
+| 3 | Chaîne intègre, mais tête différente de celle attendue : `HEAD_MISMATCH` |
+| 64 | Erreur d'usage |
 
-Le journal est une base SQLite (table `journal`) : un composant écrit dans un
-autre langage peut y écrire en respectant ce calcul d'empreinte.
+Les tests rejouent les six chaînes de `specs/examples/journal/`, et le service
+réécrit `chaine-valide.jsonl` à l'octet près.
 
-## Champs de `data` lus par le rapport
+## Garanties et limites
 
-| Étape | Champs |
-|---|---|
-| toute entrée | `agent`, `client` : pseudonymes de l'origine |
-| `2_TESTS_SECURITE` | `score`, `reason_codes`, `blocked` |
-| `9_DECISION_CONTRAT` | `code` (0, 1 ou 2), `reason`, `tx_hash`, `amount_exposed`, `amount_moved` |
-| `QUALIFICATION_HUMAINE`, `10_VALIDATION_HUMAINE` | `decision`, `by` |
-
-La détection est datée au premier `2_TESTS_SECURITE` avec `blocked: true`, ou
-au premier `9_DECISION_CONTRAT` avec `code: 0`.
-
-## Règles
-
-- Rien d'identifiant dans `data` : passer les identifiants d'agent et de client
-  par `pseudonymize()` (`pseudonym.ts`, clé `PSEUDONYM_KEY`).
-- Les montants sont des chaînes, pour ne pas perdre de précision.
-
-## Limites
-
-- Supprimer les **dernières** entrées laisse une chaîne valide. La détection
-  demande l'empreinte de tête conservée ailleurs : `verify <base> <empreinte>`.
-  Chaque rapport d'incident la consigne.
-- Quiconque peut réécrire tout le fichier peut reconstruire une chaîne
-  cohérente. Seul un ancrage extérieur de l'empreinte de tête, par exemple
-  on-chain, protège contre ce cas. Il n'est pas implémenté.
+- Un seul écrivain : un fichier verrou empêche deux services d'écrire le même journal.
+- Une entrée est sur le disque avant que le service réponde `201`.
+- Le service refuse de démarrer sur un journal altéré.
+- Sans tête de référence, une troncature en fin de chaîne ou une réécriture
+  complète passent inaperçues : il faut `--expect-head` (specs/04 § 6).
+- Aucune authentification entre composants : quiconque atteint le port peut
+  ajouter une entrée. Le service n'écoute que sur `127.0.0.1`.
 - Le journal prouve l'intégrité de ce qui a été écrit, pas sa vérité.
+
+## Écart relevé avec la spec
+
+specs/04 § 5 annonce `HASH_MISMATCH` quand `seq` est renuméroté pour masquer un
+trou. Avec l'ordre gelé des contrôles, c'est `PREV_MISMATCH` qui sort en premier,
+puisque l'entrée déplacée pointe encore vers l'empreinte retirée. `HASH_MISMATCH`
+n'apparaît que si `prev_hash` est recollé lui aussi. L'altération est détectée
+dans les deux cas ; seule la phrase de la spec est à préciser.

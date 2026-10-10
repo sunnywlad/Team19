@@ -15,10 +15,3 @@ broadcast/
 
 # --- Dépendances installées ---
 node_modules/
-
-# --- Données locales : bases SQLite du journal, de la file et de l'indexeur ---
-var/
-*.db
-*.db-journal
-*.db-wal
-*.db-shm
