@@ -118,7 +118,7 @@ export function JournalView({ response, sources, now }: ViewProps) {
           data.journal.length === 0 ? (
             <p className="vide">Journal vide.</p>
           ) : (
-            <div className="defilement">
+            <div className="defilement" role="region" aria-label="Dernières entrées du journal" tabIndex={0}>
               <table>
                 <thead>
                   <tr>

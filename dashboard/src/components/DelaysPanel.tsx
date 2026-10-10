@@ -23,7 +23,7 @@ export function DelaysTable({ report, chainPause }: { report: IncidentReport; ch
         {delays.map((d) => (
           <tr key={d.key} data-testid={`delai-${d.key}`}>
             <th scope="row">{d.label}</th>
-            <td className="duree">
+            <td className="duree" data-label="Durée">
               {d.value === null || d.clock === null ? (
                 <span className="indisponible">{d.note}</span>
               ) : d.clock === "bloc" ? (
@@ -32,7 +32,7 @@ export function DelaysTable({ report, chainPause }: { report: IncidentReport; ch
                 formatDurationMs(d.value)
               )}
             </td>
-            <td>{d.clock === null ? <span className="discret">—</span> : <ClockTag clock={d.clock} />}</td>
+            <td data-label="Source">{d.clock === null ? <span className="discret">—</span> : <ClockTag clock={d.clock} />}</td>
           </tr>
         ))}
       </tbody>

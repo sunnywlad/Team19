@@ -557,3 +557,121 @@ button {
 .cas dd {
   font-size: 1.1rem;
 }
+
+/* --- Finition : clavier, thème, écrans étroits --- */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* Visible seulement quand le clavier l'atteint. */
+.evitement {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.evitement:focus {
+  left: 12px;
+}
+
+.theme {
+  padding: 5px 12px;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.onglets button:hover,
+.selecteur button:hover,
+.theme:hover {
+  color: var(--accent);
+}
+
+.chargement::before {
+  content: "";
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--trait);
+  border-top-color: var(--accent);
+  animation: tourne 0.9s linear infinite;
+}
+
+@keyframes tourne {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chargement::before {
+    animation: none;
+  }
+}
+
+/* Portable et fenêtre partagée : les panneaux passent en une colonne. */
+@media (max-width: 1100px) {
+  .grille-haut,
+  .grille-bas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Écran étroit : chaque ligne de tableau devient une fiche, chaque cellule porte son intitulé. */
+@media (max-width: 760px) {
+  .page {
+    padding: 10px 12px 24px;
+  }
+
+  .entete {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  thead {
+    position: absolute;
+    left: -9999px;
+  }
+
+  table,
+  caption,
+  tbody,
+  tr,
+  td,
+  tbody th {
+    display: block;
+    width: 100%;
+  }
+
+  tr {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--trait);
+  }
+
+  td,
+  tbody th {
+    border: 0;
+    padding: 2px 0;
+  }
+
+  td[data-label]::before {
+    content: attr(data-label) " : ";
+    color: var(--discret);
+    font-size: 0.8rem;
+  }
+}

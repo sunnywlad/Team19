@@ -14,5 +14,7 @@ export async function tour(): Promise<void> {
     await screen.findByRole("button", { name, current: "page" });
     for (const button of screen.queryAllByRole("button", { pressed: false })) fireEvent.click(button);
   }
+  for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: /^Thème/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Aller au contenu" }));
   open("Décisions");
 }

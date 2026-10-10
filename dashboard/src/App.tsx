@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ApiClient } from "./api/client.ts";
 import { Banners, Freshness } from "./components/Banners.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
+import { THEME_LABELS, useTheme } from "./hooks/useTheme.ts";
 import { UNIT_LEGEND } from "./lib/format.ts";
 import { DecisionsView } from "./views/DecisionsView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
@@ -43,24 +44,62 @@ export function App({ client }: { client: ApiClient }) {
     window.history.replaceState(null, "", `#${key}`);
   };
 
+  const [theme, nextTheme] = useTheme();
+  const main = useRef<HTMLElement>(null);
+  const tabs = useRef<HTMLElement>(null);
+
+  /** Flèches, Début et Fin passent d'un écran à l'autre, comme dans une barre d'onglets. */
+  const onTabKey = (event: KeyboardEvent<HTMLElement>): void => {
+    const index = VIEWS.findIndex((v) => v.key === current);
+    const target =
+      event.key === "ArrowRight"
+        ? (index + 1) % VIEWS.length
+        : event.key === "ArrowLeft"
+          ? (index - 1 + VIEWS.length) % VIEWS.length
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? VIEWS.length - 1
+              : -1;
+    const view = VIEWS[target];
+    if (!view) return;
+    event.preventDefault();
+    show(view.key);
+    tabs.current?.querySelectorAll("button")[target]?.focus();
+  };
+
   return (
     <div className="page">
+      <button type="button" className="evitement" data-ui="navigation" onClick={() => main.current?.focus()}>
+        Aller au contenu
+      </button>
       <header className="entete">
         <div className="entete-titre">
           <h1>Argent Intelligent</h1>
           <p className="lecture-seule">Tableau de bord en lecture seule</p>
         </div>
         <Freshness {...view} />
+        <button type="button" className="theme" data-ui="affichage" onClick={nextTheme}>
+          Thème : {THEME_LABELS[theme]}
+        </button>
       </header>
-      <nav className="onglets" aria-label="Écrans">
+      <nav className="onglets" aria-label="Écrans" ref={tabs} onKeyDown={onTabKey}>
         {VIEWS.map((v) => (
-          <button key={v.key} type="button" data-nav="true" aria-current={current === v.key ? "page" : undefined} onClick={() => show(v.key)}>
+          <button
+            key={v.key}
+            type="button"
+            data-ui="navigation"
+            aria-current={current === v.key ? "page" : undefined}
+            // Une seule étape de tabulation pour la barre : les flèches font le reste.
+            tabIndex={current === v.key ? 0 : -1}
+            onClick={() => show(v.key)}
+          >
             {v.label}
           </button>
         ))}
       </nav>
       <Banners {...view} />
-      <main id="contenu">
+      <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
         {current === "decisions" && <DecisionsView {...view} />}
         {current === "incident" && <IncidentView {...view} />}
         {current === "journal" && <JournalView {...view} />}

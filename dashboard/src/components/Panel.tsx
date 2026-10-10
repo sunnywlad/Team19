@@ -26,7 +26,7 @@ export function Panel<T>({ title, id, source, snapshot, now, children, className
   const stale = isStale(snapshot, now);
   const { data, error, lastOkAt } = snapshot;
   return (
-    <section className={`panneau ${className ?? ""}`} aria-labelledby={id}>
+    <section className={`panneau ${className ?? ""}`} aria-labelledby={id} aria-busy={data === null && error === null}>
       <header className="panneau-entete">
         <h2 id={id}>{title}</h2>
         <SourceTag source={source} />

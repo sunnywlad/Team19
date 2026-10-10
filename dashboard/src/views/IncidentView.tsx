@@ -228,7 +228,7 @@ export function IncidentView({ relay, response, sources, now }: ViewProps) {
                       <li key={i.report.incident_id}>
                         <button
                           type="button"
-                          data-nav="true"
+                          data-ui="navigation"
                           aria-pressed={i === current}
                           onClick={() => setSelected(i.report.incident_id)}
                         >

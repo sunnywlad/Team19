@@ -26,7 +26,7 @@ export function ReactionCell({ reaction }: { reaction: Reaction }) {
 export function DecisionsTable({ decisions, events, reactionFor }: Props) {
   if (decisions.length === 0) return <p className="vide">Aucune décision du contrat pour l'instant.</p>;
   return (
-    <div className="defilement">
+    <div className="defilement" role="region" aria-label="Décisions du contrat" tabIndex={0}>
       <table className="decisions">
         <thead>
           <tr>
