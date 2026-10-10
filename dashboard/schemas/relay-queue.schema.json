@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:relay-queue:1",
+  "title": "GET /queue du relais : QueueRow[] (relay/src/queue.ts)",
+  "type": "array",
+  "maxItems": 500,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "id", "request_id", "agent_id", "client_id", "expires_at", "status",
+      "enqueued_at_ms", "updated_at_ms", "attempts", "tx_hash", "cause"
+    ],
+    "properties": {
+      "id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "request_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "agent_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "client_id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+      "expires_at": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/blockTimestamp" },
+      "status": { "enum": ["PENDING", "SUBMITTING", "SUBMITTED", "EXPIRED", "REJECTED", "IN_DOUBT"] },
+      "enqueued_at_ms": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/unixMillis" },
+      "updated_at_ms": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/unixMillis" },
+      "attempts": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+      "tx_hash": { "oneOf": [{ "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" }, { "type": "null" }] },
+      "cause": { "description": "Texte libre du relais : affiché comme contenu non fiable.", "oneOf": [{ "type": "string", "maxLength": 500 }, { "type": "null" }] }
+    }
+  }
+}

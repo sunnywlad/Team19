@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:vault-state:1",
+  "title": "PROPOSÉ (API-NEEDS.md) : GET /vault, vues du coffre lues au même bloc",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "block_number", "block_timestamp", "cash_wei", "admitted_debts_wei", "safety_reserve_wei",
+    "total_held_wei", "held_placements_wei", "placeable_wei", "threshold_wei", "vault_paused"
+  ],
+  "properties": {
+    "block_number": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+    "block_timestamp": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/blockTimestamp" },
+    "cash_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "admitted_debts_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "safety_reserve_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "total_held_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "held_placements_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "placeable_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "threshold_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/weiOrNull" },
+    "vault_paused": { "oneOf": [{ "type": "boolean" }, { "type": "null" }] }
+  }
+}
