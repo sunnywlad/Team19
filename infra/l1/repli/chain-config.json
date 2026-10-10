@@ -1,0 +1,5 @@
+{
+  "log-level": "info",
+  "database-type": "leveldb",
+  "eth-apis": ["eth", "eth-filter", "net", "web3", "internal-eth", "internal-blockchain", "internal-transaction"]
+}

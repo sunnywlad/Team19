@@ -1,0 +1,22 @@
+{
+  "network-id": "network-1919",
+  "genesis-file": "/home/wladimir/phaseF/repli/genesis-repli.json",
+  "data-dir": "/home/wladimir/phaseF/repli/nodeC/data-fresh",
+  "log-dir": "/home/wladimir/phaseF/repli/nodeC/logs",
+  "plugin-dir": "/home/wladimir/phaseF/repli/plugins",
+  "subnet-config-dir": "/home/wladimir/phaseF/repli/nodeC/subnet-configs",
+  "chain-config-dir": "/home/wladimir/phaseF/repli/nodeC/chain-configs",
+  "staking-tls-key-file": "/home/wladimir/phaseF/repli/nodeC/staking/staker.key",
+  "staking-tls-cert-file": "/home/wladimir/phaseF/repli/nodeC/staking/staker.crt",
+  "staking-signer-key-file": "/home/wladimir/phaseF/repli/nodeC/staking/signer.key",
+  "http-host": "127.0.0.1",
+  "http-port": 9690,
+  "staking-host": "127.0.0.1",
+  "staking-port": 9691,
+  "public-ip": "127.0.0.1",
+  "network-allow-private-ips": true,
+  "bootstrap-ips": "127.0.0.1:9681",
+  "bootstrap-ids": "NodeID-NwtpG1w8hKUHJZchroimvFCAYgEY7vGTF",
+  "log-level": "info",
+  "track-subnets": "3QJ7kJU84GvuL63RTCh26xcuvBW3NwQGsnTzcEZtJDWumhcyi"
+}

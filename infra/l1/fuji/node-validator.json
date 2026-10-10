@@ -1,0 +1,18 @@
+{
+  "network-id": "fuji",
+  "data-dir": "/home/ubuntu/chk/val/data",
+  "log-dir": "/home/ubuntu/chk/val/logs",
+  "plugin-dir": "/home/ubuntu/chk/plugins",
+  "subnet-config-dir": "/home/ubuntu/chk/val/subnet-configs",
+  "chain-config-dir": "/home/ubuntu/chk/val/chain-configs",
+  "staking-tls-key-file": "/home/ubuntu/chk/val/staking/staker.key",
+  "staking-tls-cert-file": "/home/ubuntu/chk/val/staking/staker.crt",
+  "staking-signer-key-file": "/home/ubuntu/chk/val/staking/signer.key",
+  "http-host": "127.0.0.1",
+  "http-port": 9650,
+  "staking-port": 9651,
+  "public-ip": "54.198.102.83",
+  "partial-sync-primary-network": true,
+  "track-subnets": "KmZRZtLMC3zFV1tmUesNe3QDtJQQFtAeGaYpVgYX4cB9aqcpv",
+  "log-level": "info"
+}
