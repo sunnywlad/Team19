@@ -9,7 +9,7 @@ comment un auditeur vérifie une décision. Elle ne revendique aucune conformit�
 |---|---|---|
 | DORA | Journal chaîné dont l'altération se détecte, rapport d'incident prérempli, horodatages de détection, de pause et d'alerte dans chaque rapport | Classification de l'incident, notification à une autorité, toute revendication de conformité |
 | AI Act | Journalisation automatique de chaque étape, validation humaine prévue pour les montants au-dessus du seuil, pause levée par un humain seulement | Qualification du système (haut risque ou non) |
-| MiCA | Démonstration prévue sur un réseau de test, en monnaie native | Statut de prestataire de services sur crypto-actifs |
+| MiCA | Démonstration prévue sur un réseau de test, avec des fonds de test en monnaie native | Statut de prestataire de services sur crypto-actifs |
 | AML | Chaîne d'autorité de chaque demande (agent, client, signature, décision), décision finale humaine au-dessus du seuil | Vérification d'identité, filtrage de sanctions |
 | RGPD | Données synthétiques ; identifiants opaques et empreintes seulement dans le journal et dans l'interface du contrat | Anonymisation |
 
@@ -28,6 +28,27 @@ Ce que le dépôt montre derrière chaque ligne :
 Ce que nous ne disons pas : « conforme DORA », « conforme » à quoi que ce
 soit, « certifié », « anonymisé ».
 <!-- ce-que-nous-ne-disons-pas:fin -->
+
+## Cadrage du paiement
+
+**Démontré, sur réseau de test.** Le coffre détient des fonds de test et paie
+dans la transaction de décision : événement `Paid`, suivi d'un transfert natif.
+
+**Envisagé, non construit.** En production, `Paid` serait l'autorisation qu'un
+connecteur bancaire consomme. Dans ce mode, le contrat ne détient plus les
+fonds : la garantie « seuls les fonds détenus par le contrat sont protégés » ne
+s'applique plus, et le connecteur devient un composant de confiance à concevoir
+(finalité, rejeu, montant et bénéficiaire lus dans l'événement). Ce connecteur
+n'existe pas : ni code, ni spec.
+
+**État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](../specs/02-contrat.md) § 1
+et § 8) et de l'interface gelée. Aucun contrat n'est écrit ni déployé : il est
+rejoué par un faux coffre, sans fonds. « Démontré » vaudra le jour où le contrat
+tournera sur le réseau de test.
+
+Conséquence pour la slide : les lignes MiCA et AML du tableau valent pour le
+premier mode. Avec un connecteur bancaire, la question réglementaire change de
+nature et n'a pas été étudiée.
 
 ## Comment un auditeur vérifie une décision
 
