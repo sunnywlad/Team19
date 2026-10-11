@@ -21,8 +21,6 @@ La genèse Fuji reprend `l1/genesis.json`, à une différence près : l'admin de
 
 Les fichiers `fuji/node-validator.json` et `fuji/node-observer.json` sont des copies de référence : l'IP publique y est remplacée par `<IP publique du validateur>`, et ce ne sont pas les fichiers qui tournent sur la VM. `fuji/fuji-tunnel.sh` lit l'hôte dans `FUJI_HOST`, ou à défaut dans `~/.config/team19/fuji-host`, hors dépôt.
 
-Les fichiers `fuji/node-validator.json` et `fuji/node-observer.json` sont des copies de référence : l'IP publique y est remplacée par `<IP publique du validateur>`, et ce ne sont pas les fichiers qui tournent sur la VM. `fuji/fuji-tunnel.sh` lit l'hôte dans `FUJI_HOST`, ou à défaut dans `~/.config/team19/fuji-host`, hors dépôt.
-
 ## Identifiants Fuji, vérifiables publiquement
 
 - subnetID : `KmZRZtLMC3zFV1tmUesNe3QDtJQQFtAeGaYpVgYX4cB9aqcpv`
