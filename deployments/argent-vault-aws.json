@@ -5,12 +5,17 @@
     "rehearsal": {
       "address": "0x12e611639ab72237cd8c3ca82b4e5f6db1f1a3a0",
       "block": 158,
-      "status": "consommé"
+      "status": "consomm\u00e9"
     },
     "scenes": {
       "address": "0x0bc40b79f1322ce6a3921ff6b7612f8f7a918e85",
       "block": 297,
-      "status": "consommé"
+      "status": "consomm\u00e9"
+    },
+    "demo": {
+      "address": "0xc873ce84882339ead0d0c98598fb6e84c82b28af",
+      "block": 714,
+      "status": "neuf"
     }
   },
   "roles": {
