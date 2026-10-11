@@ -10,21 +10,19 @@
 // Une clé par rôle. Les étapes s'exécutent dans l'ordre et le script s'arrête
 // à la première erreur.
 //
-// NON TESTÉ contre ArgentVault, qui n'existe pas encore. Sur la doublure
-// StubVault, seul l'arrêt à la première erreur est vérifié (chain-check.mjs).
-//
-// Réseau de test local uniquement (CHAIN_ID 31337) : les comptes des rôles y
-// sont crédités par anvil_setBalance, et chaque bénéficiaire reçoit une adresse
-// synthétique dont personne n'a la clé.
+// Anvil (31337) : les comptes des rôles sont crédités par anvil_setBalance.
+// L1 AWS (191919) : les rôles sont déjà financés ; aucun appel anvil n'est fait.
+// La caisse vient du solde du propriétaire. Les bénéficiaires ont des adresses
+// synthétiques dont personne n'a la clé.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { DemoError, ROOT, loadConfig } from "./lib.mjs";
 import { accounts, callVault, chainClients, viem } from "./viem.mjs";
 
 const ACTION = { PAY_INVOICE: 1, PLACE: 2 };
 
-async function main() {
-  const config = loadConfig();
+export async function seed(config = loadConfig(), { makeClients = chainClients, makeTestClient = viem.createTestClient, contractCall = callVault } = {}) {
   const need = (name, pattern) => {
     const value = config.get(name);
     if (value === undefined) throw new DemoError(`variable d'environnement manquante : ${name}`);
@@ -35,20 +33,21 @@ async function main() {
   const address = need("VAULT_ADDRESS", /^0x[0-9a-fA-F]{40}$/);
   const owner = need("OWNER_PRIVATE_KEY", KEY);
   const admission = need("ADMISSION_PRIVATE_KEY", KEY);
-  if (config.chainId !== "31337") throw new DemoError("seed : réseau de test local uniquement (CHAIN_ID 31337)");
+  if (!["31337", "191919"].includes(config.chainId)) throw new DemoError("seed : chaîne de démo attendue (31337 ou 191919)");
+  const localAnvil = config.chainId === "31337";
 
   const f = JSON.parse(readFileSync(join(ROOT, "specs", "examples", "fixtures.json"), "utf8"));
-  const clients = chainClients(config.rpcUrl, config.chainId);
-  const test = viem.createTestClient({ chain: clients.chain, transport: clients.transport, mode: "anvil" });
+  const clients = makeClients(config.rpcUrl, config.chainId);
+  const test = localAnvil ? makeTestClient({ chain: clients.chain, transport: clients.transport, mode: "anvil" }) : null;
   const syntheticAccount = (beneficiaryId) => viem.getAddress(`0x${beneficiaryId.slice(-40)}`);
 
   const steps = [];
   const step = (label, run) => steps.push({ label, run });
-  const asOwner = (label, fn, args, value) => step(label, () => callVault(clients, address, owner, fn, args, value));
-  const asAdmission = (label, fn, args) => step(label, () => callVault(clients, address, admission, fn, args));
+  const asOwner = (label, fn, args, value) => step(label, () => contractCall(clients, address, owner, fn, args, value));
+  const asAdmission = (label, fn, args) => step(label, () => contractCall(clients, address, admission, fn, args));
 
   // Du gaz pour chaque rôle présent, et la caisse du propriétaire.
-  for (const name of ["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY"]) {
+  for (const name of localAnvil ? ["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY"] : []) {
     const key = config.get(name);
     if (key === undefined || !KEY.test(key)) continue;
     step(`gaz pour ${name}`, () => test.setBalance({ address: accounts.privateKeyToAccount(key).address, value: viem.parseEther("1") }));
@@ -72,14 +71,16 @@ async function main() {
     }
     console.log(`seed : ${n + 1}/${steps.length} ${label}`);
   }
-  console.log("seed : monde de test inscrit sur le réseau de test local");
+  console.log(localAnvil ? "seed : monde de test inscrit sur le réseau de test local" : "seed : monde de test inscrit sur le L1 AWS");
   return 0;
 }
 
-try {
-  process.exitCode = await main();
-} catch (error) {
-  if (!(error instanceof DemoError)) throw error;
-  console.error(`seed : ${error.message}`);
-  process.exitCode = 1;
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  try {
+    process.exitCode = await seed();
+  } catch (error) {
+    if (!(error instanceof DemoError)) throw error;
+    console.error(`seed : ${error.message}`);
+    process.exitCode = 1;
+  }
 }

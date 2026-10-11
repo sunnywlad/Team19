@@ -1,15 +1,18 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
-import { bringUpChain } from "../chain.mjs";
-import { loadConfig } from "../lib.mjs";
+import { bringUpChain, recordConsumedVault } from "../chain.mjs";
+import { loadConfig, up } from "../lib.mjs";
 
 const address = `0x${"2".repeat(40)}`;
 const keys = Object.fromEntries(["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY", "CLIENT_SIGNER"].map((name) => [name, `0x${randomBytes(32).toString("hex")}`]));
 const config = (env = {}) => loadConfig({ env: { VAULT_MODE: "chain", ...keys, ...env }, envFile: "/nonexistent/team19-test.env" });
 
 function harness({ chainId = "0x2edaf", code = "0x6000" } = {}) {
-  const calls = { started: [], stopped: [], commands: [], rpc: [], saved: [] };
+  const calls = { started: [], stopped: [], commands: [], rpc: [], saved: [], consumed: [] };
   const deps = {
     start: async (service) => { calls.started.push(service); },
     stop: async (name) => { calls.stopped.push(name); },
@@ -19,6 +22,7 @@ function harness({ chainId = "0x2edaf", code = "0x6000" } = {}) {
       return { status: 200, body: { result: body.method === "eth_chainId" ? chainId : code } };
     },
     save: (vault) => { calls.saved.push(vault); },
+    record: (vault) => { calls.consumed.push(vault); },
     read: () => JSON.stringify({ transactions: [{ contractName: "ArgentVault", contractAddress: address }] }),
   };
   return { calls, deps };
@@ -83,3 +87,49 @@ test("RPC externe sans VAULT_ADDRESS : forge déploie sur ce RPC, puis seed", as
   assert.deepEqual(calls.saved, [address]);
   assert.equal(calls.commands[1].options.env.CHAIN_ID, "191919");
 });
+
+test("coffre neuf forcé : ignore VAULT_ADDRESS, déploie et note l'adresse consommée avant seed", async () => {
+  const oldVault = `0x${"3".repeat(40)}`;
+  const c = config({ RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919", VAULT_ADDRESS: oldVault });
+  const { calls, deps } = harness();
+  await bringUpChain(c, { ...deps, fresh: true });
+  assert.deepEqual(calls.started, []);
+  assert.deepEqual(calls.stopped, []);
+  assert.deepEqual(calls.rpc.map(({ body }) => body.method), ["eth_chainId"]);
+  assert.equal(calls.commands[0].command, "forge");
+  assert.deepEqual(calls.consumed, [address]);
+  assert.equal(calls.commands[1].options.env.VAULT_ADDRESS, address);
+  assert.notEqual(calls.commands[1].options.env.VAULT_ADDRESS, oldVault);
+});
+
+test("registre des coffres consommés : conserve les métadonnées et n'ajoute que les adresses uniques", () => {
+  const dir = mkdtempSync(join(tmpdir(), "vault-consumed-"));
+  const file = join(dir, "deployments.json");
+  try {
+    writeFileSync(file, JSON.stringify({ chainId: 191919, vaults: { rehearsal: { address, status: "consommé" } } }));
+    recordConsumedVault(address, file);
+    recordConsumedVault(address, file);
+    const next = `0x${"4".repeat(40)}`;
+    recordConsumedVault(next, file);
+    const record = JSON.parse(readFileSync(file, "utf8"));
+    assert.equal(record.chainId, 191919);
+    assert.equal(record.vaults.rehearsal.status, "consommé");
+    assert.deepEqual(record.consumedSceneVaults, [address, next]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+for (const external of [false, true]) {
+  test(`ports de up : ${external ? "RPC externe ne réserve pas anvil" : "mode local réserve toujours anvil"}`, async () => {
+    const seen = [];
+    const c = config({ DEMO_DASHBOARD: "0", ...(external ? { RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919" } : {}) });
+    await assert.rejects(up(c, {
+      check: () => {},
+      state: async () => [],
+      free: async (port) => { seen.push(port); return false; },
+    }), /ports déjà pris/);
+    assert.equal(seen.includes(8545), !external);
+    assert.deepEqual(seen.filter((port) => port !== 8545), [8790, 8780, 8770, 8787]);
+  });
+}

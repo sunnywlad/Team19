@@ -27,6 +27,7 @@
 // document est bloqué, la scène 4 le dira (écart sur la porte).
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { bringUpChain } from "./chain.mjs";
 import { evaluate, loadKnown, vanishedMessage } from "./ecarts.mjs";
@@ -316,6 +317,19 @@ async function scene6a(scene) {
   scene.journal("journal, 6a", ["DECISION_OBSERVED(2,13)"], seen, { tail: true });
 }
 
+/** Sur le L1, attend aussi le bloc du battement qui constate l'échéance réelle. */
+export async function waitForL1Expiry(c, deadline, { rpc = postJson, pause = sleep } = {}) {
+  if (c.mode !== "chain" || c.get("RPC_URL") === undefined) return;
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const reply = await rpc(c.rpcUrl, { jsonrpc: "2.0", id: 1, method: "eth_getBlockByNumber", params: ["latest", false] });
+    const timestamp = reply.body?.result?.timestamp;
+    if (reply.status !== 200 || !/^0x[0-9a-fA-F]+$/.test(timestamp ?? "")) throw new DemoError("expiration L1 : horodatage du bloc illisible");
+    if (BigInt(timestamp) > BigInt(deadline)) return;
+    await pause(250);
+  }
+  throw new DemoError("expiration L1 : aucun bloc après l'échéance, vérifier le battement");
+}
+
 async function scene6b(scene) {
   const { sent, deadline } = await sceneSix(scene);
   scene.check("expire avant l'échéance", "appel refusé (DeadlineNotReached)", await human("expire", sent.id));
@@ -324,6 +338,7 @@ async function scene6b(scene) {
     console.error(`  scène 6b : échéance dans ${left} s, personne ne répond…`);
     await sleep(Math.min(left, 5) * 1000);
   }
+  await waitForL1Expiry(config, deadline);
   scene.check("expire après l'échéance", "appel accepté", await human("expire", sent.id));
   const seen = await settledJournal(sent.id, "DECISION_OBSERVED(0,11)");
   scene.check("contrat, 6b", ["1/ABOVE_THRESHOLD", "0/APPROVAL_TIMEOUT"], await decisions(sent.id));
@@ -440,7 +455,7 @@ async function main(argv) {
     if (wanted.length > 0 && !wanted.includes(id)) continue;
     const scene = new Scene(id, title);
     try {
-      await reset(config, { chain: bringUpChain, quiet: true });
+      await reset(config, { chain: (c) => bringUpChain(c, { fresh: true }), quiet: true });
       await play(scene);
     } catch (error) {
       // Une scène qui ne va pas au bout est un écart, pas un silence.
@@ -469,10 +484,12 @@ async function main(argv) {
   return result.code;
 }
 
-try {
-  process.exitCode = await main(process.argv.slice(2));
-} catch (error) {
-  if (!(error instanceof DemoError)) throw error;
-  console.error(`scènes : ${error.message}`);
-  process.exitCode = 1;
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  try {
+    process.exitCode = await main(process.argv.slice(2));
+  } catch (error) {
+    if (!(error instanceof DemoError)) throw error;
+    console.error(`scènes : ${error.message}`);
+    process.exitCode = 1;
+  }
 }

@@ -1,7 +1,7 @@
 // VAULT_MODE=chain : anvil local par défaut, ou RPC externe explicitement fourni.
 // Le RPC externe doit correspondre à CHAIN_ID. VAULT_ADDRESS permet d'utiliser
 // un coffre déjà déployé, dont le code est vérifié avant l'inscription du monde.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEPLOY_SCRIPT, DemoError, HOST, ROOT, postJson, run, setChainVault, startService, stopService } from "./lib.mjs";
 
@@ -41,8 +41,16 @@ export function anvilService(config) {
   };
 }
 
+/** Coffres des scènes externes : adresses seules, toutes consommées. */
+export function recordConsumedVault(address, file = join(ROOT, "deployments", "argent-vault-aws.json")) {
+  const state = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+  state.consumedSceneVaults ??= [];
+  if (!state.consumedSceneVaults.includes(address)) state.consumedSceneVaults.push(address);
+  writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`);
+}
+
 /** Prépare la chaîne et inscrit le monde de test. S'arrête à la première erreur. */
-export async function bringUpChain(config, { start = startService, stop = stopService, execute = run, rpc = postJson, save = setChainVault, read = readFileSync } = {}) {
+export async function bringUpChain(config, { fresh = false, record = recordConsumedVault, start = startService, stop = stopService, execute = run, rpc = postJson, save = setChainVault, read = readFileSync } = {}) {
   if (!existsSync(join(ROOT, DEPLOY_SCRIPT))) throw new DemoError("ArgentVault absent : VAULT_MODE=chain impossible");
   const keys = roleKeys(config);
   const external = config.get("RPC_URL") !== undefined;
@@ -60,7 +68,7 @@ export async function bringUpChain(config, { start = startService, stop = stopSe
     await start(anvilService(config));
   }
 
-  let address = external ? config.get("VAULT_ADDRESS") : undefined;
+  let address = external && !fresh ? config.get("VAULT_ADDRESS") : undefined;
   if (address !== undefined) {
     if (!/^0x[0-9a-fA-F]{40}$/.test(address)) throw new DemoError("variable d'environnement mal formée : VAULT_ADDRESS");
     let reply;
@@ -86,6 +94,7 @@ export async function bringUpChain(config, { start = startService, stop = stopSe
     if (typeof address !== "string") throw new DemoError("adresse d'ArgentVault introuvable dans la sortie de forge");
   }
   save(address);
+  if (external && fresh) record(address);
 
   const seed = execute(process.execPath, [join(ROOT, "demo", "seed.mjs")], { cwd: ROOT, env: { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "", RPC_URL: config.rpcUrl, CHAIN_ID: config.chainId, VAULT_ADDRESS: address, ...keys }, stdio: ["ignore", "inherit", "inherit"] });
   if (seed.status !== 0) throw new DemoError("inscription du monde de test en échec : voir ci-dessus");

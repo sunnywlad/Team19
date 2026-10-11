@@ -379,13 +379,13 @@ function preflight(config) {
   }
 }
 
-export async function up(config, { chain } = {}) {
-  preflight(config);
-  const running = (await status(config)).filter((r) => r.pid !== null);
+export async function up(config, { chain, check = preflight, state = status, free = portFree } = {}) {
+  check(config);
+  const running = (await state(config)).filter((r) => r.pid !== null);
   if (running.length > 0) throw new DemoError(`démo déjà lancée (${running.map((r) => r.service).join(", ")}) : make demo-stop d'abord`);
-  const wanted = [...services(config).map((s) => [s.name, s.port]), ...(config.mode === "fake" ? [["contrôle du faux coffre", config.ports.control]] : [["anvil", config.ports.anvil]])];
+  const wanted = [...services(config).map((s) => [s.name, s.port]), ...(config.mode === "fake" ? [["contrôle du faux coffre", config.ports.control]] : config.get("RPC_URL") === undefined ? [["anvil", config.ports.anvil]] : [])];
   const taken = [];
-  for (const [name, number] of wanted) if (!(await portFree(number))) taken.push(`${number} (${name})`);
+  for (const [name, number] of wanted) if (!(await free(number))) taken.push(`${number} (${name})`);
   if (taken.length > 0) throw new DemoError(`ports déjà pris sur ${HOST} : ${taken.join(", ")}. Libère-les, ou vérifie avec make demo-status`);
 
   mkdirSync(VAR, { recursive: true, mode: 0o700 });
