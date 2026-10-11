@@ -26,9 +26,9 @@ Preuve : `docs-jury/architecture.md`, ligne 16 ; `docs-jury/rapport-securite.md`
 
 ## 5. Un LLM vérifie-t-il déjà les demandes ?
 
-Non. Les trois vérificateurs appellent un évaluateur factice à règle fixe sur le montant. L'interface peut accueillir un vérificateur LLM sans changement du contrat ; ce branchement est en construction.
+Oui. L'évaluateur Bedrock est branché au marché et a été joué en local puis sur le L1 AWS. Les preuves initiales portent sur Haiku 4.5, Pixtral Large et Sonnet 4.5 ; la campagne de 16 demandes du rapport utilise trois vérificateurs Haiku. Les règles dures restent appliquées avant le modèle. Le verdict du marché n'entre pas dans la décision du coffre.
 
-Preuve : `docs-jury/architecture.md`, lignes 50-51 et 143-144 ; `offchain/evaluator-stub/index.ts`.
+Preuves : [vérificateurs LLM](verificateurs-llm.md), [passage AWS initial](preuves/llm-e2e-aws.md) et [rapport de la campagne de 16 demandes](rendus/pitch-chiffres.html). Ce dernier rapporte des résultats, sans journaux bruts associés dans le dépôt.
 
 ## 6. Peut-on rejouer une demande signée, ici ou sur une autre chaîne ?
 

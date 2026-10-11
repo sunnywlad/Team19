@@ -40,19 +40,23 @@ agent → relais → ArgentVault → événements Decision / Paid → dashboard
 Marché de vérification, parcours relié et joué sur le L1 AWS :
 passerelle → createRequest(H) → tirage du comité → commit → reveal → verdict
      ↕                                                               │
-cache ← vérificateurs ← évaluateur factice                            └→ passerelle
+cache ← vérificateurs ← évaluateur LLM Bedrock                            └→ passerelle
 
 Temps 2 : verdict du marché ··· jonction à construire ··· ArgentVault
 ```
 
 La passerelle, le cache, les services vérificateurs et le marché sont reliés.
 Le parcours de bout en bout atteint la clôture sur le L1 local et le L1 AWS.
-Les évaluateurs branchés sont déterministes, pour une démo reproductible ;
-l'interface accueille des vérificateurs LLM sans changer le contrat.
+Les premiers passages utilisaient l'évaluateur à règles fixes. L'évaluateur
+LLM Bedrock est désormais branché sans changer le contrat : preuves initiales
+avec Haiku 4.5, Pixtral Large et Sonnet 4.5, puis campagne distincte de
+16 demandes avec trois vérificateurs Haiku, rapportée dans
+[rendus/pitch-chiffres.html](rendus/pitch-chiffres.html).
 
 Le flux agent, relais, coffre et dashboard décrit l'interface de l'équipe.
-Le coffre a été déployé et répété sur un L1 local identique (20 transactions, décisions 0/1/2, refus, expiration, rejeu, pause) ; il n'est pas encore déployé sur le L1 de démo, et cette
-répétition ne démontre pas à elle seule l'intégration complète au dashboard. Au temps 1, ArgentVault décide sans
+Le coffre a été déployé et répété sur un L1 local identique (20 transactions,
+décisions 0/1/2, refus, expiration, rejeu, pause), puis joué sur le L1 AWS
+([preuve du coffre AWS](preuves/vault-l1-aws.md)). Au temps 1, ArgentVault décide sans
 le vote du marché. La jonction entre le verdict et le coffre appartient au
 temps 2 et n'est pas encore construite.
 
@@ -111,11 +115,11 @@ Nous vérifions la signature du client et les droits de l'agent sur des actions 
 Nous protégeons les dettes admises, la réserve de sécurité et les montants en attente d'approbation.
 Nous refusons, bloquons pour validation humaine ou payons le bénéficiaire inscrit dans la transaction.
 
-Statut : **écrit et testé (79 tests), répété sur un L1 local identique (20 transactions, décisions 0/1/2, refus, expiration, rejeu, pause), pas encore déployé sur le L1 de démo**.
-Preuve : [preuves/vault-l1-local.md](preuves/vault-l1-local.md).
+Statut : **écrit et testé (79 tests), répété sur le L1 local puis joué sur le L1 AWS**.
+Preuves : [passage local](preuves/vault-l1-local.md), [passage AWS](preuves/vault-l1-aws.md).
 Les décisions sont 0 (refus), 1 (validation humaine) et 2 (acceptation).
 Sur le réseau de test, le transfert natif tient lieu de virement simulé.
-En production, `Paid` est l'autorisation qu'un connecteur bancaire consomme ;
+Dans la production envisagée, `Paid` serait une autorisation consommée par un connecteur bancaire ;
 ce connecteur reste à construire. Le contrat actuel effectue un transfert natif.
 
 Certaines fonctions du coffre n'exigent aucun rôle : `expire` libère une
@@ -141,7 +145,9 @@ inscrit.
   au cache, envoie les transactions, et relit les événements.
 - Les services vérificateurs écoutent les événements, lancent un processus
   d'évaluation neuf par demande, et jouent le commit puis le reveal. L'évaluateur
-  actuel est factice ; le branchement LLM reste à faire.
+  Bedrock consulte des LLM réels ; le stub reste disponible pour les tests.
+  Les comités et les limites de chaque passage sont dans
+  [verificateurs-llm.md](verificateurs-llm.md).
 
 Sources : `offchain/DESIGN.md`, `offchain/cache/server.ts`,
 `offchain/gateway/server.ts`, `offchain/verifier/evaluator.ts` et

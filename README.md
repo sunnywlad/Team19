@@ -282,6 +282,14 @@ dans l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.m
 [docs/mesures/](docs/mesures/README.md). Les chiffres du jeu provisoire écrit
 par l'auteur des règles ne sont pas repris ici.
 
+La [campagne reproductible de 500 attaques](demo/campagne/README.md)
+complète la preuve de confinement sur coffre en mémoire : dix familles,
+100 blocages du filtre et 400 refus du coffre en nominal. Avec le filtre
+aveugle, 450 refus et 50 paiements aux bons montant et bénéficiaire :
+zéro unité détournée, zéro doublon. Elle ne reproduit pas les volumes ni
+les montants du rapport trimestriel historique. Les pauses ne sont pas
+jouées dans cette simulation ; leurs délais viennent des scènes L1.
+
 ## État des composants
 
 **Fait** : le code et ses tests sont dans le dépôt. **Branché** : relié à ses
@@ -304,7 +312,7 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.md). Délais mesurés sur un incident par chemin (`docs/mesures/delais.json`). Règles fixes de référence : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
 | Marché de vérification | `src/` | oui | oui, sur le L1 AWS | Prouvé sur le L1 de démo (`docs-jury/preuves/`) ; son verdict n'entre pas encore dans la décision du coffre |
 | L1 VETO | `infra/l1/` | oui | oui | L1 privé Avalanche, chainId 191919, VETO natif, TxAllowList et Native Minter |
-| Passerelle, cache et vérificateurs | `offchain/` | oui | oui, au marché | Services de vérification ; l'évaluateur est factice, le vérificateur LLM est en construction |
+| Passerelle, cache et vérificateurs | `offchain/` | oui | oui, au marché | Services de vérification ; évaluateur LLM Bedrock branché et joué sur le L1 AWS, voir [preuves LLM](docs-jury/verificateurs-llm.md). Le verdict du marché reste indépendant du coffre |
 
 `src/`, `test/`, `script/` et `offchain/` contiennent aussi un marché de
 vérification, prouvé de bout en bout sur le L1 de démo

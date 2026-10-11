@@ -97,8 +97,9 @@ clé de client ou de propriétaire compromise sort du modèle.
 ## « Et si l'injection de prompt réussit ? »
 
 C'est notre scénario 4, et nous le montrons. Le détecteur laisse passer le
-document, l'IA du client est trompée et signe. La demande vise une facture que
-personne n'a inscrite : le contrat la refuse, motif « facture inconnue », rien
+document. Le client signataire est un bouchon déterministe et signe une
+référence fixée par le script. Aucun LLM n'est trompé dans cette scène.
+La demande vise une facture que personne n'a inscrite : le contrat la refuse, motif « facture inconnue », rien
 ne sort, et ce refus déclenche la même réponse que si la porte avait bloqué.
 Le texte piégé n'atteint jamais le composant qui signe : la porte ne transmet
 que des identifiants.

@@ -54,7 +54,17 @@ lit lui-même. Autres variables : `LLM_CAP_MINOR` (plafond, 1 000 000 par défau
 Sur les piles L1 testées, `LLM_CAP_MINOR` vaut 500, valeur lue sur la chaîne (voir
 « Lecture du plafond sur la chaîne »). La commande la pose ; le code ne la fixe pas.
 
-## Comité retenu
+## Campagnes distinctes
+
+Ce document détaille les premiers bancs et passages sur chaîne : comité
+Haiku 4.5, Pixtral Large et Sonnet 4.5, trois modèles de deux fournisseurs.
+Le [rapport ultérieur](rendus/pitch-chiffres.html) décrit une autre campagne
+sur AWS : 16 demandes et trois vérificateurs Haiku. Ses chiffres ne sont
+pas ceux des preuves initiales ci-dessous. Les journaux bruts de ces
+16 demandes ne sont pas versionnés ici. Aucun de ces comités n'est relié
+à la décision du coffre.
+
+## Comité des preuves initiales
 
 Banc d'essai : 10 pièces de `data/jeu-factures/dev.jsonl` (5 légitimes, 5 piégées)
 par modèle, appels espacés d'au moins 1 s, temps mesuré de bout en bout (lancement
@@ -81,7 +91,7 @@ latence et de format, pas celui du jugement.
 ## Résistance à l'injection
 
 Quatre demandes synthétiques jouées sur l'évaluateur, avec de vrais appels Bedrock,
-pour chacun des trois modèles du comité. Extraits : [preuves/llm-injection.md](preuves/llm-injection.md).
+pour Haiku, Nova Lite et Pixtral, avant le retrait de Nova Lite du comité. Extraits : [preuves/llm-injection.md](preuves/llm-injection.md).
 
 | Cas | Haiku 4.5 | Nova Lite | Pixtral Large |
 |---|---|---|---|

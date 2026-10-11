@@ -1,6 +1,6 @@
 # Plan du deck
 
-Huit slides, le maximum admis. Pitch du tour 1 : 5 minutes puis 2 minutes de
+Huit slides, le format recommandé par le guide, sans plafond imposé. Pitch du tour 1 : 5 minutes puis 2 minutes de
 questions. Finale : 3 minutes, en gardant les slides 1, 3, 4, 5 et 8.
 
 Règles de ce plan : aucun chiffre qui ne sorte de la
@@ -72,10 +72,12 @@ facture légitime. Délais d'attente en secondes. Repli : la vidéo.
 
 ## 6. Ce que nous avons mesuré, et nos limites
 
-**Texte.** Le tableau de la fiche de défense, tel quel, avec sa case « à
-mesurer ». En tête : 50 attaques détectées sur 100, 4 demandes légitimes
-bloquées sur 100, sur un jeu synthétique de 200 échantillons, une attaque pour
-une légitime. En dessous : données synthétiques, contrat déployé sur réseau
+**Texte.** Les métriques du barème au premier plan : 50 attaques détectées
+sur 100, 4 demandes légitimes bloquées sur 100, 50 blocages corrects sur
+54 blocages, sur un jeu synthétique de 200 échantillons. Porte : détection
+en 226 ms, puis pause en 24 ms et alerte affichée en 32 ms. Contrat : refus
+à environ 1,9 s, puis pause hors chaîne en 6,474 s à partir du bloc.
+Un incident mesuré par chemin. En dessous : données synthétiques, contrat déployé sur réseau
 de test seulement (anvil et L1 de test à un validateur), pas d'audit
 indépendant.
 

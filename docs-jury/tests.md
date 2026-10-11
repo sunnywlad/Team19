@@ -126,7 +126,7 @@ ArgentVault est répété sur un L1 local identique au L1 de démo (chainId
 191919, TxAllowList, Native Minter) : **20 transactions**, décisions 0, 1 et 2,
 refus, expiration, rejeu, pause puis reprise, toutes relues par `cast`. Une
 adresse non admise est refusée par le nœud à l'appel de `fund()`. Le coffre
-n'est pas encore déployé sur le L1 de démo. Preuve :
+a depuis été joué sur le L1 AWS : [preuve](preuves/vault-l1-aws.md). Preuve locale :
 [preuves/vault-l1-local.md](preuves/vault-l1-local.md) ; déroulé :
 `script/DeployArgentVault.s.sol` et `script/RehearseArgentVault.s.sol`.
 

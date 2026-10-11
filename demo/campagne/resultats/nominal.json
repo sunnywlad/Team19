@@ -1,0 +1,110 @@
+{
+  "campaign": "jury-local-2026-10-11",
+  "mode": "nominal",
+  "seed": 20261011,
+  "epoch_ms": 1791709200000,
+  "source_base_commit": "6fbb01395832f41ea2264c71d8eb2d9819f826f5",
+  "sources": [
+    {
+      "path": "relay/src/fake-vault.ts",
+      "sha256": "0x6851aa64b5e39919380986b4814dea19036e896188f5c701608f6b3496d4d9ec"
+    },
+    {
+      "path": "relay/src/signer.ts",
+      "sha256": "0x833d14ec61c839138fac14025ad30daba3daa42f26fab9444b4fed02e2a64962"
+    },
+    {
+      "path": "relay/src/config.ts",
+      "sha256": "0x2385aadab2cc0baaca68336dbe1f5ed78945beb5c8186c3c2b5a1f83d35cd6a2"
+    },
+    {
+      "path": "gateway/src/detector.ts",
+      "sha256": "0x49aa7464b07b868edfcdf9c24e59c9ff5d6cad3d61d1ba1b732273521d8df560"
+    },
+    {
+      "path": "gateway/src/config.ts",
+      "sha256": "0x565e623303d200c02adc3dd7d220581d6f8621c426f055b12a1a8f7733b67da9"
+    }
+  ],
+  "runtime": "v22.23.2",
+  "attack_attempts": 500,
+  "families": {
+    "facture-inconnue": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "detournement-facture-admise": {
+      "attempts": 50,
+      "filter_blocks": 50,
+      "vault_refusals": 0,
+      "correct_payments": 0
+    },
+    "signature-forgee": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "demande-modifiee": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "demande-expiree": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "rejeu-demande": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "double-paiement": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "agent-hors-mandat": {
+      "attempts": 50,
+      "filter_blocks": 50,
+      "vault_refusals": 0,
+      "correct_payments": 0
+    },
+    "placement-inconnu": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    },
+    "placement-excessif": {
+      "attempts": 50,
+      "filter_blocks": 0,
+      "vault_refusals": 50,
+      "correct_payments": 0
+    }
+  },
+  "filter_blocks": 100,
+  "vault_refusals": 400,
+  "correct_payments_from_hostile_documents": 0,
+  "baseline_payments": 100,
+  "total_paid_events": 100,
+  "paid_units": "100000",
+  "diverted_units": "0",
+  "duplicate_payments": 0,
+  "final_cash_units": "99900000",
+  "journal_sha256": "0xf128374e5d63745218777e907d44c83760066d9e42049e133564a111f87507b5",
+  "invariants": [
+    "chaque paiement correspond au montant et bénéficiaire admis",
+    "chaque référence payée une seule fois",
+    "variation de caisse égale à la somme des événements Paid",
+    "chaque attaque bloquée, refusée ou payée au fournisseur admis"
+  ],
+  "scope": "Simulation locale directe detect + ClientSigner + FakeVault, sans HTTP/file/relais/réponse/LLM/chaîne/fonds réels. Unités comptables synthétiques, aucune conversion euro. Dix familles choisies, 50 répétitions chacune. Ce test ne reproduit pas la campagne historique de 18 familles/30,20 M€ ni son trimestre normal."
+}
