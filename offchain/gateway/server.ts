@@ -11,7 +11,8 @@ import type { IncomingMessage, ServerResponse, Server } from 'node:http';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import type { Hex } from 'viem';
+import { parseEventLogs } from 'viem';
+import type { Hex, TransactionReceipt } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
 import { getConfig } from '../lib/config.ts';
@@ -44,7 +45,13 @@ export type GatewayStartOpts = {
   incidentsLog?: string;
 };
 
-type ResolvedOpts = Required<GatewayStartOpts>;
+type ResolvedOpts = Required<GatewayStartOpts> & {
+  enqueueTransaction: <T>(operation: () => Promise<T>) => Promise<T>;
+};
+
+const GAS_CREATE_REQUEST = 500_000n;
+const GAS_DRAW_BLOCK = 21_000n;
+const MAX_DRAW_ATTEMPTS = 5;
 
 // ─── Méthodes RPC autorisées (lecture seule) ──────────────────────────────────
 
@@ -100,6 +107,65 @@ function circuitOpen(incidentsLog: string): boolean {
 }
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
+
+function receiptEvents(receipt: TransactionReceipt, address: Hex) {
+  return parseEventLogs({
+    abi: marketAbiWithErrors,
+    logs: receipt.logs.filter(log => log.address.toLowerCase() === address.toLowerCase()),
+    strict: false,
+  });
+}
+
+async function drawRequestCommittee(
+  opts: ResolvedOpts,
+  requestId: bigint,
+  wClient: ReturnType<typeof walletClient>,
+  pClient: ReturnType<typeof publicClient>,
+): Promise<void> {
+  async function advanceDrawBlock(): Promise<void> {
+    // Seule transaction de remplissage permise dans offchain/ : option A du tirage,
+    // transfert de zéro à soi-même pour produire le bloc intermédiaire requis.
+    const hash = await wClient.sendTransaction({
+      to: wClient.account.address,
+      value: 0n,
+      gas: GAS_DRAW_BLOCK,
+    });
+    const receipt = await pClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== 'success') {
+      throw new HttpError(502, `Bloc intermédiaire du tirage annulé requestId=${requestId}`);
+    }
+  }
+
+  await advanceDrawBlock();
+  for (let attempt = 0; attempt < MAX_DRAW_ATTEMPTS; attempt++) {
+    const result = await sendControlled({
+      publicClient: pClient,
+      walletClient: wClient,
+      address: opts.marketAddress,
+      abi: marketAbiWithErrors,
+      call: { functionName: 'drawCommittee', args: [requestId] },
+      force: true,
+    });
+    if (result.status === 'success') {
+      const events = receiptEvents(result.receipt, opts.marketAddress);
+      if (events.some(log => log.eventName === 'CommitteeDrawn' && log.args.requestId === requestId)) return;
+      if (events.some(log => log.eventName === 'DrawRescheduled' && log.args.requestId === requestId)) {
+        if (attempt + 1 < MAX_DRAW_ATTEMPTS) await advanceDrawBlock();
+        continue;
+      }
+      throw new HttpError(502, `Tirage sans CommitteeDrawn ni DrawRescheduled requestId=${requestId}`);
+    }
+    if (result.name === 'AlreadyDrawn') return;
+    if (result.name === 'NotEnoughVerifiers') {
+      console.error(`[gateway] drawCommittee requestId=${requestId} : NotEnoughVerifiers, éligibles=${result.args?.[1] ?? 'unknown'} ; aucune relance`);
+      return;
+    }
+    // Le reçu TooEarly a produit un bloc : rappeler seulement le tirage.
+    if (result.classe === 'early' && result.sent) continue;
+    throw new HttpError(502, `drawCommittee annulé requestId=${requestId} name=${result.name ?? 'unknown'} classe=${result.classe}`);
+  }
+  throw new HttpError(502, `drawCommittee requestId=${requestId} : ${MAX_DRAW_ATTEMPTS} tentatives épuisées`);
+}
 
 // POST /requests
 async function handlePostRequests(
@@ -169,6 +235,7 @@ async function handlePostRequests(
       functionName: 'createRequest',
       args: [h],
       value: fee,
+      gas: GAS_CREATE_REQUEST,
     });
   } catch (e) {
     throw new HttpError(502, `createRequest échoué : ${(e as Error).message}`);
@@ -182,17 +249,13 @@ async function handlePostRequests(
   } catch (e) {
     throw new HttpError(502, `waitForTransactionReceipt échoué : ${(e as Error).message}`);
   }
+  if (receipt.status !== 'success') {
+    throw new HttpError(502, 'createRequest annulé');
+  }
 
   // Lire RequestCreated pour récupérer requestId, commitDeadline, revealDeadline
-  const logs = await pClient.getContractEvents({
-    address: opts.marketAddress,
-    abi: marketAbi,
-    eventName: 'RequestCreated',
-    fromBlock: receipt.blockNumber,
-    toBlock: receipt.blockNumber,
-  });
-
-  const log = logs.find(l => (l.args as { h?: Hex }).h?.toLowerCase() === h.toLowerCase());
+  const logs = receiptEvents(receipt, opts.marketAddress);
+  const log = logs.find(l => l.eventName === 'RequestCreated' && l.args.h?.toLowerCase() === h.toLowerCase());
   if (!log) {
     throw new HttpError(502, 'Événement RequestCreated introuvable dans le reçu');
   }
@@ -204,6 +267,16 @@ async function handlePostRequests(
     commitDeadline: bigint;
     revealDeadline: bigint;
   };
+
+  // Phase 1 : le comité est déjà dans le reçu de création. Phase 3 : le tirer en série.
+  if (!logs.some(l => l.eventName === 'CommitteeDrawn' && l.args.requestId === args.requestId)) {
+    try {
+      await drawRequestCommittee(opts, args.requestId, wClient, pClient);
+    } catch (e) {
+      if (e instanceof HttpError) throw e;
+      throw new HttpError(502, `drawCommittee échoué : ${String(e)}`);
+    }
+  }
 
   // Répondre avec les informations de la demande (bigint en chaînes)
   res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -542,14 +615,14 @@ async function handleRequest(
 
   // POST /requests
   if (req.method === 'POST' && path === '/requests') {
-    await handlePostRequests(req, res, opts);
+    await opts.enqueueTransaction(() => handlePostRequests(req, res, opts));
     return;
   }
 
   // POST /requests/{id}/finalize
   const finalizeMatch = path.match(/^\/requests\/(\d+)\/finalize$/);
   if (req.method === 'POST' && finalizeMatch) {
-    await handleFinalize(req, res, opts, BigInt(finalizeMatch[1]));
+    await opts.enqueueTransaction(() => handleFinalize(req, res, opts, BigInt(finalizeMatch[1])));
     return;
   }
 
@@ -591,7 +664,16 @@ export function startGateway(
     try { return getConfig(); } catch { return null; }
   })();
 
+  // Toutes les écritures de la clé demandeur partent en série, même entre routes.
+  let transactionQueue: Promise<unknown> = Promise.resolve();
+  const enqueueTransaction = <T>(operation: () => Promise<T>): Promise<T> => {
+    const result = transactionQueue.then(operation);
+    transactionQueue = result.catch(() => {});
+    return result;
+  };
+
   const resolved: ResolvedOpts = {
+    enqueueTransaction,
     port:             opts.port             ?? config?.gatewayPort       ?? 8700,
     host:             opts.host             ?? '127.0.0.1',
     apiKeys:          opts.apiKeys          ?? config?.gatewayApiKeys    ?? [],

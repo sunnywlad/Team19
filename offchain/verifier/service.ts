@@ -30,6 +30,7 @@ import { pollLogs } from '../lib/events.ts';
 import { getContent, postDetail } from '../lib/cacheClient.ts';
 import { marketAbi } from '../abi/market.ts';
 import { marketAbiWithErrors } from '../abi/marketErrors.ts';
+import { registryAbi } from '../abi/registry.ts';
 import { sendControlled } from '../lib/revert.ts';
 import type { ControlledResult } from '../lib/revert.ts';
 import { StateStore } from './state.ts';
@@ -42,6 +43,7 @@ export type VerifierOpts = {
   rpcUrl?: string;
   chainId?: number;
   marketAddress?: Hex;
+  registryAddress?: Hex;
   cacheUrl?: string;
   verifierKey?: Hex;
   dataDir?: string;
@@ -56,6 +58,7 @@ export type VerifierOpts = {
 };
 
 export type VerifierHandle = {
+  ready: Promise<void>;
   stop: () => void;
   state: StateStore;
 };
@@ -63,6 +66,13 @@ export type VerifierHandle = {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_NAMES = ['None', 'Commit', 'Reveal', 'Contest', 'Closed'] as const;
+const marketWindowAbi = [{
+  type: 'function',
+  name: 'commitWindow',
+  stateMutability: 'view',
+  inputs: [],
+  outputs: [{ name: '', type: 'uint64' }],
+}] as const;
 
 function statusName(n: number): string {
   return STATUS_NAMES[n] ?? 'Unknown';
@@ -78,10 +88,12 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
   const chainIdNum   = opts.chainId          ?? Number(config?.chainId ?? 191919);
   const chainId      = BigInt(chainIdNum);
   const marketAddress = opts.marketAddress   ?? config?.marketAddress    ?? ('' as Hex);
+  const registryAddress = opts.registryAddress ?? config?.registryAddress;
   const cacheUrl     = opts.cacheUrl         ?? config?.cacheUrl         ?? 'http://127.0.0.1:8701';
   const verifierKey  = opts.verifierKey      ?? config?.verifierKey      ?? ('' as Hex);
   const evaluatorCmd = opts.evaluatorCmd     ?? config?.evaluatorCmd     ?? 'node evaluator-stub/index.ts';
   const timeoutMs    = opts.evaluatorTimeoutMs ?? config?.evaluatorTimeoutMs ?? 90_000;
+  let effectiveTimeoutMs = timeoutMs;
   const incidentsLog = opts.incidentsLog     ?? config?.incidentsLog     ?? 'offchain/incidents.log';
   const pollMs       = opts.pollMs           ?? config?.pollMs           ?? 1_000;
 
@@ -105,6 +117,8 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
 
   const pubClient  = makePublicClient(rpcUrl, chainIdNum);
   const wltClient  = makeWalletClient(verifierKey, rpcUrl, chainIdNum);
+
+  const STAKE_TARGET_MULTIPLIER = 5n;
 
   // Dernier bloc traité (fichier sur disque via le store lui-même)
   // On garde ça en mémoire, réinitialisé à 0n au premier démarrage.
@@ -235,7 +249,7 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
     }
 
     // Lance l'évaluateur
-    const evalResult = await runEvaluator(evaluatorCmd, payloadBytes, timeoutMs);
+    const evalResult = await runEvaluator(evaluatorCmd, payloadBytes, effectiveTimeoutMs);
 
     if (!evalResult.ok) {
       const reasons = reasonsToMask([evalResult.cause]);
@@ -678,10 +692,80 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
     }
   }
 
-  // Démarrer la boucle
-  tick().catch(() => {});
+  async function initialize(): Promise<void> {
+    const commitWindow = await pubClient.readContract({
+      address: marketAddress,
+      abi: marketWindowAbi,
+      functionName: 'commitWindow',
+      args: [],
+    });
+    const maxTimeoutMs = Number(commitWindow * 500n);
+    effectiveTimeoutMs = Math.min(timeoutMs, maxTimeoutMs);
+    if (effectiveTimeoutMs < timeoutMs) {
+      console.warn(
+        `[verifier] EVALUATOR_TIMEOUT_MS réduit de ${timeoutMs} à ${effectiveTimeoutMs} ms ` +
+        `(moitié de commitWindow=${commitWindow}s)`,
+      );
+    }
+
+    if (registryAddress) {
+      const [stakeOf, minStake] = await Promise.all([
+        pubClient.readContract({
+          address: registryAddress,
+          abi: registryAbi,
+          functionName: 'stakeOf',
+          args: [account.address],
+        }),
+        pubClient.readContract({
+          address: registryAddress,
+          abi: registryAbi,
+          functionName: 'minStake',
+          args: [],
+        }),
+      ]);
+      const targetStake = STAKE_TARGET_MULTIPLIER * minStake;
+      const currentStake = stakeOf[0];
+
+      if (currentStake < targetStake) {
+        const result = await sendControlled({
+          publicClient: pubClient,
+          walletClient: wltClient,
+          address: registryAddress,
+          abi: registryAbi,
+          call: { functionName: 'register', args: [], value: targetStake - currentStake },
+          force: false,
+        });
+        if (result.status !== 'success') {
+          if (result.name === 'NotAdmitted') {
+            throw new Error(`Adresse vérificateur non admise au registre : ${verifierAddress}`);
+          }
+          throw new Error(
+            `Inscription au registre annulée (${result.name ?? 'raison inconnue'}) pour ${verifierAddress}`,
+          );
+        }
+      }
+
+      const active = await pubClient.readContract({
+        address: registryAddress,
+        abi: registryAbi,
+        functionName: 'isActive',
+        args: [account.address],
+      });
+      if (!active) {
+        throw new Error(`Adresse vérificateur non admise ou inactive après inscription : ${verifierAddress}`);
+      }
+    }
+  }
+
+  // La boucle commence seulement après les lectures et l'inscription éventuelle.
+  const ready = initialize().then(async () => {
+    if (!stopped) await tick();
+  });
+  // L'appelant direct peut choisir d'attendre ready ; éviter un rejet non géré sinon.
+  void ready.catch(() => {});
 
   return {
+    ready,
     stop: () => {
       stopped = true;
       if (timer) clearTimeout(timer);
@@ -697,8 +781,13 @@ const isMain = process.argv[1]?.endsWith('verifier/service.ts') ||
 
 if (isMain) {
   try {
-    startVerifier();
-    console.log('[verifier] Service démarré');
+    const handle = startVerifier();
+    void handle.ready.then(() => {
+      console.log('[verifier] Service démarré');
+    }).catch((err) => {
+      console.error('[verifier] Impossible de démarrer:', err);
+      process.exit(1);
+    });
   } catch (err) {
     console.error('[verifier] Impossible de démarrer:', err);
     process.exit(1);

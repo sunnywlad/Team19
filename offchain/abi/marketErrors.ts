@@ -1,4 +1,5 @@
 import { marketAbi } from './market.ts';
+import { drawnMarketAbi } from './drawnMarket.ts';
 
 export const marketErrorsAbi = [
   {
@@ -8,4 +9,4 @@ export const marketErrorsAbi = [
   },
 ] as const;
 
-export const marketAbiWithErrors = [...marketAbi, ...marketErrorsAbi] as const;
+export const marketAbiWithErrors = [...marketAbi, ...marketErrorsAbi, ...drawnMarketAbi] as const;

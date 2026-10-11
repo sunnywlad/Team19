@@ -2,7 +2,11 @@
 # e2e.sh — test bout en bout de la pile offchain contre le L1 local (Team19)
 # Utilisation : bash offchain/e2e.sh [depuis la racine du dépôt]
 # Variables optionnelles :
+#   ADDRESSES_FILE     fichier de déploiement (défaut deployments/latest-local.json)
+#   MARKET_ADDRESS     surcharge le marché ; sans REGISTRY_ADDRESS, conserve phase 1
+#   REGISTRY_ADDRESS   surcharge le registre de phase 3
 #   E2E_AMOUNT          montant de la demande (défaut 50000)
+#   E2E_REQUESTS        nombre de cycles série (défaut 1)
 #   E2E_EXPECT_CLOSED   0 (défaut) ou 1. À 1, après les contrôles code et
 #                       VerdictRevealed, attend le statut Closed (close envoyé
 #                       par les vérificateurs après contestDeadline), lu par
@@ -12,14 +16,40 @@ set -euo pipefail
 # ─── 0. Répertoire de travail ────────────────────────────────────────────────
 # Le script est dans offchain/ ; toutes les commandes node s'exécutent depuis là.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 # ─── 1. Valeurs par défaut surchargeables ───────────────────────────────────
-MARKET_ADDRESS="${MARKET_ADDRESS:-0x55a4edd8a2c051079b426e9fbdee285368824a89}"
+ADDRESSES_FILE="${ADDRESSES_FILE:-$REPO_ROOT/deployments/latest-local.json}"
+if [[ "$ADDRESSES_FILE" != /* ]]; then
+  ADDRESSES_FILE="$REPO_ROOT/$ADDRESSES_FILE"
+fi
+if [ -z "${MARKET_ADDRESS:-}" ]; then
+  if [ ! -f "$ADDRESSES_FILE" ]; then
+    echo "[e2e] ERREUR : fichier d'adresses absent ($ADDRESSES_FILE)" >&2
+    exit 1
+  fi
+  MARKET_ADDRESS=$(node -e "const d=require(process.argv[1]); process.stdout.write(d.phase3.DrawnVerificationMarket || '')" "$ADDRESSES_FILE")
+  if [ -z "${REGISTRY_ADDRESS:-}" ]; then
+    REGISTRY_ADDRESS=$(node -e "const d=require(process.argv[1]); process.stdout.write(d.phase3.VerifierRegistry || '')" "$ADDRESSES_FILE")
+  fi
+fi
+REGISTRY_ADDRESS="${REGISTRY_ADDRESS:-}"
+if [ -z "$MARKET_ADDRESS" ]; then
+  echo "[e2e] ERREUR : DrawnVerificationMarket introuvable dans $ADDRESSES_FILE" >&2
+  exit 1
+fi
 RPC_URL="${RPC_URL:-http://127.0.0.1:9654/ext/bc/bM7X3ju78mCF3i2dKcF9LKvkFCiHmcxzpm71xzpUQKemrQqvW/rpc}"
 CHAIN_ID="${CHAIN_ID:-191919}"
 E2E_AMOUNT="${E2E_AMOUNT:-50000}"
+E2E_REQUESTS="${E2E_REQUESTS:-1}"
 E2E_EXPECT_CLOSED="${E2E_EXPECT_CLOSED:-0}"
+case "$E2E_REQUESTS" in
+  ''|*[!0-9]*|0)
+    echo "[e2e] ERREUR : E2E_REQUESTS doit être un entier positif" >&2
+    exit 1 ;;
+esac
+export MARKET_ADDRESS REGISTRY_ADDRESS
 
 # Trouver des ports libres (évite les conflits avec des instances précédentes)
 find_free_port() {
@@ -46,6 +76,14 @@ if [ "$MARKET_CODE" = "0x" ] || [ -z "$MARKET_CODE" ]; then
   exit 1
 fi
 echo "[e2e] Contrat OK (${#MARKET_CODE} caractères de bytecode)"
+if [ -n "$REGISTRY_ADDRESS" ]; then
+  REGISTRY_CODE=$(cast code "$REGISTRY_ADDRESS" --rpc-url "$RPC_URL" 2>/dev/null || echo "0x")
+  if [ "$REGISTRY_CODE" = "0x" ] || [ -z "$REGISTRY_CODE" ]; then
+    echo "[e2e] ERREUR : aucun contrat registre à $REGISTRY_ADDRESS" >&2
+    exit 1
+  fi
+  echo "[e2e] Registre OK ($REGISTRY_ADDRESS)"
+fi
 
 # Fenêtres lues sur la chaîne (variables publiques immuables du marché).
 # cast peut suffixer un nombre d'une notation [1e18] : on ne garde que le 1er champ.
@@ -63,6 +101,9 @@ for w in "$COMMIT_WINDOW" "$REVEAL_WINDOW" "$CONTEST_WINDOW"; do
   esac
 done
 echo "[e2e] Fenêtres : commit=${COMMIT_WINDOW}s reveal=${REVEAL_WINDOW}s contest=${CONTEST_WINDOW}s"
+EVALUATOR_TIMEOUT_MS=$((COMMIT_WINDOW * 1000 / 2))
+export EVALUATOR_TIMEOUT_MS
+echo "[e2e] EVALUATOR_TIMEOUT_MS=$EVALUATOR_TIMEOUT_MS (moitié de la fenêtre commit)"
 
 # ─── 3. Dérivation des clés à l'exécution ───────────────────────────────────
 # Jamais écrites sur disque ni affichées dans les journaux.
@@ -75,6 +116,9 @@ REQUESTER_KEY=$(cast wallet private-key --mnemonic "$MNEMONIC" --mnemonic-index 
 
 # Adresse du demandeur (index 4) en minuscules
 REQUESTER_ADDR=$(cast wallet address --mnemonic "$MNEMONIC" --mnemonic-index 4 | tr '[:upper:]' '[:lower:]')
+VERIFIER_ADDR_1=$(cast wallet address --mnemonic "$MNEMONIC" --mnemonic-index 1 | tr '[:upper:]' '[:lower:]')
+VERIFIER_ADDR_2=$(cast wallet address --mnemonic "$MNEMONIC" --mnemonic-index 2 | tr '[:upper:]' '[:lower:]')
+VERIFIER_ADDR_3=$(cast wallet address --mnemonic "$MNEMONIC" --mnemonic-index 3 | tr '[:upper:]' '[:lower:]')
 echo "[e2e] Adresse demandeur : $REQUESTER_ADDR"
 
 export VERIFIER_KEY_1 VERIFIER_KEY_2 VERIFIER_KEY_3 REQUESTER_KEY REQUESTER_ADDR
@@ -149,6 +193,7 @@ for i in 1 2 3; do
   VERIFIER_DATA_DIR="${!VDIR_VAR}" \
   CACHE_URL="http://127.0.0.1:$CACHE_PORT" \
   MARKET_ADDRESS="$MARKET_ADDRESS" \
+  REGISTRY_ADDRESS="$REGISTRY_ADDRESS" \
   RPC_URL="$RPC_URL" \
   CHAIN_ID="$CHAIN_ID" \
   INCIDENTS_LOG="$INCIDENTS_LOG" \
@@ -157,6 +202,33 @@ for i in 1 2 3; do
   PIDS+=($!)
   echo "[e2e] Vérificateur $i PID=$!"
 done
+
+# Phase 3 : les trois services doivent être admis, inscrits et actifs avant
+# qu'une demande puisse tirer exactement ce comité.
+if [ -n "$REGISTRY_ADDRESS" ]; then
+  wait_verifier_active() {
+    local address="$1"
+    local label="$2"
+    local elapsed=0
+    while [ "$elapsed" -lt 60 ]; do
+      local active
+      active=$(cast call "$REGISTRY_ADDRESS" "isActive(address)(bool)" "$address" --rpc-url "$RPC_URL" 2>/dev/null | awk '{print $1; exit}' || true)
+      if [ "$active" = "true" ]; then
+        echo "[e2e] Vérificateur $label actif au registre"
+        return 0
+      fi
+      sleep 1
+      elapsed=$((elapsed + 1))
+    done
+    echo "[e2e] ERREUR : le vérificateur $label ($address) n'est pas actif après 60 s" >&2
+    tail -30 "$TMP_DIR/verifier-$label.log" >&2
+    E2E_EXIT_CODE=1
+    exit 1
+  }
+  wait_verifier_active "$VERIFIER_ADDR_1" 1
+  wait_verifier_active "$VERIFIER_ADDR_2" 2
+  wait_verifier_active "$VERIFIER_ADDR_3" 3
+fi
 
 # ─── 10. Attente que les ports répondent ─────────────────────────────────────
 wait_port() {
@@ -182,7 +254,11 @@ wait_port() {
 wait_port "$CACHE_PORT" "cache"
 wait_port "$GATEWAY_PORT" "gateway"
 
-# ─── 11. Construction du payload ─────────────────────────────────────────────
+# ─── 11. Cycles de demande ───────────────────────────────────────────────────
+for ((CYCLE = 1; CYCLE <= E2E_REQUESTS; CYCLE++)); do
+echo "[e2e] Cycle $CYCLE/$E2E_REQUESTS"
+
+# Construction du payload
 SALT="0x$(openssl rand -hex 32)"
 CREATED_AT=$(date +%s)
 
@@ -242,6 +318,23 @@ if [ -z "$REQUEST_ID" ]; then
 fi
 
 echo "[e2e] requestId = $REQUEST_ID"
+
+if [ -n "$REGISTRY_ADDRESS" ]; then
+  DRAW_LOGS=$(cast logs \
+    --rpc-url "$RPC_URL" \
+    --address "$MARKET_ADDRESS" \
+    --from-block 0 \
+    "CommitteeDrawn(uint256 indexed requestId, address[] committee)" \
+    "$REQUEST_ID" \
+    2>/dev/null || echo "")
+  DRAW_COUNT=$(echo "$DRAW_LOGS" | grep -c '^- address:' 2>/dev/null) || DRAW_COUNT=0
+  if [ "$DRAW_COUNT" -ne 1 ]; then
+    echo "[e2e] ERREUR : $DRAW_COUNT CommitteeDrawn pour requestId=$REQUEST_ID (1 attendu)" >&2
+    E2E_EXIT_CODE=1
+    exit 1
+  fi
+  echo "[e2e] CommitteeDrawn pour requestId=$REQUEST_ID : $DRAW_COUNT"
+fi
 
 # Lire les deadlines depuis la réponse (en secondes Unix)
 COMMIT_DEADLINE=$(echo "$RESP" | grep -o '"commitDeadline":"[^"]*"' | cut -d'"' -f4 || echo "0")
@@ -415,6 +508,32 @@ if [ "$FAIL" -eq 1 ]; then
   exit 1
 fi
 
-echo "[e2e] SUCCÈS : requestId=$REQUEST_ID code=$CODE_NUM VerdictRevealed=$VERDICT_COUNT"
+echo "[e2e] Cycle $CYCLE réussi : requestId=$REQUEST_ID code=$CODE_NUM VerdictRevealed=$VERDICT_COUNT"
+done
+
+if [ -n "$REGISTRY_ADDRESS" ] && [ "$E2E_EXPECT_CLOSED" = "1" ]; then
+  STAKE_FAIL=0
+  for i in 1 2 3; do
+    VK_ADDR_VAR="VERIFIER_ADDR_$i"
+    VERIFIER_ADDR="${!VK_ADDR_VAR}"
+    STAKE_OUTPUT=$(cast call "$REGISTRY_ADDRESS" "stakeOf(address)(uint256,uint256)" "$VERIFIER_ADDR" --rpc-url "$RPC_URL" 2>/dev/null || true)
+    STAKE_VALUES=$(echo "$STAKE_OUTPUT" | sed -E 's/\[[^]]+\]//g' | awk 'NF { for (i=1; i<=NF; i++) if ($i ~ /^[0-9]+$/) print $i }' | head -2)
+    TOTAL_STAKE=$(echo "$STAKE_VALUES" | sed -n '1p')
+    LOCKED_STAKE=$(echo "$STAKE_VALUES" | sed -n '2p')
+    if [ -z "$TOTAL_STAKE" ] || [ -z "$LOCKED_STAKE" ]; then
+      echo "[e2e] ERREUR : lecture stakeOf impossible pour $VERIFIER_ADDR" >&2
+      STAKE_FAIL=1
+      continue
+    fi
+    echo "[e2e] stakeOf vérificateur $i : total=$TOTAL_STAKE locked=$LOCKED_STAKE"
+    if [ "$LOCKED_STAKE" != "0" ]; then STAKE_FAIL=1; fi
+  done
+  if [ "$STAKE_FAIL" -ne 0 ]; then
+    echo "[e2e] ERREUR : part de caution encore bloquée après Closed" >&2
+    E2E_EXIT_CODE=1
+    exit 1
+  fi
+fi
+
 E2E_EXIT_CODE=0
 exit 0

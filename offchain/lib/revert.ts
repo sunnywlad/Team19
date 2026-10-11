@@ -1,6 +1,7 @@
 import { ContractFunctionRevertedError } from 'viem';
-import type { Hex } from 'viem';
+import type { Hex, TransactionReceipt } from 'viem';
 import type { marketAbiWithErrors } from '../abi/marketErrors.ts';
+import type { registryAbi } from '../abi/registry.ts';
 import type { publicClient, walletClient } from './chain.ts';
 
 export type RevertClass = 'done' | 'early' | 'fatal' | 'unknown';
@@ -20,10 +21,15 @@ export function revertName(err: unknown): string | undefined {
   return findRevert(err)?.data?.errorName;
 }
 
+export function revertArgs(err: unknown): readonly unknown[] | undefined {
+  return findRevert(err)?.data?.args;
+}
+
 export function classifyRevert(name: string | undefined): RevertClass {
   switch (name) {
     case 'AlreadyCommitted':
     case 'AlreadyRevealed':
+    case 'AlreadyDrawn':
       return 'done';
     case 'WrongPhase':
     case 'TooEarly':
@@ -33,6 +39,9 @@ export function classifyRevert(name: string | undefined): RevertClass {
     case 'NotCommitteeMember':
     case 'RevealWindowClosed':
     case 'UnknownRequest':
+    case 'NotEnoughVerifiers':
+    case 'NotAdmitted':
+    case 'StakeTooLow':
       return 'fatal';
     default:
       return 'unknown';
@@ -47,28 +56,36 @@ export const GAS_REVEAL = 200_000n;
 export const GAS_FINALIZE = 2_000_000n;
 // Close jamais mesuré ; marge provisoire. Limite de bloc du L1 : 8 000 000.
 export const GAS_CLOSE = 1_000_000n;
+// L1 local, 4 inscrits : 283 966 et 335 266 ; la boucle croît avec le registre.
+export const GAS_DRAW = 1_500_000n;
+// cast estimate sur L1 local : 35 055 (complément d'une inscription existante).
+// Marge pour la première inscription (ajout à la liste des actifs), non mesurée sur ce L1.
+export const GAS_REGISTER = 300_000n;
 
 type MarketCall =
   | { functionName: 'commitVerdict'; args: readonly [bigint, Hex] }
   | { functionName: 'revealVerdict'; args: readonly [bigint, number, number, Hex, Hex] }
-  | { functionName: 'finalize' | 'close'; args: readonly [bigint] };
+  | { functionName: 'finalize' | 'close' | 'drawCommittee'; args: readonly [bigint] }
+  | { functionName: 'register'; args: readonly []; value: bigint };
 
 export type ControlledResult =
-  | { status: 'success'; sent: true }
-  | { status: 'reverted'; name: string | undefined; classe: RevertClass; sent: boolean };
+  | { status: 'success'; sent: true; receipt: TransactionReceipt }
+  | { status: 'reverted'; name: string | undefined; classe: RevertClass; sent: boolean; args?: readonly unknown[] };
 
 const GAS_BY_CALL = {
   commitVerdict: GAS_COMMIT,
   revealVerdict: GAS_REVEAL,
   finalize: GAS_FINALIZE,
   close: GAS_CLOSE,
+  drawCommittee: GAS_DRAW,
+  register: GAS_REGISTER,
 } as const;
 
 export async function sendControlled(opts: {
   publicClient: ReturnType<typeof publicClient>;
   walletClient: ReturnType<typeof walletClient>;
   address: Hex;
-  abi: typeof marketAbiWithErrors;
+  abi: typeof marketAbiWithErrors | typeof registryAbi;
   call: MarketCall;
   force: boolean;
 }): Promise<ControlledResult> {
@@ -79,8 +96,8 @@ export async function sendControlled(opts: {
     ...opts.call,
     account: wc.account,
   };
-  const reverted = (name: string | undefined, sent: boolean): ControlledResult => ({
-    status: 'reverted', name, classe: classifyRevert(name), sent,
+  const reverted = (name: string | undefined, sent: boolean, args?: readonly unknown[]): ControlledResult => ({
+    status: 'reverted', name, classe: classifyRevert(name), sent, args,
   });
 
   try {
@@ -88,7 +105,7 @@ export async function sendControlled(opts: {
   } catch (err) {
     if (!findRevert(err)) throw err;
     const name = revertName(err);
-    if (classifyRevert(name) !== 'early' || !opts.force) return reverted(name, false);
+    if (classifyRevert(name) !== 'early' || !opts.force) return reverted(name, false, revertArgs(err));
     // Horloge murale prête, dernier bloc en retard : envoyer l'appel utile à gaz fixe.
   }
 
@@ -97,17 +114,17 @@ export async function sendControlled(opts: {
     hash = await wc.writeContract({ ...contract, gas: GAS_BY_CALL[opts.call.functionName] });
   } catch (err) {
     if (!findRevert(err)) throw err;
-    return reverted(revertName(err), false);
+    return reverted(revertName(err), false, revertArgs(err));
   }
   const receipt = await pc.waitForTransactionReceipt({ hash });
-  if (receipt.status === 'success') return { status: 'success', sent: true };
+  if (receipt.status === 'success') return { status: 'success', sent: true, receipt };
 
   // Le reçu n'a pas de données de revert. Rejouer dans son bloc pour les décoder.
   try {
     await pc.simulateContract({ ...contract, blockNumber: receipt.blockNumber });
   } catch (err) {
     if (!findRevert(err)) throw err;
-    return reverted(revertName(err), true);
+    return reverted(revertName(err), true, revertArgs(err));
   }
   // Le rejeu réussit malgré le reçu annulé (p. ex. panne de gaz) : raison inconnue.
   return reverted(undefined, true);
