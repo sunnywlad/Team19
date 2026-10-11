@@ -32,7 +32,8 @@ describe("états", () => {
   it("erreur : un statut HTTP ou un corps illisible donne une erreur explicite sur chaque écran", async () => {
     render(<App client={new SimulatedApiClient(async () => ({ ok: false, status: 503, json: async () => ({}) }) as Response)} />);
     await waitFor(() => expect(screen.getAllByText(/Lecture en échec : l'API a répondu 503\. Rien n'est affiché\./)).toHaveLength(document.querySelectorAll(".panneau").length));
-    for (const name of SCREENS) {
+    // La Présentation ne lit aucune donnée : aucune erreur à y montrer.
+    for (const name of SCREENS.filter((s) => s !== "Présentation")) {
       open(name);
       expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
     }
@@ -62,11 +63,10 @@ describe("clavier", () => {
     expect(screen.getByRole("button", { name: "Validation", current: "page" })).toBeTruthy();
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
 
-    await user.keyboard("{End}{ArrowLeft}");
+    await user.keyboard("{End}{ArrowLeft}{ArrowLeft}");
     expect(screen.getByRole("button", { name: "Alertes et rapports", current: "page" })).toBeTruthy();
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
-    await user.keyboard("{ArrowRight}");
-    await user.keyboard("{ArrowRight}");
+    await user.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}");
     expect(screen.getByRole("button", { name: "Accueil", current: "page" })).toBeTruthy();
     await user.keyboard("{ArrowLeft}{Home}");
     expect(screen.getByRole("button", { name: "Accueil", current: "page" })).toBeTruthy();

@@ -1,5 +1,5 @@
 // Écrans Incident, Journal et En attente, sur les scénarios qui les concernent.
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { renderScenario, text } from "./helpers.tsx";
 import { open } from "./tour.ts";
@@ -233,5 +233,34 @@ describe("page Rôles", () => {
     expect(mandates.filter((m) => m.includes("payer une facture"))).toHaveLength(3);
     expect(mandates.filter((m) => m.includes("en pause sur la chaîne"))).toHaveLength(1);
     expect(mandates.some((m) => m.includes("aucun droit d'action"))).toBe(true);
+  });
+});
+
+describe("page Présentation", () => {
+  it("sans donnée lue : trois phrases, la table étiquetée « illustration », une boucle qui repart", async () => {
+    vi.useFakeTimers();
+    renderScenario("1");
+    open("Présentation");
+    const table = screen.getByTestId("table-ronde");
+    expect(text(table)).toContain("illustration");
+    expect(text(table)).toContain("aucune donnée lue");
+    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("non-atteint");
+    expect(screen.getByTestId("siege-porte").getAttribute("data-verdict")).toBe("attente");
+    await act(async () => void (await vi.advanceTimersByTimeAsync(4 * 1400)));
+    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("veto");
+    await act(async () => void (await vi.advanceTimersByTimeAsync(2 * 1400)));
+    expect(screen.getByTestId("siege-porte").getAttribute("data-verdict")).toBe("attente");
+    // Aucun identifiant de demande : rien ne se lit comme une donnée.
+    expect(table.querySelector(".identifiant")).toBeNull();
+  });
+
+  it("mouvement réduit : la scène reste figée sur son dernier plan", async () => {
+    vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce"), addEventListener: () => undefined, removeEventListener: () => undefined }));
+    vi.useFakeTimers();
+    renderScenario("1");
+    open("Présentation");
+    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("veto");
+    await act(async () => void (await vi.advanceTimersByTimeAsync(10_000)));
+    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("veto");
   });
 });

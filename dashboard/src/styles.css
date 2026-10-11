@@ -1474,6 +1474,44 @@ tbody tr:last-child > * {
   user-select: all;
 }
 
+/* Présentation : trois phrases, et la table en illustration. */
+.presentation {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: 32px;
+  align-items: center;
+  padding: 24px 0 12px;
+}
+
+.presentation-sur {
+  margin: 0 0 10px;
+  font-size: 0.86rem;
+  letter-spacing: 0.14em;
+  color: var(--violet-clair);
+}
+
+.presentation h2 {
+  margin: 0 0 18px;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.presentation-texte > p:not(.presentation-sur) {
+  font-size: 1.12rem;
+  max-width: 34em;
+}
+
+.table-centre .source {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 1100px) {
+  .presentation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ───────────── Mouvement ───────────── */
 
 /* Une valeur lue qui change entre deux lectures entre par le bas, une fois. */
@@ -1632,6 +1670,6 @@ tbody tr:last-child > * {
   }
 }
 
-.indisponible {
+td .indisponible {
   white-space: nowrap;
 }
