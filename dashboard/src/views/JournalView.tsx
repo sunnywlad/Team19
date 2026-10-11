@@ -56,11 +56,11 @@ function Verdict({ state }: { state: JournalVerification }) {
   );
 }
 
-/** Intégrité du journal : tête, vérification, limite, têtes gardées par les rapports. */
-export function JournalIntegrity({ view }: { view: ViewProps }) {
+export function JournalView({ view }: { view: ViewProps }) {
   const { response, sources, now } = view;
   return (
-      <Panel title="Journal chaîné" id="titre-journal" source={sources.response} snapshot={response} now={now} className="panneau-journal">
+    <>
+      <Panel title="Journal chaîné" id="titre-journal" source={sources.response} snapshot={response} now={now}>
         {(data) => {
           const { head } = data.verification;
           const byseq = new Map(data.journal.map((e) => [e.seq, e.hash]));
@@ -113,14 +113,8 @@ export function JournalIntegrity({ view }: { view: ViewProps }) {
           );
         }}
       </Panel>
-  );
-}
 
-/** Les vingt dernières entrées du journal, les plus récentes d'abord. */
-export function JournalEntries({ view }: { view: ViewProps }) {
-  const { response, sources, now } = view;
-  return (
-      <Panel title="Dernières entrées du journal" id="titre-entrees" source={sources.response} snapshot={response} now={now} className="panneau-entrees">
+      <Panel title="Dernières entrées" id="titre-entrees" source={sources.response} snapshot={response} now={now}>
         {(data) =>
           data.journal.length === 0 ? (
             <p className="vide">Journal vide.</p>
@@ -165,5 +159,6 @@ export function JournalEntries({ view }: { view: ViewProps }) {
           )
         }
       </Panel>
+    </>
   );
 }

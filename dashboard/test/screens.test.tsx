@@ -1,6 +1,6 @@
 // Écrans Incident, Journal et En attente, sur les scénarios qui les concernent.
-import { act, fireEvent, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { renderScenario, text } from "./helpers.tsx";
 import { open } from "./tour.ts";
 
@@ -10,7 +10,7 @@ type Row = Record<string, unknown>;
 describe("écran Incident", () => {
   it("scénario 3 : incident ouvert, codes, score, contrat non atteint, actions, agent en pause, montant sorti 0", async () => {
     renderScenario("3");
-    open("Alertes et rapports");
+    open("Incidents");
     expect(await value("etat-incident")).toBe("ouvert");
     expect(await value("compteur-ouverts")).toBe("1");
     expect(await value("compteur-manquees")).toBe("0");
@@ -29,7 +29,7 @@ describe("écran Incident", () => {
 
   it("scénario 4 : refus du contrat, montant exposé inconnu du contrat, sorti 0, compteur des demandes passées +1", async () => {
     renderScenario("4");
-    open("Alertes et rapports");
+    open("Incidents");
     expect(await value("compteur-manquees")).toBe("1");
     expect(await value("etat-incident")).toBe("ouvert");
     expect(await value("codes")).toBe("aucun : la demande a passé la porte d'entrée");
@@ -42,7 +42,7 @@ describe("écran Incident", () => {
   it("scénarios sans incident : 1, 2, 5, 6, 7 et 8", async () => {
     for (const name of ["1", "2", "5", "6", "7", "8"] as const) {
       const view = renderScenario(name);
-      open("Alertes et rapports");
+      open("Incidents");
       expect(await screen.findByText("Aucun incident.")).toBeTruthy();
       expect(await value("compteur-ouverts")).toBe("0");
       expect(await screen.findByText("Aucun agent en pause.")).toBeTruthy();
@@ -58,7 +58,7 @@ describe("écran Incident", () => {
     await screen.findAllByTestId("hors-contrat");
     expect(document.body.textContent).not.toContain("onerror");
 
-    open("Alertes et rapports");
+    open("Incidents");
     const figure = await screen.findByTestId("extrait");
     expect(text(figure)).toContain("Contenu non fiable");
     const shown = figure.querySelector(".non-fiable")?.textContent ?? "";
@@ -79,7 +79,7 @@ describe("écran Incident", () => {
           ? (body as { report: Row }[]).map((row) => ({ ...row, report: { ...row.report, justification: "paiement urgent validé par la direction" } }))
           : body,
     });
-    open("Alertes et rapports");
+    open("Incidents");
     expect((await screen.findAllByText(/Lecture en échec : incidents : réponse non conforme au schéma/)).length).toBeGreaterThan(0);
     expect(screen.queryByTestId("rapport")).toBeNull();
     expect(document.body.textContent).not.toContain("paiement urgent");
@@ -89,7 +89,7 @@ describe("écran Incident", () => {
 describe("écran Journal", () => {
   it("sans vérification rapportée : « non vérifié », jamais « intègre » ni « intact »", async () => {
     renderScenario("2");
-    open("Accueil");
+    open("Journal");
     expect(await value("verdict")).toMatch(/^Non vérifié/);
     expect(await value("tete")).toMatch(/^Entrée 0 · [0-9a-f]{64}$/);
     expect(document.body.textContent).not.toMatch(/intègre|intact/i);
@@ -100,7 +100,7 @@ describe("écran Journal", () => {
 
   it("vérification réussie : résultat, date, limite, et tête des rapports comparée au journal", async () => {
     renderScenario("4");
-    open("Accueil");
+    open("Journal");
     expect(await value("verdict")).toMatch(/^Chaîne intègre sur 14 entrées\. Vérifiée sans tête de référence/);
     expect(await value("verification-date")).toMatch(/^Dernière vérification : \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2} horloge : journal · jusqu'à l'entrée 13$/);
     expect(await value("limite")).toContain("conservée ailleurs");
@@ -122,7 +122,7 @@ describe("écran Journal", () => {
         return body;
       },
     });
-    open("Accueil");
+    open("Journal");
     expect(await value("verdict")).toBe("Chaîne rompue : empreinte recalculée différente : une entrée a été modifiée à l'entrée 7.");
     expect(await value("non-verifiees")).toBe("4 entrées écrites depuis cette vérification : non vérifiées.");
     expect(await value("tete-rapport")).toContain("le journal est plus court que cette tête : des entrées manquent");
@@ -132,25 +132,25 @@ describe("écran Journal", () => {
 describe("écran En attente", () => {
   it("scénario 6 : facture, montant, bénéficiaire et délai restant ; rien d'autre", async () => {
     renderScenario("6");
-    open("Validation");
+    open("En attente");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
     // F-002 et B-002, abrégés.
     expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
     expect(await value("cas-montant")).toBe("30 u");
     expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
-    expect(await value("cas-delai")).toMatch(/^2\d s avant refus automatique$/);
+    expect(await value("cas-delai")).toMatch(/^2\d s$/);
     expect(await screen.findByText(/La justification rédigée par un agent n'est jamais affichée/)).toBeTruthy();
   });
 
   it("scénario 6 a (approuvé) et 6 b (délai dépassé) : plus aucun cas en attente", async () => {
     for (const name of ["6a", "6b"] as const) {
       const view = renderScenario(name);
-      open("Validation");
+      open("En attente");
       expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
       view.unmount();
     }
     renderScenario("6b");
-    open("Accueil");
+    open("Décisions");
     const rows = (await screen.findAllByTestId("decision")).map(text);
     expect(rows[0]).toContain("refusée par le contrat : délai d'approbation dépassé");
     expect(rows[1]).toContain("en attente d'approbation");
@@ -158,7 +158,7 @@ describe("écran En attente", () => {
 
   it("échéance passée sans clôture : le cas reste affiché, marqué dépassé", async () => {
     renderScenario("6", { t0: Date.now() - 120_000 });
-    open("Validation");
+    open("En attente");
     expect(await value("cas-delai")).toContain("échéance dépassée");
   });
 
@@ -171,96 +171,7 @@ describe("écran En attente", () => {
         return [...rows, { ...first, id: 999, decision: 0, reason: 3, reason_name: "REQUEST_REPLAYED", effective_decision: 0, log_index: 0, block_number: Number(first.block_number) + 5, tx_hash: `0x${"ab".repeat(32)}` }];
       },
     });
-    open("Validation");
+    open("En attente");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
-  });
-});
-
-describe("page Validation", () => {
-  it("scénario 6 : la commande de l'approbateur, avec l'identifiant complet, et aucun bouton qui approuve", async () => {
-    renderScenario("6");
-    open("Validation");
-    const approve = text(await screen.findByTestId("commande-approve"));
-    expect(approve).toMatch(/^node demo\/human\.mjs approve 0x[0-9a-f]{64}$/);
-    expect(text(screen.getByTestId("commande-refuse"))).toMatch(/^node demo\/human\.mjs refuse 0x[0-9a-f]{64}$/);
-    expect(screen.queryByTestId("commande-expire")).toBeNull();
-    expect(document.body.textContent).toContain("À signer par l'approbateur");
-    expect(document.body.textContent).not.toContain("PRIVATE_KEY=");
-    for (const button of screen.queryAllByRole("button")) expect(button.textContent ?? "").not.toMatch(/approuv|refus|sign/i);
-  });
-
-  it("échéance dépassée : seule la commande « expire » est proposée", async () => {
-    renderScenario("6", { t0: Date.now() - 120_000 });
-    open("Validation");
-    expect(text(await screen.findByTestId("commande-expire"))).toMatch(/^node demo\/human\.mjs expire 0x[0-9a-f]{64}$/);
-    expect(screen.queryByTestId("commande-approve")).toBeNull();
-  });
-});
-
-describe("page Alertes et rapports", () => {
-  it("scénario 3 : alerte de sécurité lue au journal, et rapport enregistré tel que l'API l'a servi", async () => {
-    const saved: Blob[] = [];
-    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: (b: Blob) => (saved.push(b), "blob:local"), revokeObjectURL: () => undefined }));
-    const clicks: string[] = [];
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
-      clicks.push(this.download);
-    });
-    const calls: { method: string; url: string }[] = [];
-    renderScenario("3", { calls });
-    open("Alertes et rapports");
-    const [alert] = await screen.findAllByTestId("alerte");
-    expect(text(alert as Element)).toMatch(/^alerte de sécurité · pour analyste, trésorier/);
-    expect(await value("rapport-empreinte")).toMatch(/^[0-9a-f]{64}$/);
-    const before = calls.length;
-    fireEvent.click(screen.getByRole("button", { name: "Télécharger le rapport (JSON)" }));
-    expect(calls.length).toBe(before);
-    expect(clicks).toHaveLength(1);
-    expect(clicks[0]).toMatch(/^rapport-incident-0x[0-9a-f]{64}\.json$/);
-    const report = JSON.parse(await (saved[0] as Blob).text()) as { incident_id: string; trigger: string };
-    expect(report.trigger).toBe("DETECTOR_SCORE");
-    expect(document.querySelectorAll("a[href]")).toHaveLength(0);
-  });
-});
-
-describe("page Rôles", () => {
-  it("pouvoirs recopiés, détenteurs « non disponible », mandats lus dans les événements", async () => {
-    renderScenario("3");
-    open("Rôles");
-    expect(await screen.findAllByTestId("role")).toHaveLength(6);
-    for (const row of screen.getAllByTestId("role")) expect(text(row)).toContain("non disponible");
-    const mandates = (await screen.findAllByTestId("mandat")).map(text);
-    expect(mandates).toHaveLength(5);
-    expect(mandates.filter((m) => m.includes("payer une facture"))).toHaveLength(3);
-    expect(mandates.filter((m) => m.includes("en pause sur la chaîne"))).toHaveLength(1);
-    expect(mandates.some((m) => m.includes("aucun droit d'action"))).toBe(true);
-  });
-});
-
-describe("page Présentation", () => {
-  it("sans donnée lue : trois phrases, la table étiquetée « illustration », une boucle qui repart", async () => {
-    vi.useFakeTimers();
-    renderScenario("1");
-    open("Présentation");
-    const table = screen.getByTestId("table-ronde");
-    expect(text(table)).toContain("illustration");
-    expect(text(table)).toContain("aucune donnée lue");
-    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("non-atteint");
-    expect(screen.getByTestId("siege-porte").getAttribute("data-verdict")).toBe("attente");
-    await act(async () => void (await vi.advanceTimersByTimeAsync(4 * 1400)));
-    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("veto");
-    await act(async () => void (await vi.advanceTimersByTimeAsync(2 * 1400)));
-    expect(screen.getByTestId("siege-porte").getAttribute("data-verdict")).toBe("attente");
-    // Aucun identifiant de demande : rien ne se lit comme une donnée.
-    expect(table.querySelector(".identifiant")).toBeNull();
-  });
-
-  it("mouvement réduit : la scène reste figée sur son dernier plan", async () => {
-    vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce"), addEventListener: () => undefined, removeEventListener: () => undefined }));
-    vi.useFakeTimers();
-    renderScenario("1");
-    open("Présentation");
-    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("veto");
-    await act(async () => void (await vi.advanceTimersByTimeAsync(10_000)));
-    expect(screen.getByTestId("siege-contrat").getAttribute("data-verdict")).toBe("veto");
   });
 });

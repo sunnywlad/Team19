@@ -51,7 +51,7 @@ describe("fraîcheur", () => {
     renderScenario("1", { down: () => true });
     await advance(50);
     expect(screen.queryByTestId("placable")).toBeNull();
-    expect(screen.getAllByText(/Rien n'est affiché\./).length).toBe(document.querySelectorAll(".panneau").length);
+    expect(screen.getAllByText(/Rien n'est affiché\./).length).toBe(5);
     await advance(11_000);
     expect(screen.getByText("Données indisponibles")).toBeTruthy();
   });
