@@ -54,7 +54,8 @@ const demoMode = process.env["DEMO_MODE"] === "1";
 const server = createJournalServer(store, engine, Date.now, { demoMode });
 const relay = new RelayWatch(relayUrl, engine);
 
-// Décisions du contrat : chaque seconde. File : toutes les 5 secondes.
+// Décisions du contrat : chaque seconde. File : toutes les 5 secondes, lue
+// dans le relais et, indépendamment de lui, dans le journal.
 let busy = false;
 const decisions = setInterval(() => {
   if (busy) return;
@@ -62,10 +63,18 @@ const decisions = setInterval(() => {
   void relay.pollDecisions().finally(() => (busy = false));
 }, 1000);
 const queue = setInterval(() => void relay.pollQueue(), 5000);
+const journalQueue = setInterval(() => {
+  try {
+    engine.checkJournalQueue();
+  } catch (error) {
+    console.error("réponse : surveillance de la file par le journal en erreur", error instanceof Error ? error.message : "");
+  }
+}, 5000);
 
 function shutdown(): void {
   clearInterval(decisions);
   clearInterval(queue);
+  clearInterval(journalQueue);
   server.close(() => {
     store.close();
     process.exit(0);

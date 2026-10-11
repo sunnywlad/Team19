@@ -174,7 +174,7 @@ make demo-stop
 d'entrée, en HTTP, avec le jeton de chaque agent, puis compare ce que les
 services ont fait à ce que la spec attend. En mode fake, toute décision, tout
 montant et tout « payé » que les scènes lisent vient d'un **coffre simulé** :
-aucun fonds, aucune chaîne. Une ligne par scène : « OK », « ÉCART CONNU (E1) »
+aucun fonds, aucune chaîne. Une ligne par scène : « OK », « ÉCART CONNU (identifiant) »
 ou « ÉCART ». Les écarts connus sont listés dans
 [demo/ecarts-connus.json](demo/ecarts-connus.json), avec leur responsable ; la
 commande les réaffiche à chaque passage. Elle sort en échec pour un écart qui
@@ -215,17 +215,12 @@ chaîne.
 
 Ce que `make scenes` a montré le jour de cette rédaction, en mode fake, donc
 sur le coffre simulé : les décisions, les motifs, les montants et les réactions
-attendus par la spec sont observés dans les dix scènes. Deux écarts connus
-restent, corrigés hors de `relay/` et de `demo/` :
+attendus par la spec sont observés dans les dix scènes. Aucun écart connu ne
+reste : la liste est vide.
 
-- **E1, ordre du journal.** La spec place `FORWARDED_TO_CLIENT_AI` avant
-  `REQUEST_SIGNED` et `ENQUEUED` ; la porte l'écrit après le retour de l'IA du
-  client, donc après. Toutes les scènes qui passent la porte sont touchées.
-- **E2, scène 5, relais arrêté.** L'alerte de disponibilité ne part pas tant
-  que le relais est arrêté : le service de réponse la tire de la file que le
-  relais lui sert. Elle arrive à sa relance, après `QUEUE_EXPIRED`.
-  `QUEUE_EXPIRED`, lui, s'écrit à l'échéance, relais arrêté : l'IA du client
-  balaie aussi la file. Rien n'est soumis ni payé.
+Scène 5, relais arrêté : l'alerte de disponibilité part après 15 s en file, le
+service de réponse la lisant dans le journal ; puis `QUEUE_EXPIRED` s'écrit à
+l'échéance, l'IA du client balayant aussi la file. Rien n'est soumis ni payé.
 
 Hors liste, signalé en note par les scènes 3 et 4 : `AGENT_PAUSED (ONCHAIN)`,
 annoncé « plus tard » par la spec, n'est jamais écrit. Aucun composant ne pose
@@ -295,14 +290,14 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Porte d'entrée | `gateway/` | oui | oui, au journal | Transmet à l'IA du client par `CLIENT_AI_URL` : enchaînement joué par `make scenes` |
 | Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesuré sur un jeu synthétique, une attaque pour une légitime : 50 attaques détectées sur 100, 4 demandes légitimes bloquées sur 100 ([fiche de défense](docs/fiche-defense.md)) |
 | Journal chaîné | `response/src/journal.ts` | oui | oui | Écrivain unique. « Au moins une fois » : une entrée peut apparaître deux fois, jamais zéro |
-| Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne. L'alerte de disponibilité ne part pas tant que le relais est arrêté (écart E2) |
+| Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne |
 | IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle. Balaie aussi la file pour expirer une demande, relais arrêté ou non |
 | File d'attente | `relay/src/queue.ts` | oui | oui | SQLite, idempotente |
 | Relais | `relay/src/relay.ts` | oui | au journal et aux pauses | Soumet au contrat sur anvil en `VAULT_MODE=chain`, à un faux coffre par défaut et dans ses tests. Écarte un agent en pause en lisant le service de réponse |
 | Contrat (coffre) | `src/ArgentVault.sol` | oui | en `VAULT_MODE=chain` | Implémente l'interface gelée `specs/contract/IArgentVault.sol`, tests dans `test/ArgentVault.t.sol`. Déployé par `make demo` sur un réseau de test local (anvil, 31337), nulle part ailleurs. En mode fake, `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
 | Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui | Dans `make demo`, indexe les événements du contrat sur anvil en `VAULT_MODE=chain`, ceux du faux coffre par défaut |
 | Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; en mode fake le coffre est simulé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo`. En mode chain, le bandeau ne s'affiche pas |
-| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; `VAULT_MODE=chain` déploie le contrat sur anvil. Deux écarts connus avec la spec, listés dans `demo/ecarts-connus.json` |
+| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; `VAULT_MODE=chain` déploie le contrat sur anvil. Aucun écart connu avec la spec : `demo/ecarts-connus.json` est vide |
 | Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par la [fiche de défense](docs/fiche-defense.md). Règles fixes de référence et délais : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
 | Marché de vérification | `src/` | oui | oui, sur le L1 AWS | Prouvé sur le L1 de démo (`docs-jury/preuves/`) ; son verdict n'entre pas encore dans la décision du coffre |
 | L1 VETO | `infra/l1/` | oui | oui | L1 privé Avalanche, chainId 191919, VETO natif, TxAllowList et Native Minter |

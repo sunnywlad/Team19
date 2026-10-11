@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -9,6 +10,7 @@ import type { Entry, NewEntry } from "../src/chain.ts";
 import { ResponseEngine } from "../src/engine.ts";
 import type { Alert, IndexedDecision } from "../src/engine.ts";
 import { JournalStore } from "../src/journal.ts";
+import { RelayWatch } from "../src/relay-watch.ts";
 import { reportSha256 } from "../src/report.ts";
 import type { ActionName, IncidentReport } from "../src/report.ts";
 import { createJournalServer } from "../src/server.ts";
@@ -354,6 +356,115 @@ describe("disponibilité", () => {
     // Ni pause, ni incident de sécurité.
     assert.equal(engine.isPaused(AGENT), false);
     assert.equal(engine.incidents().length, 0);
+  });
+
+  const queued = (type: string, component: string, n: number, data: Record<string, unknown>): void =>
+    void store.append({ type, component, request_id: REQ(n), agent_id: AGENT, client_id: CLIENT, data });
+  const enqueue = (n: number): void => queued("ENQUEUED", "QUEUE", n, { expires_at: 1_800_000_300 });
+  const availability = (): Entry[] => store.entries().filter((e) => e.type === "ALERT_SENT");
+
+  it("relais injoignable : l'alerte part du journal, et ne repart pas quand le relais revient", async () => {
+    // Un port fermé : le relais ne répond pas.
+    const server = createServer((_req, res) => {
+      res.setHeader("content-type", "application/json");
+      res.end(JSON.stringify([row(1, "PENDING", 60_000)]));
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as AddressInfo;
+    await new Promise((resolve) => server.close(resolve));
+    const watch = new RelayWatch(`http://127.0.0.1:${port}`, engine, 500);
+
+    enqueue(1);
+    now += 16_000;
+    assert.equal(await watch.pollQueue(), false);
+    assert.equal(alerts.length, 0);
+    engine.checkJournalQueue();
+    assert.deepEqual(alerts.map((a) => [a.kind, a.recipients, a.request_id, a.agent_id]), [["AVAILABILITY", ["OPERATIONS"], REQ(1), AGENT]]);
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 1);
+
+    // Le relais revient et rapporte la même demande : même clé, pas de seconde alerte.
+    await new Promise<void>((resolve) => server.listen(port, "127.0.0.1", resolve));
+    try {
+      assert.equal(await watch.pollQueue(), true);
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 1);
+    assert.equal(availability().length, 1);
+    assert.equal(engine.isPaused(AGENT), false);
+    assert.equal(engine.incidents().length, 0);
+  });
+
+  it("l'alerte du relais, partie la première, n'est pas doublée par le journal", () => {
+    enqueue(1);
+    now += 16_000;
+    engine.checkQueue([row(1, "PENDING", 16_000)]);
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 1);
+    assert.equal(availability().length, 1);
+  });
+
+  it("une demande soumise ou expirée ne déclenche rien", () => {
+    enqueue(1);
+    queued("SUBMITTED", "RELAY", 1, { tx_hash: TX(1) });
+    enqueue(2);
+    engine.checkJournalQueue();
+    // Sortie de file vue après un premier passage, avant le délai.
+    queued("QUEUE_EXPIRED", "QUEUE", 2, { expires_at: 1_800_000_300 });
+    now += 60_000;
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 0);
+    assert.equal(availability().length, 0);
+  });
+
+  it("une demande rejetée par la file ou le relais après sa mise en file ne déclenche rien", () => {
+    enqueue(1);
+    // Le relais ne connaît plus l'agent : identifiants à null, comme il l'écrit.
+    store.append({ type: "SCHEMA_REJECTED", component: "RELAY", request_id: REQ(1), agent_id: null, client_id: null, data: { error_count: 1 } });
+    enqueue(2);
+    engine.checkJournalQueue();
+    queued("SCHEMA_REJECTED", "QUEUE", 2, { error_count: 1 });
+    // Un rejet avant la mise en file ne clôt rien : la demande entre en file ensuite.
+    queued("SCHEMA_REJECTED", "QUEUE", 3, { error_count: 1 });
+    enqueue(3);
+    now += 16_000;
+    engine.checkJournalQueue();
+    assert.deepEqual(alerts.map((a) => a.request_id), [REQ(3)]);
+  });
+
+  it("un agent en pause dont la demande reste en file alerte toujours après 15 s", () => {
+    enqueue(1);
+    store.append({ type: "AGENT_PAUSED", component: "RESPONSE", request_id: REQ(9), agent_id: AGENT, client_id: CLIENT, data: { incident_id: REQ(99), scope: "OFFCHAIN", tx_hash: null } });
+    assert.equal(engine.isPaused(AGENT), true);
+    now += 16_000;
+    engine.checkJournalQueue();
+    assert.deepEqual(alerts.map((a) => [a.kind, a.request_id]), [["AVAILABILITY", REQ(1)]]);
+  });
+
+  it("une demande en file depuis moins de 15 s ne déclenche rien, puis alerte passé le délai", () => {
+    enqueue(1);
+    now += 14_000;
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 0);
+    now += 2_000;
+    engine.checkJournalQueue();
+    assert.deepEqual(alerts.map((a) => a.request_id), [REQ(1)]);
+  });
+
+  it("après un redémarrage, le journal est relu sans renvoyer l'alerte déjà partie", () => {
+    enqueue(1);
+    enqueue(2);
+    now += 16_000;
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 2);
+    store.close();
+
+    start();
+    engine.checkJournalQueue();
+    assert.equal(alerts.length, 2);
+    assert.equal(availability().length, 2);
   });
 });
 

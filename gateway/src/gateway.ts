@@ -194,13 +194,15 @@ export class Gateway {
 
       // --- Étape 4 : l'IA du client reçoit des identifiants, jamais le document. ---
       if (this.#deps.forward !== undefined) {
+        // Journal avant action : l'entrée précède l'appel. Journal indisponible, rien n'est transmis.
+        await journal.append(entry("FORWARDED_TO_CLIENT_AI", {}));
         try {
           await this.#deps.forward({ ...ids, action: parsed.action, ref_id: parsed.ref_id });
         } catch {
-          // Rien n'a été transmis : la demande n'ira pas plus loin.
+          // La transmission n'a pas abouti : la demande n'ira pas plus loin. Le
+          // journal garde l'entrée, sans REQUEST_SIGNED derrière.
           return { httpStatus: 502, response: { request_id: requestId, status: "rejected" }, output: null };
         }
-        await journal.append(entry("FORWARDED_TO_CLIENT_AI", {}));
       }
       return finish(202, { ...scored, verdict: "PASS", reason_codes: detection.reason_codes });
     } catch (error) {

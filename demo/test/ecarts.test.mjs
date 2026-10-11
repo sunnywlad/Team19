@@ -1,19 +1,27 @@
 // Écarts connus : un écart hors liste fait échouer, un écart listé non, un
 // écart listé qui ne se produit plus fait échouer.
 import assert from "node:assert/strict";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { evaluate, explain, loadKnown, vanishedMessage } from "../ecarts.mjs";
 
 const NOMINAL = ["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED", "FORWARDED_TO_CLIENT_AI", "REQUEST_SIGNED", "ENQUEUED", "SUBMITTED"];
 const LATE = ["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED", "REQUEST_SIGNED", "ENQUEUED", "FORWARDED_TO_CLIENT_AI", "SUBMITTED"];
-const known = loadKnown();
+// Liste figée, propre aux tests : la vraie liste change quand un écart est
+// corrigé, les règles de demo/ecarts.mjs restent à éprouver.
+const known = loadKnown(join(dirname(fileURLToPath(import.meta.url)), "ecarts-fixture.json"));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const journal = (expected, observed, tail = false) => ({ point: "journal", expected: "", observed: "", ok: same(tail ? observed.slice(-expected.length) : observed, expected), raw: { expected, observed, tail } });
 const plain = (ok) => ({ point: "contrat", expected: "2/NONE", observed: ok ? "2/NONE" : "0/INVOICE_UNKNOWN", ok });
 
-test("la liste versionnée est bien formée : E1 et E2, chacun avec ses sept champs", () => {
+test("la liste figée des tests est bien formée : E1 et E2, chacun avec ses sept champs", () => {
   assert.deepEqual(known.map((k) => k.id), ["E1", "E2"]);
   assert.deepEqual(known.find((k) => k.id === "E2").scenes, ["5"]);
+});
+
+test("la vraie liste, demo/ecarts-connus.json, se charge : bien formée, même vide", () => {
+  assert.ok(Array.isArray(loadKnown()));
 });
 
 test("un écart connu ne fait pas échouer, et reste listé comme actif", () => {
