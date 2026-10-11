@@ -121,10 +121,14 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const anvilPort = await freePort();
     ({ proc: anvilProc, rpcUrl } = await startAnvil(anvilPort));
 
-    // Fenêtres courtes : commit=6s, reveal=6s, contest=6s
+    // Fenêtres en temps EVM : commit=6s, reveal=60s, contest=6s.
+    // La fenêtre de reveal est large exprès : doTransitionToReveal avance l'horloge de 9 s
+    // depuis l'instant réel du commit. Avec 6 s de reveal, un commit confirmé plus de 3 s
+    // après la création poussait l'horloge EVM au-delà de revealDeadline, et le service,
+    // à raison, ne révélait plus : échec intermittent sans rapport avec ce que le test vérifie.
     marketAddress = await deployMockMarket(
       rpcUrl, deployerKey, [v0.address, v1.address, v2.address],
-      6, 6, 6,
+      6, 60, 6,
     );
 
     cacheDataDir = join(testRoot, 'cache-data');
@@ -724,7 +728,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     let useWallClock = false;
     const blockNow = makeBlockNow(rpcUrl);
     const nowFn = async () => {
-      if (useWallClock) return cd + 4; // wall clock avancée : > commitDeadline + 3, < revealDeadline (= cd+6)
+      if (useWallClock) return cd + 4; // wall clock avancée : > commitDeadline + 3, < revealDeadline (= cd+60)
       return blockNow();               // EVM time pendant le commit
     };
 
@@ -752,6 +756,10 @@ describe('verifier service — intégration', { concurrency: false }, () => {
 
       // Attendre un peu que le service tente reveal et reçoive WrongPhase (log attendu)
       await new Promise(r => setTimeout(r, 1_000));
+      assert.equal(
+        handle.state.get(requestId)?.step, 'committed',
+        'un reveal annulé sur la chaîne ne doit pas faire passer l\'étape à revealed',
+      );
 
       // Avancer l'EVM et appeler transitionToReveal → le reveal peut maintenant passer
       await doTransitionToReveal(requestId);

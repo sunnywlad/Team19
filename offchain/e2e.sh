@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # e2e.sh — test bout en bout de la pile offchain contre le L1 local (Team19)
 # Utilisation : bash offchain/e2e.sh [depuis la racine du dépôt]
-# Variable optionnelle : E2E_AMOUNT (défaut 50000)
+# Variables optionnelles :
+#   E2E_AMOUNT          montant de la demande (défaut 50000)
+#   E2E_EXPECT_CLOSED   0 (défaut) ou 1. À 1, après les contrôles code et
+#                       VerdictRevealed, attend le statut Closed (close envoyé
+#                       par les vérificateurs après contestDeadline), lu par
+#                       cast call getRequest, pendant au plus contestWindow+60 s.
 set -euo pipefail
 
 # ─── 0. Répertoire de travail ────────────────────────────────────────────────
@@ -14,6 +19,7 @@ MARKET_ADDRESS="${MARKET_ADDRESS:-0x55a4edd8a2c051079b426e9fbdee285368824a89}"
 RPC_URL="${RPC_URL:-http://127.0.0.1:9654/ext/bc/bM7X3ju78mCF3i2dKcF9LKvkFCiHmcxzpm71xzpUQKemrQqvW/rpc}"
 CHAIN_ID="${CHAIN_ID:-191919}"
 E2E_AMOUNT="${E2E_AMOUNT:-50000}"
+E2E_EXPECT_CLOSED="${E2E_EXPECT_CLOSED:-0}"
 
 # Trouver des ports libres (évite les conflits avec des instances précédentes)
 find_free_port() {
@@ -40,6 +46,23 @@ if [ "$MARKET_CODE" = "0x" ] || [ -z "$MARKET_CODE" ]; then
   exit 1
 fi
 echo "[e2e] Contrat OK (${#MARKET_CODE} caractères de bytecode)"
+
+# Fenêtres lues sur la chaîne (variables publiques immuables du marché).
+# cast peut suffixer un nombre d'une notation [1e18] : on ne garde que le 1er champ.
+read_window() {
+  cast call "$MARKET_ADDRESS" "$1()(uint64)" --rpc-url "$RPC_URL" 2>/dev/null | awk '{print $1; exit}' || true
+}
+COMMIT_WINDOW=$(read_window commitWindow)
+REVEAL_WINDOW=$(read_window revealWindow)
+CONTEST_WINDOW=$(read_window contestWindow)
+for w in "$COMMIT_WINDOW" "$REVEAL_WINDOW" "$CONTEST_WINDOW"; do
+  case "$w" in
+    ''|*[!0-9]*)
+      echo "[e2e] ERREUR : lecture des fenêtres du marché impossible" >&2
+      exit 1 ;;
+  esac
+done
+echo "[e2e] Fenêtres : commit=${COMMIT_WINDOW}s reveal=${REVEAL_WINDOW}s contest=${CONTEST_WINDOW}s"
 
 # ─── 3. Dérivation des clés à l'exécution ───────────────────────────────────
 # Jamais écrites sur disque ni affichées dans les journaux.
@@ -225,11 +248,11 @@ COMMIT_DEADLINE=$(echo "$RESP" | grep -o '"commitDeadline":"[^"]*"' | cut -d'"' 
 echo "[e2e] commitDeadline = $COMMIT_DEADLINE"
 
 # ─── 13. Sondage jusqu'à Contest ─────────────────────────────────────────────
-# Budget : fenêtre commit (180s) + fenêtre reveal (60s) + marge (240s) = 480s.
+# Budget : fenêtre commit + fenêtre reveal (lues sur la chaîne) + marge de 120s.
 # Les vérificateurs gèrent eux-mêmes commit → reveal → finalize ; on sonde
 # seulement le statut sans appeler finalize prématurément (cela provoquerait
 # une finalisation avant que tous les vérificateurs n'aient révélé).
-MAX_POLL=480
+MAX_POLL=$((COMMIT_WINDOW + REVEAL_WINDOW + 120))
 POLL_INTERVAL=5
 ELAPSED=0
 STATUS=""
@@ -288,13 +311,15 @@ CAST_LOGS=$(cast logs \
   --address "$MARKET_ADDRESS" \
   --from-block 0 \
   "VerdictRevealed(uint256 indexed requestId, address indexed verifier, uint8 vote, uint16 reasons, bytes32 detailHash)" \
+  "$REQUEST_ID" \
   2>/dev/null || echo "")
 
-# Filtrer sur le requestId (en hex)
-REQUEST_ID_HEX=$(printf "0x%064x" "$REQUEST_ID")
-# grep -c retourne 0 sur stdout même quand il ne trouve rien, avec exit code 1.
-# On ignore l'exit code et ne prend pas le || echo "0" pour éviter "0\n0".
-VERDICT_COUNT=$(echo "$CAST_LOGS" | grep -c "$REQUEST_ID_HEX" 2>/dev/null) || VERDICT_COUNT=0
+# Le filtre sur le topic indexé requestId est fait côté nœud (argument après la
+# signature). On compte les journaux (une ligne "- address:" chacun), pas le
+# contenu : le champ data d'une autre demande pouvait ressembler à un requestId.
+# grep -c écrit 0 sur stdout même sans correspondance, avec exit code 1 : on
+# ignore l'exit code sans ajouter de "|| echo 0" (sinon "0\n0").
+VERDICT_COUNT=$(echo "$CAST_LOGS" | grep -c '^- address:' 2>/dev/null) || VERDICT_COUNT=0
 
 echo "[e2e] VerdictRevealed pour requestId=$REQUEST_ID : $VERDICT_COUNT"
 
@@ -314,11 +339,50 @@ case "$CODE_NAME" in
   *)           CODE_NUM=99 ;;
 esac
 
+# ─── 14b. Statut final (seulement si E2E_EXPECT_CLOSED=1) ────────────────────
+# Lecture qui fait foi : cast call getRequest, tuple décodé, champ status (8e).
+# eth_call ne produit aucun bloc ; seuls Contest et Closed sont stockés.
+FINAL_STATUS_LINE=""
+CLOSE_FAIL=0
+if [ "$E2E_EXPECT_CLOSED" = "1" ]; then
+  read_chain_status() {
+    cast call "$MARKET_ADDRESS" \
+      "getRequest(uint256)((address,bytes32,uint96,uint64,uint64,uint64,uint64,uint8,uint8))" \
+      "$REQUEST_ID" --rpc-url "$RPC_URL" 2>/dev/null \
+      | tr -d '()' | cut -d, -f8 | awk '{print $1; exit}' || true
+  }
+  CLOSE_MAX=$((CONTEST_WINDOW + 60))
+  CLOSE_ELAPSED=0
+  CHAIN_STATUS=""
+  echo "[e2e] Attente du statut Closed (max ${CLOSE_MAX}s, sondage toutes les ${POLL_INTERVAL}s)..."
+  while true; do
+    CHAIN_STATUS=$(read_chain_status)
+    if [ $((CLOSE_ELAPSED % 15)) -eq 0 ]; then
+      echo "[e2e] t=${CLOSE_ELAPSED}s : status chaîne=${CHAIN_STATUS:-?}"
+    fi
+    if [ "$CHAIN_STATUS" = "4" ]; then break; fi
+    if [ $CLOSE_ELAPSED -ge $CLOSE_MAX ]; then break; fi
+    sleep $POLL_INTERVAL
+    CLOSE_ELAPSED=$((CLOSE_ELAPSED + POLL_INTERVAL))
+  done
+  if [ "$CHAIN_STATUS" = "4" ]; then
+    echo "[e2e] Preuve de close : getRequest($REQUEST_ID).status = 4 (Closed), lu par cast call"
+    FINAL_STATUS_LINE="4 (Closed)"
+  else
+    echo "[e2e] ERREUR : statut Closed non atteint après ${CLOSE_MAX}s (dernier: ${CHAIN_STATUS:-?})" >&2
+    FINAL_STATUS_LINE="${CHAIN_STATUS:-?} (Closed attendu)"
+    CLOSE_FAIL=1
+  fi
+fi
+
 echo ""
 echo "════════════════════════════════════════"
 echo " requestId      : $REQUEST_ID"
 echo " code           : $CODE_NUM ($CODE_NAME)"
 echo " VerdictRevealed: $VERDICT_COUNT"
+if [ "$E2E_EXPECT_CLOSED" = "1" ]; then
+  echo " statut final   : $FINAL_STATUS_LINE"
+fi
 echo "════════════════════════════════════════"
 
 # ─── 15. Vérification finale ──────────────────────────────────────────────────
@@ -331,6 +395,10 @@ fi
 
 if [ "$VERDICT_COUNT" -lt 3 ]; then
   echo "[e2e] ERREUR : seulement $VERDICT_COUNT VerdictRevealed (3 attendus)" >&2
+  FAIL=1
+fi
+
+if [ "$CLOSE_FAIL" -eq 1 ]; then
   FAIL=1
 fi
 

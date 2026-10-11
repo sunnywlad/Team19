@@ -133,5 +133,91 @@ export function makeBlockNow(rpcUrl: string): () => Promise<number> {
   };
 }
 
+// Déploie le vrai VerificationMarket (via test/mock/RealMarket.sol).
+// Statut Commit → Reveal dérivé de block.timestamp : sur anvil sans trafic, eth_call
+// lit le timestamp du dernier bloc, figé comme sur le L1.
+export async function deployRealMarket(
+  rpcUrl: string,
+  deployerKey: Hex,
+  committee: [Hex, Hex, Hex],
+  commitWindow: number,
+  revealWindow: number,
+  contestWindow: number,
+  fee = '100000000000000',
+): Promise<Hex> {
+  const mockDir = join(dirname(fileURLToPath(import.meta.url)), '../mock');
+  return new Promise((resolve, reject) => {
+    const proc = spawn(FORGE, [
+      'create',
+      '--rpc-url', rpcUrl,
+      '--private-key', deployerKey,
+      '--broadcast',
+      'RealMarket.sol:RealMarket',
+      '--constructor-args',
+      `[${committee[0]},${committee[1]},${committee[2]}]`,
+      fee,
+      String(commitWindow),
+      String(revealWindow),
+      String(contestWindow),
+    ], { cwd: mockDir, stdio: 'pipe' });
+    let out = '';
+    proc.stdout!.on('data', (d: Buffer) => { out += d.toString(); });
+    proc.stderr!.on('data', (d: Buffer) => { out += d.toString(); });
+    proc.on('close', code => {
+      if (code !== 0) { reject(new Error(`forge create RealMarket failed:\n${out}`)); return; }
+      const m = out.match(/Deployed to: (0x[0-9a-fA-F]{40})/);
+      if (!m) { reject(new Error(`Adresse non trouvée:\n${out}`)); return; }
+      resolve(m[1] as Hex);
+    });
+  });
+}
+
+// Attend qu'une condition devienne vraie. Le libellé part dans l'erreur de délai,
+// pour qu'un échec dise ce qui était attendu.
+export async function waitUntil(
+  cond: () => Promise<boolean> | boolean,
+  timeoutMs: number,
+  label: string,
+  intervalMs = 200,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await cond()) return;
+    await sleep(intervalMs);
+  }
+  throw new Error(`délai de ${timeoutMs} ms dépassé en attendant : ${label}`);
+}
+
+export type ChainTx = {
+  from: Hex;
+  to: Hex | null;
+  selector: Hex;
+  status: 'success' | 'reverted';
+  blockNumber: bigint;
+  timestamp: bigint;
+};
+
+// Toutes les transactions minées depuis fromBlock, avec le statut de leur reçu.
+export async function listTxs(rpcUrl: string, fromBlock: bigint): Promise<ChainTx[]> {
+  const client = makePublicClient(rpcUrl, CHAIN_ID);
+  const latest = await client.getBlockNumber();
+  const out: ChainTx[] = [];
+  for (let n = fromBlock; n <= latest; n++) {
+    const block = await client.getBlock({ blockNumber: n, includeTransactions: true });
+    for (const tx of block.transactions) {
+      const receipt = await client.getTransactionReceipt({ hash: tx.hash });
+      out.push({
+        from: tx.from.toLowerCase() as Hex,
+        to: tx.to ? (tx.to.toLowerCase() as Hex) : null,
+        selector: tx.input.slice(0, 10) as Hex,
+        status: receipt.status,
+        blockNumber: n,
+        timestamp: block.timestamp,
+      });
+    }
+  }
+  return out;
+}
+
 export { makePublicClient, makeWalletClient, privateKeyToAccount };
 export type { Hex };

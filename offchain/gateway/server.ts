@@ -24,6 +24,8 @@ import { postContent, getContent, getDetail, CacheClientError } from '../lib/cac
 import { pollLogs } from '../lib/events.ts';
 import { publicClient, walletClient } from '../lib/chain.ts';
 import { marketAbi } from '../abi/market.ts';
+import { marketAbiWithErrors } from '../abi/marketErrors.ts';
+import { sendControlled, revertName } from '../lib/revert.ts';
 import { stringify } from '../lib/json.ts';
 import { signRead } from '../lib/readAuth.ts';
 
@@ -348,32 +350,42 @@ async function handleFinalize(
   }
 
   const wClient = walletClient(opts.requesterKey, opts.rpcUrl, opts.chainId);
-
-  // Appeler finalize
-  try {
-    const txHash = await wClient.writeContract({
-      address: opts.marketAddress,
-      abi: marketAbi,
-      functionName: 'finalize',
-      args: [requestId],
-    });
-    const pClient = publicClient(opts.rpcUrl, opts.chainId);
-    await pClient.waitForTransactionReceipt({ hash: txHash });
-  } catch (e) {
-    // Un revert peut survenir si déjà finalisé ou trop tôt — non fatal
-    // On continue pour tenter close si applicable
-    const msg = (e as Error).message ?? '';
-    if (!msg.includes('revert') && !msg.includes('Revert')) {
-      throw new HttpError(502, `finalize échoué : ${msg}`);
-    }
-  }
-
-  // Lire l'état après finalize pour tenter close si contestDeadline passée
+  const pClient = publicClient(opts.rpcUrl, opts.chainId);
   let onChain;
   try {
     onChain = await readRequest(opts, requestId);
-  } catch {
-    throw new HttpError(404, `Demande ${requestId} introuvable`);
+  } catch (e) {
+    if (revertName(e) === 'UnknownRequest') {
+      throw new HttpError(404, `Demande ${requestId} introuvable`);
+    }
+    throw new HttpError(502, `lecture avant finalize échouée : ${String(e)}`);
+  }
+
+  const initialStatus = STATUS_NAMES[onChain.status] ?? 'None';
+  if (initialStatus === 'Commit' || initialStatus === 'Reveal') {
+    try {
+      await sendControlled({
+        publicClient: pClient,
+        walletClient: wClient,
+        address: opts.marketAddress,
+        abi: marketAbiWithErrors,
+        call: { functionName: 'finalize', args: [requestId] },
+        force: BigInt(Math.floor(Date.now() / 1000)) >= onChain.revealDeadline,
+      });
+    } catch (e) {
+      // Les annulations sont des résultats ; les erreurs réseau/nonce remontent.
+      throw new HttpError(502, `finalize échoué : ${String(e)}`);
+    }
+
+    // Lire l'état après finalize pour tenter close si contestDeadline passée.
+    try {
+      onChain = await readRequest(opts, requestId);
+    } catch (e) {
+      if (revertName(e) === 'UnknownRequest') {
+        throw new HttpError(404, `Demande ${requestId} introuvable`);
+      }
+      throw new HttpError(502, `lecture après finalize échouée : ${String(e)}`);
+    }
   }
 
   const statusName = STATUS_NAMES[onChain.status] ?? 'None';
@@ -383,18 +395,17 @@ async function handleFinalize(
     const now = BigInt(Math.floor(Date.now() / 1000));
     if (now >= onChain.contestDeadline) {
       try {
-        const wc = walletClient(opts.requesterKey, opts.rpcUrl, opts.chainId);
-        const closeTx = await wc.writeContract({
+        await sendControlled({
+          publicClient: pClient,
+          walletClient: wClient,
           address: opts.marketAddress,
-          abi: marketAbi,
-          functionName: 'close',
-          args: [requestId],
+          abi: marketAbiWithErrors,
+          call: { functionName: 'close', args: [requestId] },
+          force: true,
         });
-        const pc = publicClient(opts.rpcUrl, opts.chainId);
-        await pc.waitForTransactionReceipt({ hash: closeTx });
         onChain = await readRequest(opts, requestId);
-      } catch {
-        // Close peut échouer si contestation ouverte — non fatal
+      } catch (e) {
+        throw new HttpError(502, `close échoué : ${String(e)}`);
       }
     }
   }

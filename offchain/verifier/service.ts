@@ -10,10 +10,10 @@
 //         Échec : vote 1, content_mismatch, incident vers INCIDENTS_LOG.
 //      c. Lance l'évaluateur (EVALUATOR_CMD).
 //   3. Commit pendant la fenêtre de commit (sel persisté sur disque avant envoi).
-//   4. Reveal dès now >= commitDeadline + 2 s et avant revealDeadline.
+//   4. Reveal dès now >= commitDeadline + 3 s et avant revealDeadline.
 //   5. POST /detail.
-//   6. finalize (tolère le revert si un autre l'a déjà fait).
-//   7. close après contestDeadline (tolère le revert).
+//   6. finalize, puis confirmer Contest/Closed et relire contestDeadline.
+//   7. close après contestDeadline, confirmé par le reçu ou l'état Closed.
 
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
@@ -29,6 +29,9 @@ import { reasonsToMask } from '../lib/reasons.ts';
 import { pollLogs } from '../lib/events.ts';
 import { getContent, postDetail } from '../lib/cacheClient.ts';
 import { marketAbi } from '../abi/market.ts';
+import { marketAbiWithErrors } from '../abi/marketErrors.ts';
+import { sendControlled } from '../lib/revert.ts';
+import type { ControlledResult } from '../lib/revert.ts';
 import { StateStore } from './state.ts';
 import type { RequestState, RequestStep } from './state.ts';
 import { runEvaluator } from './evaluator.ts';
@@ -47,7 +50,7 @@ export type VerifierOpts = {
   incidentsLog?: string;
   pollMs?: number;
   // Horloge injectable (retourne les secondes depuis l'époque).
-  // Par défaut : timestamp du dernier bloc connu.
+  // Par défaut : horloge murale.
   // En production : horloge murale. En tests avec evm_increaseTime : timestamp EVM.
   now?: () => Promise<number> | number;
 };
@@ -63,39 +66,6 @@ const STATUS_NAMES = ['None', 'Commit', 'Reveal', 'Contest', 'Closed'] as const;
 
 function statusName(n: number): string {
   return STATUS_NAMES[n] ?? 'Unknown';
-}
-
-// Décode les erreurs de revert viem pour les tolérer (finalize/close déjà faits)
-function isAlreadyDone(err: unknown): boolean {
-  const msg = String(err);
-  // WrongPhase, AlreadyCommitted, AlreadyRevealed, TooEarly → revert attendu
-  return (
-    msg.includes('WrongPhase') ||
-    msg.includes('AlreadyCommitted') ||
-    msg.includes('AlreadyRevealed') ||
-    msg.includes('TooEarly') ||
-    msg.includes('revert') ||
-    msg.includes('Revert')
-  );
-}
-
-// Vérifie si l'erreur provient d'un échec de simulation (eth_estimateGas ou eth_call) sans
-// qu'aucune transaction n'ait été envoyée.
-// Sur un L1 inactif, le dernier bloc est en retard : la simulation utilise un
-// block.timestamp < commitDeadline → WrongPhase → pas de transaction envoyée.
-// Signe fiable : aucun transactionHash dans toute la chaîne de cause.
-function isSimulationFailure(err: unknown): boolean {
-  let curr: unknown = err;
-  while (curr && typeof curr === 'object') {
-    const c = curr as Record<string, unknown>;
-    // Si un hash de transaction est présent quelque part, une tx a été envoyée
-    if (typeof c['transactionHash'] === 'string' && c['transactionHash']) {
-      return false;
-    }
-    curr = c['cause'];
-  }
-  // Aucun hash de tx trouvé → simulation seulement, aucune tx envoyée
-  return true;
 }
 
 // ─── startVerifier ────────────────────────────────────────────────────────────
@@ -142,6 +112,7 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
 
   // Demandes en cours d'évaluation (pour ne pas relancer l'évaluateur)
   const evaluating = new Set<string>();
+  const unknownReceipts = new Map<string, number>();
 
   // ── Fonctions utilitaires sur la chaîne ──
 
@@ -163,6 +134,37 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
     } catch {
       // ne pas crasher si le chemin n'est pas accessible
     }
+  }
+
+  function isFatalResult(
+    state: RequestState,
+    step: 'commit' | 'reveal' | 'finalize' | 'close',
+    result: ControlledResult,
+  ): boolean {
+    if (result.status === 'reverted') {
+      console.log(`[verifier] ${step} annulé requestId=${state.requestId} name=${result.name ?? 'unknown'} classe=${result.classe} sent=${result.sent}`);
+    }
+    const key = `${state.requestId}:${step}`;
+    let fatal = result.status === 'reverted' && result.classe === 'fatal';
+    if (result.status === 'reverted' && result.classe === 'unknown' && result.sent) {
+      const count = (unknownReceipts.get(key) ?? 0) + 1;
+      unknownReceipts.set(key, count);
+      fatal = count >= 5;
+    } else {
+      unknownReceipts.delete(key);
+    }
+    if (fatal && result.status === 'reverted') {
+      unknownReceipts.delete(key);
+      appendIncident({
+        verifier: verifierAddress,
+        requestId: state.requestId,
+        h: state.h,
+        cause: 'tx_reverted',
+        step,
+        error: result.name ?? 'unknown',
+      });
+    }
+    return fatal;
   }
 
   // ── Évaluation + détermination du vote ──
@@ -264,17 +266,9 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
     const nowSecNorm = rawNow > 1e12 ? Math.floor(rawNow / 1000) : rawNow;
     const commitDeadline = Number(state.commitDeadline);
     const revealDeadline = Number(state.revealDeadline);
-    const contestDeadline = Number(state.contestDeadline);
 
     // ── Étape : pending → committed ──
     if (state.step === 'pending') {
-      // Ne pas dépasser la fenêtre commit
-      if (nowSecNorm >= commitDeadline) {
-        // Trop tard pour commit, marquer comme committed sans l'avoir fait
-        // (on ne peut plus rien faire pour cette demande)
-        return;
-      }
-
       // Vérifier si déjà committée sur la chaîne (reprise après crash)
       try {
         const reveal = await pubClient.readContract({
@@ -288,8 +282,16 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
           store.set({ ...state, step: 'committed' });
           return;
         }
-      } catch {
-        // pas de reveal disponible, continuer
+      } catch (err) {
+        // Ne pas confondre une lecture impossible avec l'absence de commit.
+        console.error(`[verifier] Erreur lecture commit requestId=${requestId}:`, err);
+        if (nowSecNorm >= commitDeadline) return;
+      }
+
+      if (nowSecNorm >= commitDeadline) {
+        // Commit manqué : poursuivre la finalisation et la clôture de la demande.
+        store.set({ ...state, step: 'detailed' });
+        return;
       }
 
       // Évaluer si pas déjà en cours
@@ -350,21 +352,22 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
       });
 
       try {
-        const txHash = await wltClient.writeContract({
+        const result = await sendControlled({
+          publicClient: pubClient,
+          walletClient: wltClient,
           address: marketAddress,
-          abi: marketAbi,
-          functionName: 'commitVerdict',
-          args: [requestId, commitment],
+          abi: marketAbiWithErrors,
+          call: { functionName: 'commitVerdict', args: [requestId, commitment] },
+          force: false,
         });
-        await pubClient.waitForTransactionReceipt({ hash: txHash });
-        store.set({ ...newState, step: 'committed' });
-      } catch (err) {
-        if (isAlreadyDone(err)) {
+        if (isFatalResult(newState, 'commit', result)) {
+          store.set({ ...newState, step: 'detailed' });
+        } else if (result.status === 'success' || result.classe === 'done') {
           store.set({ ...newState, step: 'committed' });
-        } else {
-          console.error(`[verifier] Erreur commit requestId=${requestId}:`, err);
-          // Réessayer au tour suivant (step reste pending)
         }
+      } catch (err) {
+        console.error(`[verifier] Erreur commit requestId=${requestId}:`, err);
+        // Réessayer au tour suivant (step reste pending).
       }
       return;
     }
@@ -398,55 +401,25 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
         // pas de reveal disponible, continuer
       }
 
-      // Tenter le reveal ; WrongPhase / TooEarly = bloc encore en retard, réessayer au tour suivant.
-      // Stratégie gaz en deux temps :
-      //   1. Essai sans gas explicite (laisser eth_estimateGas estimer).
-      //   2. Si eth_estimateGas échoue (WrongPhase/TooEarly car timestamp du dernier bloc
-      //      < commitDeadline), réessayer avec gas=200_000 pour contourner la simulation
-      //      et forcer le nœud à miner un nouveau bloc au timestamp courant.
-      // Cette stratégie évite d'envoyer des transactions vouées à l'échec sur des chaînes
-      // de test (anvil) où la simulation fonctionne normalement.
-      const doReveal = async (gasLimit?: bigint): Promise<void> => {
-        const commonArgs = {
-          address: marketAddress,
-          abi: marketAbi,
-          functionName: 'revealVerdict' as const,
-          args: [requestId, state.vote as number, state.reasons as number, state.detailHash as Hex, state.salt as Hex] as const,
-        };
-        const txHash = gasLimit !== undefined
-          ? await wltClient.writeContract({ ...commonArgs, gas: gasLimit })
-          : await wltClient.writeContract(commonArgs);
-        await pubClient.waitForTransactionReceipt({ hash: txHash });
-        store.set({ ...state, step: 'revealed' });
-      };
-
       try {
-        await doReveal();
-      } catch (err) {
-        if (isAlreadyDone(err)) {
-          if (String(err).includes('AlreadyRevealed')) {
-            store.set({ ...state, step: 'revealed' });
-          } else if (isSimulationFailure(err)) {
-            // Simulation a échoué (eth_estimateGas, aucune tx envoyée) : L1 inactif,
-            // timestamp de bloc en retard. Réessayer avec gas fixe pour contourner
-            // la simulation et forcer le nœud à miner un nouveau bloc au timestamp courant.
-            try {
-              await doReveal(200_000n);
-            } catch (err2) {
-              if (isAlreadyDone(err2) && String(err2).includes('AlreadyRevealed')) {
-                store.set({ ...state, step: 'revealed' });
-              } else if (isAlreadyDone(err2)) {
-                console.log(`[verifier] revealVerdict revert (gas fixe), réessai requestId=${requestId}`);
-              } else {
-                console.error(`[verifier] Erreur reveal (gas fixe) requestId=${requestId}:`, err2);
-              }
-            }
-          } else {
-            console.log(`[verifier] revealVerdict revert (bloc en retard), réessai requestId=${requestId}`);
-          }
-        } else {
-          console.error(`[verifier] Erreur reveal requestId=${requestId}:`, err);
+        const result = await sendControlled({
+          publicClient: pubClient,
+          walletClient: wltClient,
+          address: marketAddress,
+          abi: marketAbiWithErrors,
+          call: {
+            functionName: 'revealVerdict',
+            args: [requestId, state.vote, state.reasons, state.detailHash, state.salt],
+          },
+          force: true,
+        });
+        if (isFatalResult(state, 'reveal', result)) {
+          store.set({ ...state, step: 'detailed' });
+        } else if (result.status === 'success' || result.classe === 'done') {
+          store.set({ ...state, step: 'revealed' });
         }
+      } catch (err) {
+        console.error(`[verifier] Erreur reveal requestId=${requestId}:`, err);
       }
       return;
     }
@@ -516,58 +489,41 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
 
       if (!allRevealed && !pastRevealDeadline) return; // pas encore prêt
 
+      let fatal = false;
       try {
-        const txHash = await wltClient.writeContract({
+        const result = await sendControlled({
+          publicClient: pubClient,
+          walletClient: wltClient,
           address: marketAddress,
-          abi: marketAbi,
-          functionName: 'finalize',
-          args: [requestId],
-          gas: 300_000n,
+          abi: marketAbiWithErrors,
+          call: { functionName: 'finalize', args: [requestId] },
+          force: true,
         });
-        await pubClient.waitForTransactionReceipt({ hash: txHash });
-
-        // Relire pour avoir contestDeadline
-        const updated = await getRequestOnChain(requestId);
-        store.set({
-          ...state,
-          step: 'finalized',
-          contestDeadline: updated.contestDeadline.toString(),
-        });
+        fatal = isFatalResult(state, 'finalize', result);
+        if (fatal) store.set({ ...state, step: 'closed' });
       } catch (err) {
-        if (isAlreadyDone(err)) {
-          // Relire le statut pour distinguer :
-          // - WrongPhase car le contrat est maintenant Contest (finalisé par un autre) → passer à finalized
-          // - WrongPhase/TooEarly car le bloc est en retard → réessayer au prochain tick
-          try {
-            const updated = await getRequestOnChain(requestId);
-            const updSName = statusName(updated.status);
-            if (updSName === 'Contest' || updSName === 'Closed') {
-              store.set({
-                ...state,
-                step: 'finalized',
-                contestDeadline: updated.contestDeadline.toString(),
-              });
-            } else {
-              // Bloc en retard (toujours Reveal ou Commit) : réessayer
-              console.log(`[verifier] finalize revert (bloc en retard), réessai requestId=${requestId}`);
-            }
-          } catch {
-            // Relecture impossible, réessayer au prochain tick
-            console.log(`[verifier] finalize revert (relecture impossible), réessai requestId=${requestId}`);
-          }
-        } else {
-          console.error(`[verifier] Erreur finalize requestId=${requestId}:`, err);
+        console.error(`[verifier] Erreur finalize requestId=${requestId}:`, err);
+      }
+
+      // Quel que soit le résultat, seule la chaîne confirme la finalisation.
+      try {
+        const updated = await getRequestOnChain(requestId);
+        const sName = statusName(updated.status);
+        if (!fatal && (sName === 'Contest' || sName === 'Closed')) {
+          store.set({
+            ...state,
+            step: 'finalized',
+            contestDeadline: updated.contestDeadline.toString(),
+          });
         }
+      } catch (err) {
+        console.error(`[verifier] Erreur relecture finalize requestId=${requestId}:`, err);
       }
       return;
     }
 
     // ── Étape : finalized → closed ──
     if (state.step === 'finalized') {
-      if (contestDeadline === 0) return; // pas encore de contestDeadline
-      // close quand now >= contestDeadline + 2 (marge pour que le bloc soit à jour)
-      if (nowSecNorm < contestDeadline + 2) return;
-
       try {
         const onChain = await getRequestOnChain(requestId);
         if (statusName(onChain.status) === 'Closed') {
@@ -575,20 +531,39 @@ export function startVerifier(opts: VerifierOpts = {}): VerifierHandle {
           return;
         }
 
-        const txHash = await wltClient.writeContract({
+        // Réparer aussi un état finalized persisté avec une échéance nulle.
+        const contestDeadline = Number(onChain.contestDeadline);
+        if (contestDeadline === 0 && statusName(onChain.status) !== 'Contest') {
+          // Une ancienne finalisation annulée doit pouvoir être retentée.
+          store.set({ ...state, step: 'detailed', contestDeadline: '0' });
+          return;
+        }
+        if (state.contestDeadline !== onChain.contestDeadline.toString()) {
+          state = { ...state, contestDeadline: onChain.contestDeadline.toString() };
+          store.set(state);
+        }
+        if (contestDeadline === 0) return;
+        // close quand now >= contestDeadline + 2 (marge inchangée).
+        if (nowSecNorm < contestDeadline + 2) return;
+
+        const result = await sendControlled({
+          publicClient: pubClient,
+          walletClient: wltClient,
           address: marketAddress,
-          abi: marketAbi,
-          functionName: 'close',
-          args: [requestId],
+          abi: marketAbiWithErrors,
+          call: { functionName: 'close', args: [requestId] },
+          force: true,
         });
-        await pubClient.waitForTransactionReceipt({ hash: txHash });
-        store.set({ ...state, step: 'closed' });
-      } catch (err) {
-        if (isAlreadyDone(err)) {
+        if (isFatalResult(state, 'close', result) || result.status === 'success') {
           store.set({ ...state, step: 'closed' });
         } else {
-          console.error(`[verifier] Erreur close requestId=${requestId}:`, err);
+          const updated = await getRequestOnChain(requestId);
+          if (statusName(updated.status) === 'Closed') {
+            store.set({ ...state, step: 'closed' });
+          }
         }
+      } catch (err) {
+        console.error(`[verifier] Erreur close requestId=${requestId}:`, err);
       }
       return;
     }
