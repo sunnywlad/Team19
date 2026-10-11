@@ -1,12 +1,11 @@
-// VAULT_MODE=chain : SQUELETTE, en attente du contrat ArgentVault (Wladimir,
-// src/ArgentVault.sol et script/DeployArgentVault.s.sol). Tant que le script de
-// déploiement n'existe pas, lib.mjs arrête « make demo » avant d'arriver ici :
-// « ArgentVault absent : VAULT_MODE=chain impossible ». Aucun repli sur le faux
-// coffre.
+// VAULT_MODE=chain : lance anvil, déploie ArgentVault (src/ArgentVault.sol) par
+// script/DeployArgentVault.s.sol et inscrit le monde de test (seed.mjs). Si le
+// script de déploiement manque, lib.mjs arrête « make demo » avant d'arriver
+// ici : « ArgentVault absent : VAULT_MODE=chain impossible ». Aucun repli sur le
+// faux coffre.
 //
-// NON TESTÉ contre ArgentVault : le nom du contrat dans la sortie de forge et
-// les variables que lira le script de déploiement sont des suppositions à
-// reprendre quand il existera.
+// Vérifié contre ArgentVault sur anvil (réseau de test local, chaîne 31337),
+// par « make scenes » en VAULT_MODE=chain. Fuji non testé.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEPLOY_SCRIPT, DemoError, HOST, ROOT, postJson, run, setChainVault, startService, stopService } from "./lib.mjs";
