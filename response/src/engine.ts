@@ -108,7 +108,7 @@ export class ResponseEngine {
   readonly #refusals = new Map<string, { at: number; requestId: string }[]>();
   /** Jetons invalides récents, toutes sources confondues (ms). */
   #invalidTokens: number[] = [];
-  /** Demandes en file d'après le journal : ENQUEUED sans SUBMITTED ni QUEUE_EXPIRED. */
+  /** Demandes en file d'après le journal : ENQUEUED sans SUBMITTED, QUEUE_EXPIRED ni rejet par la file ou le relais. */
   readonly #queued = new Map<string, { agent_id: string | null; client_id: string | null; enqueued_at_ms: number }>();
   /** Demandes sorties de la file, ou déjà signalées : elles ne déclenchent plus rien. */
   readonly #settled = new Set<string>();
@@ -375,6 +375,10 @@ export class ResponseEngine {
           this.#queued.set(entry.request_id, { agent_id: entry.agent_id, client_id: entry.client_id, enqueued_at_ms: entry.ts_ms });
         }
       } else if (entry.type === "SUBMITTED" || entry.type === "QUEUE_EXPIRED") {
+        this.#queued.delete(entry.request_id);
+        this.#settled.add(entry.request_id);
+      } else if (entry.type === "SCHEMA_REJECTED" && (entry.component === "QUEUE" || entry.component === "RELAY") && this.#queued.has(entry.request_id)) {
+        // Rejetée après sa mise en file : elle n'attend plus.
         this.#queued.delete(entry.request_id);
         this.#settled.add(entry.request_id);
       }

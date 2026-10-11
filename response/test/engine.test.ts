@@ -419,6 +419,30 @@ describe("disponibilité", () => {
     assert.equal(availability().length, 0);
   });
 
+  it("une demande rejetée par la file ou le relais après sa mise en file ne déclenche rien", () => {
+    enqueue(1);
+    // Le relais ne connaît plus l'agent : identifiants à null, comme il l'écrit.
+    store.append({ type: "SCHEMA_REJECTED", component: "RELAY", request_id: REQ(1), agent_id: null, client_id: null, data: { error_count: 1 } });
+    enqueue(2);
+    engine.checkJournalQueue();
+    queued("SCHEMA_REJECTED", "QUEUE", 2, { error_count: 1 });
+    // Un rejet avant la mise en file ne clôt rien : la demande entre en file ensuite.
+    queued("SCHEMA_REJECTED", "QUEUE", 3, { error_count: 1 });
+    enqueue(3);
+    now += 16_000;
+    engine.checkJournalQueue();
+    assert.deepEqual(alerts.map((a) => a.request_id), [REQ(3)]);
+  });
+
+  it("un agent en pause dont la demande reste en file alerte toujours après 15 s", () => {
+    enqueue(1);
+    store.append({ type: "AGENT_PAUSED", component: "RESPONSE", request_id: REQ(9), agent_id: AGENT, client_id: CLIENT, data: { incident_id: REQ(99), scope: "OFFCHAIN", tx_hash: null } });
+    assert.equal(engine.isPaused(AGENT), true);
+    now += 16_000;
+    engine.checkJournalQueue();
+    assert.deepEqual(alerts.map((a) => [a.kind, a.request_id]), [["AVAILABILITY", REQ(1)]]);
+  });
+
   it("une demande en file depuis moins de 15 s ne déclenche rien, puis alerte passé le délai", () => {
     enqueue(1);
     now += 14_000;

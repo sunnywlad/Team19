@@ -97,7 +97,7 @@ alerte, rapport.
 | Contrat | 10, 11, 12 | Notification à l'approbateur |
 | Contrat | 0, 7, 8, 13 | Rien de plus que le journal |
 | File du relais | Demande en attente depuis plus de 15 s, ou expirée | Alerte `AVAILABILITY` vers l'exploitation, une fois par demande |
-| Journal | `ENQUEUED` depuis plus de 15 s, sans `SUBMITTED` ni `QUEUE_EXPIRED` | La même alerte, sous la même clé : une fois par demande, relais arrêté ou non |
+| Journal | `ENQUEUED` depuis plus de 15 s, sans `SUBMITTED`, `QUEUE_EXPIRED` ni `SCHEMA_REJECTED` de la file ou du relais | La même alerte, sous la même clé : une fois par demande, relais arrêté ou non |
 
 Les blocages de la porte sont lus dans le journal, au moment où la porte les
 écrit. Les décisions du contrat sont lues dans l'indexeur du relais, chaque
