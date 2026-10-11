@@ -427,7 +427,8 @@ async function main(argv) {
     return 64;
   }
   if (process.env.DEMO_MODE !== "1") throw new DemoError("les scènes remettent la démo à zéro : DEMO_MODE=1 exigé (make scenes)");
-  const down = (await status(config)).filter((row) => row.service !== "dashboard" && row.state !== "prêt" && row.state !== "ouvert");
+  // « lancé » : anvil en mode chain, que status() suit par son pid, sans sonde de santé.
+  const down = (await status(config)).filter((row) => row.service !== "dashboard" && row.state !== "prêt" && row.state !== "ouvert" && row.state !== "lancé");
   if (down.length > 0) throw new DemoError(`services non prêts (${down.map((row) => row.service).join(", ")}) : make demo d'abord`);
   const known = loadKnown();
 
