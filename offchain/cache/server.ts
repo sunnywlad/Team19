@@ -301,7 +301,7 @@ async function handlePostDetail(
     throw new HttpError(409, 'Demande introuvable sur la chaîne');
   }
 
-  let matchingVerifier: `0x${string}` | null = null;
+  let matched = false;
   for (const verifier of committee) {
     const reveal = await clients.client.readContract({
       address: clients.marketAddress,
@@ -310,17 +310,19 @@ async function handlePostDetail(
       args: [requestId, verifier],
     });
     if (reveal.revealed && reveal.detailHash.toLowerCase() === bodyHash.toLowerCase()) {
-      matchingVerifier = verifier;
+      matched = true;
       break;
     }
   }
 
-  if (!matchingVerifier) {
+  if (!matched) {
     throw new HttpError(409, 'keccak256(octets) ne correspond à aucun detailHash révélé');
   }
 
+  // Stockage adressé par le contenu : l'attribution aux membres se fait au GET,
+  // depuis les reveals lus sur la chaîne. Des détails identiques partagent un fichier.
   const detailPath = join(
-    opts.dataDir, 'detail', requestId.toString(), `${matchingVerifier.toLowerCase()}.bin`,
+    opts.dataDir, 'detail', requestId.toString(), `${bodyHash.toLowerCase()}.bin`,
   );
   atomicWrite(detailPath, body);
 
@@ -368,21 +370,29 @@ async function handleGetDetail(
     throw new HttpError(403, 'Accès refusé : rôle insuffisant');
   }
 
-  // Lire tous les fichiers détail pour cette demande
+  // Un détail par membre révélé dont les octets ({detailHash}.bin) ont été déposés.
+  // Les fichiers de l'ancien schéma ({verifier}.bin) sont ignorés, effacés à la clôture.
   const detailDir = join(opts.dataDir, 'detail', requestId.toString());
-  if (!existsSync(detailDir)) {
-    replyJson(res, 200, { details: [] });
-    return;
-  }
-
-  const { readdirSync } = await import('node:fs');
-  const files = readdirSync(detailDir).filter(f => f.endsWith('.bin'));
-
-  const details = files.map(f => {
-    const verifier = f.replace('.bin', '');
-    const data = readFileSync(join(detailDir, f));
-    return { verifier, detail: data.toString('base64') };
+  const committee = await clients.client.readContract({
+    address: clients.marketAddress,
+    abi: marketAbi,
+    functionName: 'getCommittee',
+    args: [requestId],
   });
+
+  const details: { verifier: string; detail: string }[] = [];
+  for (const verifier of committee) {
+    const reveal = await clients.client.readContract({
+      address: clients.marketAddress,
+      abi: marketAbi,
+      functionName: 'getReveal',
+      args: [requestId, verifier],
+    });
+    if (!reveal.revealed) continue;
+    const path = join(detailDir, `${reveal.detailHash.toLowerCase()}.bin`);
+    if (!existsSync(path)) continue;
+    details.push({ verifier: verifier.toLowerCase(), detail: readFileSync(path).toString('base64') });
+  }
 
   replyJson(res, 200, { details });
 }
