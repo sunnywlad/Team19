@@ -422,6 +422,98 @@ button {
   font-size: 0.86rem;
 }
 
+/* --- Effet c : barre empilée du cash --- */
+.barre {
+  margin: 12px 0 4px;
+}
+
+.barre-svg {
+  display: block;
+  width: 100%;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.barre-fond {
+  fill: var(--surface-2);
+}
+
+/* Largeurs en attribut SVG, transition CSS : la barre glisse d'une lecture à l'autre. */
+.barre-segment {
+  stroke: var(--surface);
+  stroke-width: 3;
+  transition: x 0.8s ease, width 0.8s ease;
+}
+
+/* Chaque terme a sa couleur ET son motif dans la légende ; la valeur est écrite à côté. */
+.segment-dettes {
+  fill: var(--humain);
+  background: var(--humain);
+}
+
+.segment-reserve {
+  fill: var(--bloque);
+  background: var(--bloque);
+}
+
+.segment-placements-bloques {
+  fill: var(--refuse);
+  background: var(--refuse);
+}
+
+.segment-placable {
+  fill: var(--accent);
+  background: var(--accent);
+}
+
+.barre-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.84rem;
+}
+
+.barre-legende li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pastille-legende {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.barre-absente {
+  margin: 12px 0;
+}
+
+/* Compteur : la nouvelle valeur entre par le bas, sans valeur intermédiaire. */
+.roule {
+  display: inline-block;
+}
+
+.roule-actif {
+  animation: roule 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes roule {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .termes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

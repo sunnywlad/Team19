@@ -3,6 +3,7 @@ import type { IncidentItem } from "../api/types.ts";
 import { ClockTag, Amount, DecisionBadge, OpaqueId, SourceTag, Untrusted } from "../components/atoms.tsx";
 import { DelaysNote, DelaysTable } from "../components/DelaysPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
+import { Counter } from "../components/Rolling.tsx";
 import { chainPausedAgents, latestIncidents } from "../domain/activity.ts";
 import { chainPauseTimestamp } from "../domain/delays.ts";
 import {
@@ -220,11 +221,15 @@ export function IncidentView({ view }: { view: ViewProps }) {
               <dl className="compteurs">
                 <div>
                   <dt>Incidents ouverts</dt>
-                  <dd data-testid="compteur-ouverts">{open}</dd>
+                  <dd data-testid="compteur-ouverts">
+                    <Counter value={open} />
+                  </dd>
                 </div>
                 <div>
                   <dt>Passées la porte puis bloquées par le contrat</dt>
-                  <dd data-testid="compteur-manquees">{missed}</dd>
+                  <dd data-testid="compteur-manquees">
+                    <Counter value={missed} />
+                  </dd>
                 </div>
               </dl>
               {incidents.length === 0 ? (

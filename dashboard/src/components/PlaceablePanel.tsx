@@ -1,6 +1,8 @@
 import type { VaultState } from "../api/types.ts";
 import { UNIT_LEGEND, formatTime } from "../lib/format.ts";
 import { Amount } from "./atoms.tsx";
+import { PlaceableBar } from "./PlaceableBar.tsx";
+import { Rolling } from "./Rolling.tsx";
 
 /**
  * Montant plaçable et ses termes, tels que les vues du contrat les renvoient.
@@ -11,38 +13,51 @@ export function PlaceableValues({ vault, simulated = false }: { vault: VaultStat
   return (
     <>
       <p className="placable" data-testid="placable">
-        <Amount wei={vault.placeable_wei} />
+        <Rolling value={vault.placeable_wei}>
+          <Amount wei={vault.placeable_wei} />
+        </Rolling>
       </p>
       <p className="formule">plaçable = cash − dettes admises − réserve de sécurité − placements bloqués (jamais négatif)</p>
+      <PlaceableBar vault={vault} />
       <dl className="termes">
         <div>
           <dt>Cash</dt>
           <dd data-testid="cash">
-            <Amount wei={vault.cash_wei} />
+            <Rolling value={vault.cash_wei}>
+              <Amount wei={vault.cash_wei} />
+            </Rolling>
           </dd>
         </div>
         <div>
           <dt>− Dettes admises</dt>
           <dd data-testid="dettes">
-            <Amount wei={vault.admitted_debts_wei} />
+            <Rolling value={vault.admitted_debts_wei}>
+              <Amount wei={vault.admitted_debts_wei} />
+            </Rolling>
           </dd>
         </div>
         <div>
           <dt>− Réserve de sécurité</dt>
           <dd data-testid="reserve">
-            <Amount wei={vault.safety_reserve_wei} />
+            <Rolling value={vault.safety_reserve_wei}>
+              <Amount wei={vault.safety_reserve_wei} />
+            </Rolling>
           </dd>
         </div>
         <div>
           <dt>− Placements bloqués</dt>
           <dd data-testid="placements-bloques">
-            <Amount wei={vault.held_placements_wei} />
+            <Rolling value={vault.held_placements_wei}>
+              <Amount wei={vault.held_placements_wei} />
+            </Rolling>
           </dd>
         </div>
         <div>
           <dt>Montant bloqué (cas en attente)</dt>
           <dd data-testid="bloque">
-            <Amount wei={vault.total_held_wei} />
+            <Rolling value={vault.total_held_wei}>
+              <Amount wei={vault.total_held_wei} />
+            </Rolling>
           </dd>
         </div>
       </dl>

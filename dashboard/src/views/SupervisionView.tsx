@@ -1,6 +1,7 @@
 import { OpaqueId } from "../components/atoms.tsx";
 import { CountdownRing } from "../components/CountdownRing.tsx";
 import { FlowPanel } from "../components/FlowPanel.tsx";
+import { Counter } from "../components/Rolling.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { PlaceableValues } from "../components/PlaceablePanel.tsx";
 import { latestIncidents, offContractLines, pendingCases } from "../domain/activity.ts";
@@ -30,15 +31,21 @@ export function SupervisionView({ view }: { view: ViewProps }) {
                 <dl className="compteurs">
                   <div>
                     <dt>Acceptées et payées</dt>
-                    <dd data-testid="sup-acceptees">{count("accepte")}</dd>
+                    <dd data-testid="sup-acceptees">
+                      <Counter value={count("accepte")} />
+                    </dd>
                   </div>
                   <div>
                     <dt>En validation humaine</dt>
-                    <dd data-testid="sup-attente">{pending.length}</dd>
+                    <dd data-testid="sup-attente">
+                      <Counter value={pending.length} />
+                    </dd>
                   </div>
                   <div>
                     <dt>Refusées par le contrat</dt>
-                    <dd data-testid="sup-refusees">{count("refuse")}</dd>
+                    <dd data-testid="sup-refusees">
+                      <Counter value={count("refuse")} />
+                    </dd>
                   </div>
                 </dl>
                 {pending.length > 0 && (
@@ -73,15 +80,21 @@ export function SupervisionView({ view }: { view: ViewProps }) {
             <dl className="compteurs">
               <div>
                 <dt>Arrêtées à la porte d'entrée</dt>
-                <dd data-testid="sup-porte">{offContractLines(data.journal, [], []).length}</dd>
+                <dd data-testid="sup-porte">
+                      <Counter value={offContractLines(data.journal, [], []).length} />
+                    </dd>
               </div>
               <div>
                 <dt>Incidents ouverts</dt>
-                <dd data-testid="sup-incidents">{latestIncidents(data.incidents).filter((i) => i.report.human_decision === null).length}</dd>
+                <dd data-testid="sup-incidents">
+                      <Counter value={latestIncidents(data.incidents).filter((i) => i.report.human_decision === null).length} />
+                    </dd>
               </div>
               <div>
                 <dt>Agents en pause, hors chaîne</dt>
-                <dd data-testid="sup-pauses">{data.pausedAgents.filter((p) => p.scope === "OFFCHAIN").length}</dd>
+                <dd data-testid="sup-pauses">
+                      <Counter value={data.pausedAgents.filter((p) => p.scope === "OFFCHAIN").length} />
+                    </dd>
               </div>
             </dl>
           )}
