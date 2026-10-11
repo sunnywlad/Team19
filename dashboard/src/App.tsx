@@ -30,8 +30,11 @@ export function App({ client }: { client: ApiClient }) {
   const relay = usePolled(useCallback((signal: AbortSignal) => loadRelay(client, signal), [client]));
   const vault = usePolled(useCallback((signal: AbortSignal) => client.getVaultState(signal), [client]));
   const response = usePolled(useCallback((signal: AbortSignal) => loadResponse(client, signal), [client]));
+  const origin = usePolled(useCallback((signal: AbortSignal) => client.getVaultOrigin(signal), [client]));
   const now = useNow();
-  const view: ViewProps = { relay, vault, response, sources: client.sources, now };
+  // Sans réponse du proxy local, l'origine du coffre n'est pas confirmée : jamais « chaîne » par défaut.
+  const vaultOrigin = origin.data ?? (origin.error === null ? "lecture" : "non-confirme");
+  const view: ViewProps = { relay, vault, response, sources: client.sources, vaultOrigin, now };
 
   const [current, setCurrent] = useState<ViewKey>(viewFromHash);
   useEffect(() => {

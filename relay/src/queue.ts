@@ -154,7 +154,7 @@ export class Queue {
    * expiration de ce qui n'est plus valable. À appeler à chaque tour.
    */
   async sweep(): Promise<{ stalled: number; expired: number }> {
-    const { policy, clock, journal, alerts } = this.#deps;
+    const { policy, clock, alerts } = this.#deps;
     const now = clock();
 
     const stalled = this.#db
@@ -170,11 +170,33 @@ export class Queue {
       this.#db.prepare("UPDATE queue SET stall_alerted = 1 WHERE id = ?").run(row.id);
     }
 
-    const expired = this.#db
-      .prepare(`SELECT ${COLUMNS} FROM queue WHERE status = 'PENDING' AND expires_at < ? ORDER BY id`)
-      .all(toSeconds(now)) as QueueRow[];
-    for (const row of expired) {
-      this.#set(row.id, "EXPIRED", { cause: "REQUEST_EXPIRED" });
+    return { stalled: stalled.length, expired: await this.expire() };
+  }
+
+  /**
+   * Expiration seule : ce qui attend encore après son échéance passe à EXPIRED
+   * et n'est plus jamais soumis. Appelée par le relais (sweep) et par l'IA du
+   * client, pour qu'une demande expire même relais arrêté. Le changement d'état
+   * se fait en une transaction : de deux processus sur la même base, un seul
+   * obtient la ligne, et lui seul écrit QUEUE_EXPIRED. Rien n'est journalisé
+   * si aucune ligne n'a changé.
+   */
+  async expire(): Promise<number> {
+    const { clock, journal } = this.#deps;
+    const now = clock();
+    let expired: QueueRow[];
+    // IMMEDIATE : le verrou d'écriture est pris avant de lire.
+    this.#db.exec("BEGIN IMMEDIATE");
+    try {
+      expired = this.#db
+        .prepare(`UPDATE queue SET status = 'EXPIRED', cause = 'REQUEST_EXPIRED', updated_at_ms = ? WHERE status = 'PENDING' AND expires_at < ? RETURNING ${COLUMNS}`)
+        .all(now, toSeconds(now)) as QueueRow[];
+      this.#db.exec("COMMIT");
+    } catch (error) {
+      this.#db.exec("ROLLBACK");
+      throw error;
+    }
+    for (const row of expired.sort((x, y) => x.id - y.id)) {
       await journal.append({
         type: "QUEUE_EXPIRED",
         component: "QUEUE",
@@ -184,7 +206,7 @@ export class Queue {
         data: { expires_at: row.expires_at },
       });
     }
-    return { stalled: stalled.length, expired: expired.length };
+    return expired.length;
   }
 
   /** Demandes en attente, de la plus ancienne à la plus récente. */

@@ -8,10 +8,11 @@ import { Queue } from "../src/queue.ts";
 import { Relay } from "../src/relay.ts";
 import { generatePrivateKey } from "viem/accounts";
 import { DEFAULT_POLICY, type Policy } from "../src/config.ts";
-import { FakeVault } from "../src/fake-vault.ts";
+import type { FakeVault } from "../src/fake-vault.ts";
 import { MemoryJournal } from "../src/journal.ts";
 import { ClientSigner, domainFor } from "../src/signer.ts";
 import type { Hex } from "../src/types.ts";
+import { fakeVaultFromFixtures } from "../src/world.ts";
 import { ManualClock, T0_MS, fixtures, type Fixtures } from "./helpers.ts";
 
 export type World = {
@@ -39,21 +40,7 @@ export function makeWorld(overrides: Partial<Policy> = {}): World {
   const domain = domainFor(31337, "0x1111111111111111111111111111111111111111");
   // Clé du client tirée pour le test, jamais écrite.
   const client = new ClientSigner(generatePrivateKey(), f.ids["C-DEMO"]!, domain, policy, clock.now);
-  const vault = new FakeVault({
-    clientId: f.ids["C-DEMO"]!,
-    clientSigner: client.address,
-    domain,
-    policy,
-    clock: clock.now,
-    cash: BigInt(f.vault.cash_wei),
-    safetyReserve: BigInt(f.vault.safety_reserve_wei),
-    threshold: BigInt(f.vault.threshold_wei),
-    approvalDelayS: f.vault.approval_delay_s,
-  });
-  for (const b of f.beneficiaries) vault.registerBeneficiary(b.beneficiary_id);
-  for (const i of f.invoices) if (i.registered) vault.registerInvoice(i.invoice_id, f.ids[i.beneficiary!]!, BigInt(i.amount_wei!));
-  for (const p of f.placements) vault.registerPlacement(p.placement_id, f.ids[p.beneficiary]!, BigInt(p.amount_wei));
-  for (const a of f.agents) vault.registerAgent(a.agent_id, a.mandate);
+  const vault = fakeVaultFromFixtures(f, { clientSigner: client.address, domain, policy, clock: clock.now });
   return { f, ids: f.ids, policy, clock, journal: new MemoryJournal(clock.now), client, vault, unit: BigInt(f.unit_wei) };
 }
 

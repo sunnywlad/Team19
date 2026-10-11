@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Source } from "../api/types.ts";
+import type { TagSource } from "../api/types.ts";
 import type { Snapshot } from "../hooks/poller.ts";
 import { isStale } from "../hooks/poller.ts";
 import { formatTime } from "../lib/format.ts";
@@ -9,7 +9,7 @@ type Props<T> = {
   title: string;
   /** Identifiant du titre, pour aria-labelledby. */
   id: string;
-  source: Source;
+  source: TagSource;
   snapshot: Snapshot<T>;
   now: number;
   /** Appelé seulement avec une lecture valide. */

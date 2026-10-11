@@ -6,7 +6,7 @@
 // Le navigateur n'appelle que sa propre origine : /api/* est relayé par le proxy
 // local de vite.config.ts, qui porte les URLs (et un éventuel jeton) côté serveur.
 import { getJson, type FetchLike } from "./http.ts";
-import { parse } from "../validation/validate.ts";
+import { InvalidResponse, parse } from "../validation/validate.ts";
 import type {
   IncidentItem,
   JournalEntry,
@@ -17,6 +17,7 @@ import type {
   RelayEvent,
   RelayStatus,
   Sources,
+  VaultOrigin,
   VaultState,
 } from "./types.ts";
 
@@ -31,6 +32,8 @@ export interface ApiClient {
   getJournalEntries(signal?: AbortSignal): Promise<JournalEntry[]>;
   getJournalVerification(signal?: AbortSignal): Promise<JournalVerification>;
   getPausedAgents(signal?: AbortSignal): Promise<PausedAgent[]>;
+  /** Contrat ou faux coffre derrière le relais : dit par le proxy local, pas par le relais. */
+  getVaultOrigin(signal?: AbortSignal): Promise<VaultOrigin>;
 }
 
 /** Taille de page demandée au relais : son maximum (relay/src/api.ts, MAX_LIMIT). */
@@ -39,6 +42,18 @@ export const PAGE_LIMIT = 500;
 const RELAY = "/api/relay";
 const RESPONSE = "/api/reponse";
 const SIMULATION = "/api/simulation";
+const LOCAL_MODE = "/api/local/mode";
+
+/** Réponse du proxy local : un seul champ, trois valeurs. Tout le reste est refusé. */
+function parseVaultOrigin(data: unknown): VaultOrigin {
+  if (typeof data === "object" && data !== null && !Array.isArray(data) && Object.keys(data).length === 1) {
+    const { vault } = data as { vault?: unknown };
+    if (vault === "fake") return "faux-coffre";
+    if (vault === "chain") return "chaine";
+    if (vault === "unknown") return "non-confirme";
+  }
+  throw new InvalidResponse("mode du coffre", "forme inattendue");
+}
 
 type Routes = { relay: string; vault: string; response: string };
 
@@ -46,12 +61,17 @@ const defaultFetch: FetchLike = (input, init) => fetch(input, init);
 
 abstract class GetOnlyClient implements ApiClient {
   abstract readonly sources: Sources;
+  abstract getVaultOrigin(signal?: AbortSignal): Promise<VaultOrigin>;
   readonly #fetch: FetchLike;
   readonly #routes: Routes;
 
   protected constructor(routes: Routes, fetchFn: FetchLike) {
     this.#routes = routes;
     this.#fetch = fetchFn;
+  }
+
+  protected readLocalMode(signal?: AbortSignal): Promise<VaultOrigin> {
+    return getJson(this.#fetch, LOCAL_MODE, parseVaultOrigin, signal);
   }
 
   getRelayStatus(signal?: AbortSignal): Promise<RelayStatus> {
@@ -107,11 +127,18 @@ export class RealApiClient extends GetOnlyClient {
       response: options.responseAvailable ? "reel" : "simulation",
     };
   }
+  getVaultOrigin(signal?: AbortSignal): Promise<VaultOrigin> {
+    return this.readLocalMode(signal);
+  }
 }
 
 export class SimulatedApiClient extends GetOnlyClient {
   readonly sources: Sources = { relay: "simulation", vault: "simulation", response: "simulation" };
   constructor(fetchFn: FetchLike = defaultFetch) {
     super({ relay: SIMULATION, vault: SIMULATION, response: SIMULATION }, fetchFn);
+  }
+  /** Tout est déjà étiqueté « simulation » : rien à demander. */
+  getVaultOrigin(): Promise<VaultOrigin> {
+    return Promise.resolve("sans-objet");
   }
 }

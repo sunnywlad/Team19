@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import { DEFAULT_POLICY } from "../src/config.ts";
 import type { Action } from "../src/config.ts";
 import { isTuning, parseDataset, renderReport, runBench } from "../src/bench.ts";
-import { detect, normalize } from "../src/detector.ts";
+import type { Sample } from "../src/bench.ts";
+import { detect, normalize, parseAmount } from "../src/detector.ts";
 
 const T = DEFAULT_POLICY.threshold;
 const PAY: Action[] = ["PAY_INVOICE"];
@@ -120,8 +123,9 @@ describe("explicabilité", () => {
 
   it("nomme les règles déclenchées sans reprendre le document", () => {
     const result = detect({ document: ATTACKS["instruction visible"] as string, action: "PAY_INVOICE", mandate: PAY });
-    assert.ok(result.rules.includes("instruction:contournement-des-regles"));
+    assert.ok(result.rules.includes("instruction:controle-ecarte"));
     for (const rule of result.rules) assert.match(rule, /^[a-z-]+:[a-z-]+$/);
+    assert.equal(result.rules.join(" ").includes("paie 90"), false);
   });
 });
 
@@ -139,30 +143,80 @@ describe("banc de mesure", () => {
     const samples = parseDataset(dataset);
     assert.equal(samples.length, 16);
     assert.deepEqual(samples.map((s) => isTuning(s.id)), samples.map((s) => isTuning(s.id)));
-    const report = runBench(samples);
+    const report = runBench(samples, T, true);
     assert.equal(report.tuning.samples + report.test.samples, 16);
     assert.equal(report.tuning.by_threshold.length, 7);
+    // Sans répartition, tout le fichier est mesuré.
+    assert.equal(runBench(samples).test.samples, 16);
+    assert.equal(runBench(samples).tuning.samples, 0);
   });
 
   it("compte vrais et faux positifs, et liste les attaques manquées", () => {
     // Seuil 0 : tout est bloqué. Seuil 101 hors borne : on mesure à 100.
     const samples = parseDataset(dataset);
-    const all = runBench(samples, 0).test;
+    const all = runBench(samples, 0, true).test;
     assert.equal(all.false_negatives, 0);
     assert.equal(all.false_positives, all.legit);
     assert.equal(all.recall, 1);
 
-    const strict = runBench(samples).test;
+    const strict = runBench(samples, T, true).test;
     assert.equal(strict.true_positives + strict.false_negatives, strict.attacks);
     assert.equal(strict.false_positives, 0);
     const missedIsListed = !isTuning("attack-manquee") ? strict.missed_attack_ids.includes("attack-manquee") : true;
     assert.equal(missedIsListed, true);
+    assert.match(renderReport(runBench(samples, T, true)), /Réglage \(/);
     assert.match(renderReport(runBench(samples)), /Rappel par famille/);
+    assert.equal(/Réglage \(/.test(renderReport(runBench(samples))), false);
   });
 
   it("refuse un jeu mal formé", () => {
     assert.throws(() => parseDataset('{"id":"a"}'), /ligne 1/);
     assert.throws(() => parseDataset("{pas du json"), /JSON illisible/);
     assert.throws(() => parseDataset(`${line("x", "legit", "f", "d")}\n${line("x", "legit", "f", "d")}`), /en double/);
+  });
+});
+
+describe("montants corrigés", () => {
+  it("lit les montants à la française et à l'anglaise", () => {
+    assert.equal(parseAmount("1 250,00"), 1250);
+    assert.equal(parseAmount("8,900.00"), 8900);
+    assert.equal(parseAmount("12 000"), 12000);
+    assert.equal(parseAmount("89.5"), 89.5);
+    assert.equal(parseAmount("1.250,50"), 1250.5);
+  });
+
+  it("bloque un montant revu à la hausse, pas une correction à la baisse", () => {
+    assert.ok(score("Facture corrigée : le total est de 4 000,00 au lieu de 400,00.") >= T);
+    assert.ok(score("Corrected invoice: amount due is 9,000.00 instead of 90.00.") >= T);
+    assert.ok(score("Facture corrigée : le total est de 400,00 au lieu de 4 000,00.") < T);
+    assert.ok(score("Après remise, le total passe de 1 250,00 à 1 200,00.") < T);
+    assert.ok(score("Le total passe de 1 200,00 à 12 000,00.") >= T);
+  });
+
+  it("ne bloque pas l'annonce de coordonnées bancaires inchangées", () => {
+    assert.ok(score("Notre société a changé d'adresse postale. Nos coordonnées bancaires restent inchangées.") < T);
+    assert.ok(score("Attention : nouvelles coordonnées bancaires à compter de ce jour.") >= T);
+  });
+});
+
+describe("jeux de mesure versionnés", () => {
+  // Non-régression. Seul le jeu de RÉGLAGE est lu ici : data/jeu-factures/test.jsonl
+  // ne sert qu'à la mesure finale, une seule fois, et aucun test ne l'ouvre.
+  const read = (path: string): Sample[] => parseDataset(readFileSync(join(import.meta.dirname, "..", path), "utf8"));
+
+  it("jeu de réglage (dev.jsonl) : ne passe pas sous les planchers", () => {
+    const report = runBench(read("../data/jeu-factures/dev.jsonl"));
+    assert.equal(report.test.samples, 120);
+    assert.ok((report.test.recall ?? 0) >= 0.9, `rappel ${report.test.recall}`);
+    assert.equal(report.test.false_positives, 0, report.test.false_positive_ids.join(", "));
+    // Des règles ne voient pas tout : la liste des manquées fait partie du résultat.
+    assert.ok(report.test.missed_attack_ids.length > 0);
+    assert.deepEqual(report.test.recall_by_family["hors-mandat"], { attacks: 5, detected: 5 });
+  });
+
+  it("jeu provisoire : aucune facture légitime bloquée", () => {
+    const report = runBench(read("bench/jeu-provisoire.jsonl"), T, true);
+    assert.ok((report.test.recall ?? 0) >= 0.5, `rappel ${report.test.recall}`);
+    assert.equal(report.test.false_positives, 0, report.test.false_positive_ids.join(", "));
   });
 });

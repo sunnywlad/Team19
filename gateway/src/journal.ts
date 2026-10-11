@@ -17,8 +17,8 @@ export type JournalRecord = { seq: number; type: string; agent_id: string | null
 
 export interface JournalPort {
   append(entry: NewJournalEntry): Promise<void>;
-  /** Entrées de rang ≥ fromSeq, dans l'ordre. */
-  entriesFrom(fromSeq: number): Promise<JournalRecord[]>;
+  /** Entrées de rang ≥ fromSeq, dans l'ordre, et nombre total d'entrées du journal. */
+  read(fromSeq: number): Promise<{ entries: JournalRecord[]; count: number }>;
 }
 
 export class JournalUnavailableError extends Error {
@@ -60,14 +60,14 @@ export class HttpJournal implements JournalPort {
     });
   }
 
-  async entriesFrom(fromSeq: number): Promise<JournalRecord[]> {
+  async read(fromSeq: number): Promise<{ entries: JournalRecord[]; count: number }> {
     const all: JournalRecord[] = [];
     for (let from = fromSeq; ; ) {
       const response = await this.#fetch(`/journal/entries?from_seq=${from}&limit=${PAGE}`);
-      const page = ((await response.json()) as { entries: JournalRecord[] }).entries;
-      all.push(...page);
-      if (page.length < PAGE) return all;
-      from = (page.at(-1) as JournalRecord).seq + 1;
+      const page = (await response.json()) as { entries: JournalRecord[]; head: { count: number } };
+      all.push(...page.entries);
+      if (page.entries.length < PAGE) return { entries: all, count: page.head.count };
+      from = (page.entries.at(-1) as JournalRecord).seq + 1;
     }
   }
 }

@@ -1,0 +1,47 @@
+{
+  "schema": "../../schemas/inbound.schema.json",
+  "cases": [
+    {
+      "file": "valid/01-paiement-facture.json",
+      "expect": "valid"
+    },
+    {
+      "file": "valid/02-placement.json",
+      "expect": "valid"
+    },
+    {
+      "file": "valid/03-document-piege.json",
+      "expect": "valid",
+      "why": "Le schéma ne juge pas le contenu : un document piégé est bien formé. C'est le détecteur qui le bloque (scénario 3)."
+    },
+    {
+      "file": "invalid/01-champ-inconnu.json",
+      "expect": "schema-invalid",
+      "why": "Champ « amount » : le montant ne voyage jamais dans la demande."
+    },
+    {
+      "file": "invalid/02-champ-manquant.json",
+      "expect": "schema-invalid",
+      "why": "document absent."
+    },
+    {
+      "file": "invalid/03-action-hors-liste.json",
+      "expect": "schema-invalid"
+    },
+    {
+      "file": "invalid/04-identifiant-en-clair.json",
+      "expect": "schema-invalid",
+      "why": "ref_id n'est pas un identifiant opaque de 32 octets."
+    },
+    {
+      "file": "invalid/05-jeton-dans-le-corps.json",
+      "expect": "schema-invalid",
+      "why": "Le jeton voyage dans l'en-tête d'autorisation, jamais dans le corps."
+    },
+    {
+      "file": "invalid/06-document-trop-long.json",
+      "expect": "schema-invalid",
+      "why": "8193 caractères, pour une limite de 8192."
+    }
+  ]
+}

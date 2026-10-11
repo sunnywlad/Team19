@@ -155,3 +155,16 @@ export type PausedAgent = { agent_id: string; scope: "OFFCHAIN" | "ONCHAIN"; inc
 /** D'où vient une famille de données. */
 export type Source = "reel" | "simulation";
 export type Sources = { relay: Source; vault: Source; response: Source };
+
+/**
+ * Ce que le relais réel a derrière lui, dit par le proxy local (/api/local/mode) :
+ *   chaine        un contrat ;
+ *   faux-coffre   un faux coffre en mémoire : aucun fonds, aucune chaîne ;
+ *   non-confirme  le proxy ne l'a pas dit, ou sa réponse est illisible ;
+ *   lecture       première lecture en cours ;
+ *   sans-objet    le relais lui-même est simulé (serveur de fixtures).
+ * Seul « chaine » laisse l'étiquette « réel » sur ce qui vient du coffre.
+ */
+export type VaultOrigin = "chaine" | "faux-coffre" | "non-confirme" | "lecture" | "sans-objet";
+/** Étiquette de provenance d'un panneau. */
+export type TagSource = Source | "faux-coffre" | "non-confirme";

@@ -15,7 +15,9 @@ test("l'indexeur attend le nombre de confirmations fixé", async () => {
   await s.relay.tick();
   assert.equal((await s.indexer.tick()).inserted, 0, "bloc de la décision non confirmé");
   s.vault.mine(2);
-  assert.equal((await s.indexer.tick()).inserted, 0, "deux confirmations sur trois");
+  // Seules les inscriptions de la mise en place sont confirmées.
+  await s.indexer.tick();
+  assert.equal(s.indexer.decisions().length, 0, "deux confirmations sur trois");
   s.vault.mine(1);
   assert.equal((await s.indexer.tick()).inserted, 2, "Decision et Paid");
   s.close();
@@ -30,7 +32,7 @@ test("idempotence : relire les mêmes blocs n'écrit rien de plus", async () => 
   await s.relay.tick();
   await s.index();
   const count = s.indexer.count();
-  assert.equal(count, 3, "Decision et Paid, puis Decision");
+  assert.equal(count, 5, "deux InvoiceRegistered à la mise en place, Decision et Paid, puis Decision");
 
   // Un RPC qui rend deux fois chaque événement, et les rend encore au tour
   // suivant : la clé unique (tx_hash, log_index) ne laisse entrer qu'une copie.
@@ -72,9 +74,9 @@ test("reprise : l'indexeur repart du bloc stocké, sans trou ni doublon", async 
 
     const after = makeStack({}, paths, world);
     assert.equal(after.indexer.nextBlock(), next);
-    assert.equal(after.indexer.count(), 2);
+    assert.equal(after.indexer.count(), 4);
     await after.index();
-    assert.equal(after.indexer.count(), 3);
+    assert.equal(after.indexer.count(), 5);
     assert.equal(after.indexer.currentDecision(first.detector.request_id)?.decision, 2);
     assert.equal(after.indexer.currentDecision(second.detector.request_id)?.reason_name, "INVOICE_UNKNOWN");
     assert.equal((await after.indexer.tick()).inserted, 0);
@@ -146,7 +148,7 @@ test("API : lecture seule, liée à 127.0.0.1", async () => {
     assert.equal(queue[0]!.status, "SUBMITTED");
     assert.equal("payload" in queue[0]!, false, "ni contenu ni signature dans la vue de la file");
     const status = (await (await fetch(`${base}/status`)).json()) as { events: number };
-    assert.equal(status.events, 2);
+    assert.equal(status.events, 4, "deux InvoiceRegistered, Decision, Paid");
 
     for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
       const res = await fetch(`${base}/decisions`, { method });
@@ -156,7 +158,7 @@ test("API : lecture seule, liée à 127.0.0.1", async () => {
     assert.equal((await fetch(`${base}/decisions/0x${"0".repeat(63)}1`)).status, 404);
     assert.equal((await fetch(`${base}/events?limit=abc`)).status, 400);
     assert.equal((await fetch(`${base}/inconnu`)).status, 404);
-    assert.equal(s.indexer.count(), 2, "aucune requête n'a écrit");
+    assert.equal(s.indexer.count(), 4, "aucune requête n'a écrit");
   } finally {
     await new Promise((resolve) => server.close(resolve));
     s.close();
@@ -169,5 +171,8 @@ function stub(): VaultClient {
     agentPaused: async () => false,
     blockNumber: async () => 0n,
     events: async () => [],
+    state: async () => {
+      throw new Error("bouchon");
+    },
   };
 }

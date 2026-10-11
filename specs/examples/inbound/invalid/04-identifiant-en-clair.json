@@ -1,0 +1,7 @@
+{
+  "agent_id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+  "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+  "action": "PAY_INVOICE",
+  "ref_id": "F-001",
+  "document": "Facture synthétique. Merci de payer sous 30 jours."
+}

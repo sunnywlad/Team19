@@ -188,6 +188,12 @@ code,
   border-color: var(--refuse);
 }
 
+.bandeau-simule {
+  color: var(--simulation);
+  background: var(--simulation-fond);
+  border-color: var(--simulation);
+}
+
 .bandeau-alerte {
   color: var(--humain);
   background: var(--humain-fond);

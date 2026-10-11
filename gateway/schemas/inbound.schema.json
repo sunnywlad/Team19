@@ -5,14 +5,27 @@
   "description": "Corps de POST /requests. Le jeton de l'agent voyage dans l'en-tête Authorization, jamais dans le corps. Proposition à copier dans specs/ après validation à quatre.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["agent_id", "client_id", "action", "ref_id", "document"],
+  "required": [
+    "agent_id",
+    "client_id",
+    "action",
+    "ref_id",
+    "document"
+  ],
   "properties": {
     "agent_id": {
       "description": "Identifiant déclaré. Doit être celui du jeton.",
       "$ref": "#/$defs/bytes32"
     },
-    "client_id": { "$ref": "#/$defs/bytes32" },
-    "action": { "enum": ["PAY_INVOICE", "PLACE"] },
+    "client_id": {
+      "$ref": "#/$defs/bytes32"
+    },
+    "action": {
+      "enum": [
+        "PAY_INVOICE",
+        "PLACE"
+      ]
+    },
     "ref_id": {
       "description": "Facture ou placement visé.",
       "$ref": "#/$defs/bytes32"
@@ -27,7 +40,9 @@
     "bytes32": {
       "type": "string",
       "pattern": "^0x[0-9a-f]{64}$",
-      "not": { "const": "0x0000000000000000000000000000000000000000000000000000000000000000" }
+      "not": {
+        "const": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { IncidentItem } from "../api/types.ts";
-import { ClockTag, Amount, DecisionBadge, OpaqueId, Untrusted } from "../components/atoms.tsx";
+import { ClockTag, Amount, DecisionBadge, OpaqueId, SourceTag, Untrusted } from "../components/atoms.tsx";
 import { DelaysNote, DelaysTable } from "../components/DelaysPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { chainPausedAgents, latestIncidents } from "../domain/activity.ts";
@@ -16,9 +16,9 @@ import {
 import { readDecision } from "../domain/reasons.ts";
 import { formatDateTime, formatTime } from "../lib/format.ts";
 import { EXCERPT_MAX } from "../lib/safeText.ts";
-import { sameWorld, type ViewProps } from "./shared.ts";
+import { sameWorld, vaultFed, type ViewProps } from "./shared.ts";
 
-function Report({ item, chainPause }: { item: IncidentItem; chainPause: number | null }) {
+function Report({ item, chainPause, fakeVault }: { item: IncidentItem; chainPause: number | null; fakeVault: boolean }) {
   const { report } = item;
   const contract = report.contract ? readDecision({ ...report.contract, effective_decision: report.contract.decision }) : null;
   return (
@@ -72,7 +72,14 @@ function Report({ item, chainPause }: { item: IncidentItem; chainPause: number |
         </div>
       </dl>
 
-      <h3>Décision du contrat</h3>
+      <h3>
+        Décision du contrat{" "}
+        {fakeVault && (
+          <span data-testid="decision-contrat-simulee">
+            <SourceTag source="faux-coffre" /> faux coffre : aucun contrat n'a jugé
+          </span>
+        )}
+      </h3>
       <div data-testid="decision-contrat">
         {report.contract === null || contract === null ? (
           <p>Contrat non atteint : la demande a été arrêtée avant lui.</p>
@@ -239,7 +246,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
                       </li>
                     ))}
                   </ul>
-                  {current && <Report item={current} chainPause={pause} />}
+                  {current && <Report fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
                 </>
               )}
             </>
@@ -267,7 +274,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
             );
           }}
         </Panel>
-        <Panel title="Agents en pause, sur la chaîne" id="titre-pauses-chaine" source={sources.relay} snapshot={relay} now={now}>
+        <Panel title="Agents en pause, sur la chaîne" id="titre-pauses-chaine" source={vaultFed(sources.relay, view.vaultOrigin)} snapshot={relay} now={now}>
           {(data) => {
             const onchain = chainPausedAgents(data.events);
             return onchain.length === 0 ? (
