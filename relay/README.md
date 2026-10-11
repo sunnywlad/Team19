@@ -78,6 +78,13 @@ le service « IA du client » sur la même file. `npm run scene` joue une scène
 dans la même file, sans passer par ce service. Sans `RPC_URL`, sans `VAULT_ADDRESS` ou sans `RELAYER`, le
 relais ne soumet rien et les demandes expirent.
 
+L'expiration ne dépend pas du relais : le service « IA du client » balaie lui
+aussi la file, tous les `POLL_INTERVAL_MS`. Les deux processus partagent
+`QUEUE_DB` ; le passage à `EXPIRED` se fait en une transaction, donc un seul
+des deux obtient la ligne et écrit `QUEUE_EXPIRED`, une fois. Une demande
+expirée n'est jamais soumise, relais relancé ou non. L'alerte de disponibilité,
+elle, n'est pas émise par ce dossier.
+
 ## Faux coffre : `VAULT_MODE=fake`
 
 Sans `VAULT_MODE`, ou avec `chain`, rien ne change. Avec `fake`, `npm start`

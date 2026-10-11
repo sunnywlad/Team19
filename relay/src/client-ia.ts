@@ -1,5 +1,7 @@
 // Service « IA du client » (étapes 5 et 6) : reçoit de la porte d'entrée une
 // demande acceptée, la signe avec la clé du client et la dépose dans la file.
+// Il balaie aussi la file (POLL_INTERVAL_MS) pour expirer ce qui a dépassé son
+// échéance, relais arrêté ou non.
 // BOUCHON : aucun modèle ne juge la demande, tout ce qui est conforme est signé.
 // Lié à 127.0.0.1, sans authentification : quiconque atteint le port obtient
 // une demande signée. Seuls des identifiants entrent ; le montant et le
@@ -140,6 +142,31 @@ export function createClientIa(deps: ClientIaDeps): Server {
   });
 }
 
+/**
+ * Balayage de la file par ce service : une demande expire à son échéance même
+ * si le relais est arrêté. Il ne soumet rien et n'alerte pas : il ne fait que
+ * fermer ce qui n'est plus valable. Le relais balaie la même base ; la file
+ * garantit qu'un seul des deux écrit QUEUE_EXPIRED (Queue.expire).
+ */
+export function expirySweeper(queue: Queue, flush: () => Promise<void> = async () => {}): () => Promise<number> {
+  let busy = false;
+  return async () => {
+    if (busy) return 0;
+    busy = true;
+    try {
+      // D'abord les entrées de journal restées en attente d'un tour précédent.
+      await flush();
+      return await queue.expire();
+    } catch {
+      // Journal ou base injoignable : nouvel essai au prochain tour. Une
+      // entrée QUEUE_EXPIRED déjà en boîte d'envoi repart avec flush().
+      return 0;
+    } finally {
+      busy = false;
+    }
+  };
+}
+
 // --- Lancement ----------------------------------------------------------------
 
 async function main(): Promise<void> {
@@ -148,10 +175,13 @@ async function main(): Promise<void> {
   const client = new ClientSigner(clientSignerKey(), clientId, domainFor(chainId(), vaultAddress()), policy, systemClock);
   // Même règle que le relais : avec JOURNAL_URL, le journal est obligatoire.
   const journalUrl = readEnv("JOURNAL_URL");
-  const journal: JournalClient = journalUrl === undefined ? new MemoryJournal(systemClock) : new HttpJournal(journalUrl, { outboxPath: dbPath("JOURNAL_OUTBOX_DB", "var/journal-outbox.db") });
+  const httpJournal = journalUrl === undefined ? null : new HttpJournal(journalUrl, { outboxPath: dbPath("JOURNAL_OUTBOX_DB", "var/journal-outbox.db") });
+  const journal: JournalClient = httpJournal ?? new MemoryJournal(systemClock);
   const queue = new Queue({ path: dbPath("QUEUE_DB", "var/queue.db"), policy, clock: systemClock, journal, alerts: stderrAlerts });
   const port = await listen(createClientIa({ client, clientId, queue, journal }), intEnv("CLIENT_IA_PORT", CLIENT_IA_DEFAULT_PORT));
   console.error(journalUrl === undefined ? "[client-ia] journal : bouchon en mémoire (JOURNAL_URL absente)" : "[client-ia] journal : service de journal (JOURNAL_URL)");
+  const sweep = expirySweeper(queue, httpJournal ? () => httpJournal.flush() : undefined);
+  setInterval(() => void sweep().then((expired) => expired > 0 && console.error(`[client-ia] ${expired} demande(s) expirée(s) en file`)), intEnv("POLL_INTERVAL_MS", 1000));
   console.error(`[client-ia] BOUCHON sans modèle : POST http://${API_HOST}:${port}/accepted`);
 }
 
