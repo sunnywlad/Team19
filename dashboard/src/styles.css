@@ -1631,3 +1631,7 @@ tbody tr:last-child > * {
     transition: none !important;
   }
 }
+
+.indisponible {
+  white-space: nowrap;
+}

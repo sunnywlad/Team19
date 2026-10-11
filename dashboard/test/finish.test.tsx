@@ -62,9 +62,10 @@ describe("clavier", () => {
     expect(screen.getByRole("button", { name: "Validation", current: "page" })).toBeTruthy();
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
 
-    await user.keyboard("{End}");
+    await user.keyboard("{End}{ArrowLeft}");
     expect(screen.getByRole("button", { name: "Alertes et rapports", current: "page" })).toBeTruthy();
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
+    await user.keyboard("{ArrowRight}");
     await user.keyboard("{ArrowRight}");
     expect(screen.getByRole("button", { name: "Accueil", current: "page" })).toBeTruthy();
     await user.keyboard("{ArrowLeft}{Home}");

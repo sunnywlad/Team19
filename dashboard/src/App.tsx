@@ -9,12 +9,14 @@ import { UNIT_LEGEND } from "./lib/format.ts";
 import { HomeView } from "./views/HomeView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
 import { PendingView } from "./views/PendingView.tsx";
+import { RolesView } from "./views/RolesView.tsx";
 import type { ViewProps } from "./views/shared.ts";
 
 export const VIEWS = [
   { key: "accueil", label: "Accueil" },
   { key: "validation", label: "Validation" },
   { key: "alertes", label: "Alertes et rapports" },
+  { key: "roles", label: "Rôles" },
 ] as const;
 export type ViewKey = (typeof VIEWS)[number]["key"];
 
@@ -133,6 +135,7 @@ export function App({ client }: { client: ApiClient }) {
           )}
           {current === "validation" && <PendingView view={view} />}
           {current === "alertes" && <IncidentView view={view} initialIncident={incident} />}
+          {current === "roles" && <RolesView view={view} />}
         </main>
       </div>
       <footer className="cadre pied">

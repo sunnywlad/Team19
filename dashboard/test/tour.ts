@@ -2,7 +2,7 @@
 // chaque bouton qui ne fait que changer ce qu'on regarde.
 import { fireEvent, screen } from "@testing-library/react";
 
-export const SCREENS = ["Accueil", "Validation", "Alertes et rapports"] as const;
+export const SCREENS = ["Accueil", "Validation", "Alertes et rapports", "Rôles"] as const;
 
 export function open(name: (typeof SCREENS)[number]): void {
   fireEvent.click(screen.getByRole("button", { name }));

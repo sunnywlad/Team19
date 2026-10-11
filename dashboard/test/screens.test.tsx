@@ -221,3 +221,17 @@ describe("page Alertes et rapports", () => {
     expect(document.querySelectorAll("a[href]")).toHaveLength(0);
   });
 });
+
+describe("page Rôles", () => {
+  it("pouvoirs recopiés, détenteurs « non disponible », mandats lus dans les événements", async () => {
+    renderScenario("3");
+    open("Rôles");
+    expect(await screen.findAllByTestId("role")).toHaveLength(6);
+    for (const row of screen.getAllByTestId("role")) expect(text(row)).toContain("non disponible");
+    const mandates = (await screen.findAllByTestId("mandat")).map(text);
+    expect(mandates).toHaveLength(5);
+    expect(mandates.filter((m) => m.includes("payer une facture"))).toHaveLength(3);
+    expect(mandates.filter((m) => m.includes("en pause sur la chaîne"))).toHaveLength(1);
+    expect(mandates.some((m) => m.includes("aucun droit d'action"))).toBe(true);
+  });
+});
