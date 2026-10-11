@@ -8,6 +8,9 @@
 //   GET  /outputs    ?from=n&limit=m : enregistrements de sortie (specs/03 § 3),
 //                    pour le banc de mesure et le dashboard.
 //   GET  /health     état du service.
+//
+// Mode démo, seulement si la porte est lancée avec DEMO_MODE=1 :
+//   POST /demo/reissue-tokens   révoque les jetons en cours et en émet de nouveaux.
 import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { Gateway } from "./gateway.ts";
@@ -42,7 +45,9 @@ function readBody(req: IncomingMessage, maxBytes: number): Promise<{ text: strin
   });
 }
 
-export function createGatewayServer(gateway: Gateway, outputs: OutputLog, maxBodyBytes: number): Server {
+export type DemoHooks = { reissueTokens: () => number };
+
+export function createGatewayServer(gateway: Gateway, outputs: OutputLog, maxBodyBytes: number, demo?: DemoHooks): Server {
   return createServer((req, res) => {
     void (async () => {
       const url = new URL(req.url ?? "/", "http://localhost");
@@ -61,7 +66,15 @@ export function createGatewayServer(gateway: Gateway, outputs: OutputLog, maxBod
         return send(res, 200, { outputs: outputs.from(Number(from), Math.min(Number(limit), MAX_OUTPUTS)), count: outputs.count });
       }
 
-      if (url.pathname === "/health" && req.method === "GET") return send(res, 200, { status: "ok", outputs: outputs.count });
+      if (url.pathname === "/health" && req.method === "GET") {
+        return send(res, 200, { status: "ok", outputs: outputs.count, demo_mode: demo !== undefined });
+      }
+
+      // Sans DEMO_MODE, cette route n'existe pas.
+      if (demo !== undefined && url.pathname === "/demo/reissue-tokens") {
+        if (req.method !== "POST") return send(res, 405, { error: "METHOD_NOT_ALLOWED" });
+        return send(res, 200, { agents: demo.reissueTokens() });
+      }
 
       return send(res, 404, { error: "NOT_FOUND" });
     })().catch(() => {

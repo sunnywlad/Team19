@@ -132,8 +132,12 @@ Ce que le script détecte, avec un fichier de preuve pour chaque cas :
 | Entrée supprimée au milieu | `SEQ_MISMATCH` à la place de l'entrée retirée | [chaine-supprimee.jsonl](examples/journal/chaine-supprimee.jsonl) |
 | Entrées réordonnées | `SEQ_MISMATCH` à la première entrée déplacée | [chaine-reordonnee.jsonl](examples/journal/chaine-reordonnee.jsonl) |
 
-Si l'auteur de l'altération renumérote `seq` pour masquer un trou, l'empreinte ne
-correspond plus : le défaut devient `HASH_MISMATCH`.
+Si l'auteur de l'altération renumérote `seq` pour masquer un trou, le chaînage ne
+correspond plus : le défaut devient `PREV_MISMATCH` à la place de l'entrée
+retirée, car l'entrée qui prend son rang pointe encore vers l'empreinte retirée,
+et ce contrôle passe avant celui de l'empreinte. S'il recolle aussi `prev_hash`,
+c'est l'empreinte qui ne correspond plus : `HASH_MISMATCH`. L'altération est
+détectée dans les deux cas.
 
 FAIT : « une entrée modifiée » et « une entrée supprimée » font échouer la
 vérification (PLANNING § 3 ; CHECKLIST). L'entrée réordonnée est PROPOSÉE.

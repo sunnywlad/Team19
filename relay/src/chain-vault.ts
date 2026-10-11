@@ -15,7 +15,7 @@ import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import { argentVaultAbi } from "./abi.ts";
 import { toStruct } from "./signer.ts";
 import type { Hex, SignedRequest } from "./types.ts";
-import type { EventArgs, SubmitOutcome, VaultClient, VaultEvent } from "./vault.ts";
+import type { EventArgs, SubmitOutcome, VaultClient, VaultEvent, VaultState } from "./vault.ts";
 
 export type ChainVaultConfig = {
   rpcUrl: string;
@@ -39,6 +39,28 @@ function normalize(value: unknown): string | number | boolean {
   if (typeof value === "bigint") return value.toString();
   if (typeof value === "number" || typeof value === "boolean") return value;
   return String(value).toLowerCase();
+}
+
+// Champs uint64 de chaque événement (échéances et durées, en secondes).
+const UINT64_FIELDS = new Map<string, Set<string>>();
+for (const item of argentVaultAbi) {
+  if (item.type !== "event") continue;
+  UINT64_FIELDS.set(item.name, new Set(item.inputs.filter((input) => input.type === "uint64").map((input) => input.name)));
+}
+
+/**
+ * Arguments décodés d'un événement, sous la forme d'EventArgs : les entiers
+ * 256 bits en chaîne décimale, les uint64 (HoldPlaced.deadline, délais) en
+ * nombre, comme block_timestamp et comme FakeVault. Un uint64 hors des entiers
+ * sûrs reste une chaîne plutôt que de perdre en précision.
+ */
+export function eventArgs(eventName: string, decoded: Record<string, unknown>): EventArgs {
+  const seconds = UINT64_FIELDS.get(eventName);
+  const args: EventArgs = {};
+  for (const [key, value] of Object.entries(decoded)) {
+    args[key] = typeof value === "bigint" && seconds?.has(key) && value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : normalize(value);
+  }
+  return args;
 }
 
 export class ChainVault implements VaultClient {
@@ -130,8 +152,7 @@ export class ChainVault implements VaultClient {
       } catch {
         continue; // Événement hors de l'interface gelée : ignoré.
       }
-      const args: EventArgs = {};
-      for (const [key, value] of Object.entries((decoded.args ?? {}) as Record<string, unknown>)) args[key] = normalize(value);
+      const args = eventArgs(decoded.eventName, (decoded.args ?? {}) as Record<string, unknown>);
       out.push({
         name: decoded.eventName,
         txHash: log.transactionHash,
@@ -142,6 +163,51 @@ export class ChainVault implements VaultClient {
       });
     }
     return out;
+  }
+
+  /**
+   * Les vues de specs/02 § 4, toutes lues au même bloc. Une vue en échec vaut
+   * null ; si le bloc lui-même ne peut pas être lu, l'appel échoue.
+   */
+  async state(): Promise<VaultState> {
+    const block = await this.#client.getBlock({ blockTag: "latest" });
+    const at = { address: this.#config.address, abi: argentVaultAbi, blockNumber: block.number } as const;
+    const amount = async (functionName: "cash" | "admittedDebts" | "safetyReserve" | "totalHeld" | "heldPlacements" | "placeable" | "threshold"): Promise<string | null> => {
+      try {
+        return (await this.#client.readContract({ ...at, functionName })).toString();
+      } catch {
+        return null;
+      }
+    };
+    const paused = async (): Promise<boolean | null> => {
+      try {
+        return await this.#client.readContract({ ...at, functionName: "vaultPaused" });
+      } catch {
+        return null;
+      }
+    };
+    const [cash, debts, reserve, held, heldPlacements, placeable, threshold, vaultPaused] = await Promise.all([
+      amount("cash"),
+      amount("admittedDebts"),
+      amount("safetyReserve"),
+      amount("totalHeld"),
+      amount("heldPlacements"),
+      amount("placeable"),
+      amount("threshold"),
+      paused(),
+    ]);
+    return {
+      block_number: Number(block.number),
+      block_timestamp: Number(block.timestamp),
+      cash_wei: cash,
+      admitted_debts_wei: debts,
+      safety_reserve_wei: reserve,
+      total_held_wei: held,
+      held_placements_wei: heldPlacements,
+      placeable_wei: placeable,
+      threshold_wei: threshold,
+      vault_paused: vaultPaused,
+    };
   }
 
   async #timestamp(blockNumber: bigint): Promise<number> {

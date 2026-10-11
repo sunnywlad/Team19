@@ -1,23 +1,37 @@
 // Lance le relais, l'indexeur et l'API en lecture seule dans un seul processus.
 //   npm start        (variables : voir relay/.env.example)
 import { createApi, listen, API_HOST } from "./api.ts";
-import { intEnv } from "./config.ts";
+import { intEnv, readEnv } from "./config.ts";
+import { startDemoControl } from "./demo-control.ts";
+import { HttpJournal } from "./http-journal.ts";
 import { Indexer } from "./indexer.ts";
-import { MemoryJournal } from "./journal.ts";
-import { StaticPauseSource, VaultPauseSource, anyPause } from "./pauses.ts";
+import { MemoryJournal, type JournalClient } from "./journal.ts";
+import { HttpPauseSource, StaticPauseSource, VaultPauseSource, anyPause } from "./pauses.ts";
 import { Queue } from "./queue.ts";
 import { Relay } from "./relay.ts";
 import { dbPath, policyFromEnv, stderrAlerts, vaultFromEnv } from "./runtime.ts";
 import { systemClock } from "./types.ts";
 
 const policy = policyFromEnv();
-const { vault, note } = vaultFromEnv();
+const { vault, note, fake } = vaultFromEnv();
 console.error(`[relay] ${note}`);
 
-// BOUCHONS, à remplacer par feat/reponse-journal : le journal reste en mémoire
-// et la liste des pauses hors chaîne est vide.
-const journal = new MemoryJournal(systemClock);
-console.error("[relay] journal : bouchon en mémoire, rien n'est conservé");
+// Journal : le service de response/ si JOURNAL_URL est posée. Il devient alors
+// obligatoire : sans réponse de sa part, rien n'entre en file et rien n'est
+// soumis. Sans JOURNAL_URL, bouchon en mémoire, pour un essai isolé.
+const journalUrl = readEnv("JOURNAL_URL");
+// Boîte d'envoi : une entrée restée sans réponse y garde sa clé d'idempotence
+// et repart telle quelle, y compris après un redémarrage.
+const httpJournal = journalUrl === undefined ? null : new HttpJournal(journalUrl, { outboxPath: dbPath("JOURNAL_OUTBOX_DB", "var/journal-outbox.db") });
+const journal: JournalClient = httpJournal ?? new MemoryJournal(systemClock);
+console.error(journalUrl === undefined ? "[relay] journal : bouchon en mémoire, rien n'est conservé (JOURNAL_URL absente)" : "[relay] journal : service de journal (JOURNAL_URL)");
+
+// Pauses hors chaîne : la liste du service de réponse si PAUSE_SOURCE_URL est
+// posée. Elle devient alors obligatoire : sans réponse de sa part, rien n'est
+// soumis. Sans PAUSE_SOURCE_URL, BOUCHON : liste vide, seule la chaîne compte.
+const pauseUrl = readEnv("PAUSE_SOURCE_URL");
+const offchainPauses = pauseUrl === undefined ? new StaticPauseSource() : new HttpPauseSource(pauseUrl);
+console.error(pauseUrl === undefined ? "[relay] pauses hors chaîne : bouchon, liste vide (PAUSE_SOURCE_URL absente)" : "[relay] pauses hors chaîne : service de réponse (PAUSE_SOURCE_URL)");
 
 const queue = new Queue({ path: dbPath("QUEUE_DB", "var/queue.db"), policy, clock: systemClock, journal, alerts: stderrAlerts });
 const relay = new Relay({
@@ -25,7 +39,7 @@ const relay = new Relay({
   vault,
   journal,
   alerts: stderrAlerts,
-  pauses: anyPause(new StaticPauseSource(), new VaultPauseSource(vault)),
+  pauses: anyPause(offchainPauses, new VaultPauseSource(vault)),
   policy,
   clock: systemClock,
 });
@@ -36,18 +50,33 @@ const indexer = new Indexer({
   confirmations: policy.confirmations,
 });
 
-const port = await listen(createApi({ indexer, queue, confirmations: policy.confirmations }), intEnv("API_PORT", 8787));
+const port = await listen(createApi({ indexer, queue, confirmations: policy.confirmations, vault }), intEnv("API_PORT", 8787));
 console.error(`[relay] API en lecture seule sur http://${API_HOST}:${port}`);
+
+// Démo, faux coffre seulement : l'approbateur est remplacé par un port à part.
+const control = await startDemoControl(fake);
+if (control) console.error(`[relay] MODE DÉMO : contrôle du faux coffre sur http://${API_HOST}:${control.port} (approve, refuse, expire)`);
 
 // Un tour à la fois : jamais deux soumissions concurrentes de la même file.
 let busy = false;
 let lastError = "";
+let refusedSeen = 0;
 async function turn(): Promise<void> {
   if (busy) return;
   busy = true;
   try {
+    // D'abord les entrées de journal en attente : tant qu'elles ne partent
+    // pas, le tour s'arrête ici et rien n'est soumis.
+    if (httpJournal) {
+      await httpJournal.flush();
+      const refused = httpJournal.refused().length;
+      if (refused > refusedSeen) console.error(`[relay] ${refused} entrée(s) refusée(s) pour de bon par le service de journal, gardée(s) dans la boîte d'envoi`);
+      refusedSeen = refused;
+    }
     const report = await relay.tick();
     if (report.submitted + report.rejected + report.inDoubt + report.expired > 0) console.error(`[relay] ${JSON.stringify(report)}`);
+    // Le faux coffre n'a pas de mineur : un bloc par tour, pour les confirmations.
+    fake?.mine();
     const { inserted } = await indexer.tick();
     if (inserted > 0) console.error(`[indexeur] ${inserted} événement(s)`);
     lastError = "";

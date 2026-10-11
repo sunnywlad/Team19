@@ -5,6 +5,8 @@
 //                        la porte s'arrête après l'étape 3.
 //   GATEWAY_AGENTS_FILE  agents à enrôler (défaut : specs/examples/fixtures.json)
 //   GATEWAY_DATA_DIR     données locales (défaut : var/)
+//   AGENT_TOKEN_TTL_SECONDS  durée de vie d'un jeton d'agent (défaut : 900)
+//   DEMO_MODE            1 pour ouvrir POST /demo/reissue-tokens
 //
 // Au démarrage, la porte émet un jeton par agent et les écrit dans
 // <GATEWAY_DATA_DIR>/agent-tokens.json, lisible par son seul propriétaire.
@@ -33,28 +35,42 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   process.exit(64);
 }
 
+const ttl = Number(process.env["AGENT_TOKEN_TTL_SECONDS"] || DEFAULT_POLICY.tokenTtlS);
+if (!Number.isInteger(ttl) || ttl < 30 || ttl > 86_400) {
+  console.error("AGENT_TOKEN_TTL_SECONDS invalide : entier de 30 à 86400 secondes");
+  process.exit(64);
+}
+
 mkdirSync(dataDir, { recursive: true });
-const policy = DEFAULT_POLICY;
+const policy = { ...DEFAULT_POLICY, tokenTtlS: ttl };
 const tokens = new TokenRegistry(Date.now);
 
 // Enrôlement : un jeton par agent du fichier, lié à son mandat.
 const file = JSON.parse(readFileSync(agentsFile, "utf8")) as AgentsFile;
 const defaultClient = file.ids?.["C-DEMO"];
-const issued: Record<string, { agent_id: string; token: string }> = {};
-for (const agent of file.agents) {
-  const client = agent.client_id ?? defaultClient;
-  const mandate = agent.mandate.filter((a): a is Action => ACTIONS.includes(a as Action));
-  if (!isBytes32(agent.agent_id) || !isBytes32(client) || mandate.length !== agent.mandate.length) {
-    console.error(`agent ignoré, enrôlement invalide : ${agent.label}`);
-    continue;
-  }
-  issued[agent.label] = {
-    agent_id: agent.agent_id,
-    token: tokens.issue({ agent_id: agent.agent_id as Hex, client_id: client as Hex, mandate }, policy.tokenTtlS),
-  };
-}
 const tokensPath = join(dataDir, "agent-tokens.json");
-writeFileSync(tokensPath, JSON.stringify({ expires_in_s: policy.tokenTtlS, agents: issued }, null, 2), { encoding: "utf8", mode: 0o600 });
+
+// Émet un jeton par agent et réécrit le fichier lu par les agents scriptés.
+// Les jetons émis avant sont révoqués : un seul jeu de jetons vaut à la fois.
+function issueTokens(): number {
+  tokens.revokeAll();
+  const issued: Record<string, { agent_id: string; token: string }> = {};
+  for (const agent of file.agents) {
+    const client = agent.client_id ?? defaultClient;
+    const mandate = agent.mandate.filter((a): a is Action => ACTIONS.includes(a as Action));
+    if (!isBytes32(agent.agent_id) || !isBytes32(client) || mandate.length !== agent.mandate.length) {
+      console.error(`agent ignoré, enrôlement invalide : ${agent.label}`);
+      continue;
+    }
+    issued[agent.label] = {
+      agent_id: agent.agent_id,
+      token: tokens.issue({ agent_id: agent.agent_id as Hex, client_id: client as Hex, mandate }, policy.tokenTtlS),
+    };
+  }
+  writeFileSync(tokensPath, JSON.stringify({ expires_in_s: policy.tokenTtlS, agents: issued }, null, 2), { encoding: "utf8", mode: 0o600 });
+  return Object.keys(issued).length;
+}
+const enrolled = issueTokens();
 
 const forward =
   clientAiUrl === undefined
@@ -81,13 +97,15 @@ const gateway = new Gateway({
   onOutput: (output) => outputs.add(output),
 });
 
-const server = createGatewayServer(gateway, outputs, policy.maxBodyBytes);
+const demoMode = process.env["DEMO_MODE"] === "1";
+const server = createGatewayServer(gateway, outputs, policy.maxBodyBytes, demoMode ? { reissueTokens: issueTokens } : undefined);
 process.on("SIGINT", () => server.close(() => process.exit(0)));
 process.on("SIGTERM", () => server.close(() => process.exit(0)));
 
 // Écoute en local uniquement.
 server.listen(port, "127.0.0.1", () => {
   console.log(`porte d'entrée sur http://127.0.0.1:${port}, journal ${journalUrl}`);
-  console.log(`${Object.keys(issued).length} agents enrôlés, jetons dans ${tokensPath} (valables ${policy.tokenTtlS} s)`);
+  console.log(`${enrolled} agents enrôlés, jetons dans ${tokensPath} (valables ${policy.tokenTtlS} s)`);
+  if (demoMode) console.log("MODE DÉMO : POST /demo/reissue-tokens réémet les jetons");
   console.log(clientAiUrl === undefined ? "étape 4 désactivée : CLIENT_AI_URL absent" : `étape 4 vers ${clientAiUrl}`);
 });

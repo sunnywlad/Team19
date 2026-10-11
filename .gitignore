@@ -10,16 +10,23 @@
 keystore/
 broadcast/
 
+# --- Données locales de la démo (make demo) : clé générée, pid, logs, bases ---
+/var/
+
 # --- Outils locaux installés par scripts/ (binaires épinglés, venv) ---
 .tools/
 # --- Dépendances installées ---
 node_modules/
-# Compiler files
-cache/
-out/
+# Sorties du compilateur Foundry, à la racine seulement : un « cache/ » non
+# ancré ignorait aussi offchain/cache/, le code du service de cache.
+/cache/
+/out/
 # Commonly ignored directories
 .logs/
 .ignore/
+<<<<<<< HEAD
 # Notes de travail : lien symbolique vers Team19-notes, hors dépôt
 /docs
+=======
+>>>>>>> origin/main
 # Dotenv file

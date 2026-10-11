@@ -23,7 +23,7 @@ type Stored = NewJournalEntry | { type: string; component: string; request_id: H
 // Refuse toute entrée non conforme à specs/04 : un écart de la porte échoue ici
 // plutôt qu'à l'intégration avec le vrai service de journal.
 export class MemoryJournal implements JournalPort {
-  readonly entries: Stored[] = [];
+  entries: Stored[] = [];
   down = false;
 
   async append(entry: Stored): Promise<void> {
@@ -35,9 +35,10 @@ export class MemoryJournal implements JournalPort {
     this.entries.push(entry);
   }
 
-  async entriesFrom(fromSeq: number): Promise<JournalRecord[]> {
+  async read(fromSeq: number): Promise<{ entries: JournalRecord[]; count: number }> {
     if (this.down) throw new JournalUnavailableError();
-    return this.entries.slice(fromSeq).map((e, i) => ({ seq: fromSeq + i, type: e.type, agent_id: e.agent_id, data: e.data }));
+    const entries = this.entries.slice(fromSeq).map((e, i) => ({ seq: fromSeq + i, type: e.type, agent_id: e.agent_id, data: e.data }));
+    return { entries, count: this.entries.length };
   }
 
   types(requestId?: Hex): string[] {

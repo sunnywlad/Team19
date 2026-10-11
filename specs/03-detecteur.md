@@ -25,8 +25,9 @@ PROPOSÉ, point h.
 
 Aucune source ne décrit l'objet envoyé par l'agent demandeur à l'étape 1. C'est
 une sixième interface, entre les agents scriptés (Joseph) et la porte d'entrée
-(Loris). Proposition minimale, PROPOSÉE, point i. Elle n'a pas de schéma versionné
-tant qu'elle n'est pas validée.
+(Loris). PROPOSÉE, point i. Schéma : [schemas/inbound.schema.json](schemas/inbound.schema.json),
+strict comme les autres. `gateway/schemas/inbound.schema.json` en est la copie
+lue par la porte ; un test de `gateway/` vérifie que les deux fichiers sont identiques.
 
 | Élément | Où | Contenu |
 |---|---|---|
@@ -36,6 +37,15 @@ tant qu'elle n'est pas validée.
 | `action` | Corps | `PAY_INVOICE` ou `PLACE` |
 | `ref_id` | Corps | Facture ou placement visé |
 | `document` | Corps | Texte de la pièce transmise, borné en taille. C'est une donnée, jamais une instruction (FAIT, § 7) |
+
+Transport, PROPOSÉ : `POST /requests` sur la porte, corps JSON de 16 Ko au plus,
+jeton dans l'en-tête `Authorization: Bearer`. Le document fait 8192 caractères au
+plus. L'agent reçoit `{ request_id, status }`, avec `status` à `accepted` ou
+`rejected` : § 6. Un corps trop gros ou mal formé est analysé pour ce qu'il
+contient, puis rejeté avec `SCHEMA_INVALID`.
+
+Ce que la porte transmet ensuite à l'IA du client (étape 4), PROPOSÉ :
+`{ request_id, agent_id, client_id, action, ref_id }`. Jamais le document.
 
 La porte attribue `request_id` à l'arrivée, y compris aux demandes qu'elle
 rejette. Le mandat de l'agent (lecteur, demandeur) vient du registre de la porte,
@@ -117,6 +127,11 @@ qui passe sous le seuil. PROPOSÉ.
 | [invalid/03-block-sans-code.json](examples/detector/invalid/03-block-sans-code.json) | Rejet par le schéma |
 | [invalid/04-pass-au-dessus-du-seuil.json](examples/detector/invalid/04-pass-au-dessus-du-seuil.json) | Schéma valide ; règle `SCORE_VERDICT` |
 | [invalid/05-jeton-invalide-avec-agent.json](examples/detector/invalid/05-jeton-invalide-avec-agent.json) | Rejet par le schéma |
+
+Exemples de la demande reçue (§ 2), dans [examples/inbound/](examples/inbound/) :
+trois valides, dont un document piégé que le schéma laisse passer, et six rejets
+(champ inconnu, champ manquant, action hors liste, identifiant en clair, jeton
+dans le corps, document trop long).
 
 ## 8. Limites
 

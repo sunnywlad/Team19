@@ -7,17 +7,18 @@ import { PlaceableValues } from "../components/PlaceablePanel.tsx";
 import { latestIncidents, offContractLines } from "../domain/activity.ts";
 import { chainPauseTimestamp } from "../domain/delays.ts";
 import { readDecision } from "../domain/reasons.ts";
-import { makeReactionFor, sameWorld, type ViewProps } from "./shared.ts";
+import { makeReactionFor, sameWorld, vaultFed, type ViewProps } from "./shared.ts";
 
 export function DecisionsView({ view }: { view: ViewProps }) {
-  const { relay, vault, response, sources, now } = view;
+  const { relay, vault, response, sources, vaultOrigin, now } = view;
+  const fake = vaultFed(sources.relay, vaultOrigin) === "faux-coffre";
   const reactionFor = makeReactionFor(sources, response.data);
   const linked = sameWorld(sources);
   return (
     <>
       <div className="grille-haut">
-        <Panel title="Montant plaçable" id="titre-placable" source={sources.vault} snapshot={vault} now={now} className="panneau-placable">
-          {(state) => <PlaceableValues vault={state} />}
+        <Panel title="Montant plaçable" id="titre-placable" source={vaultFed(sources.vault, vaultOrigin)} snapshot={vault} now={now} className="panneau-placable">
+          {(state) => <PlaceableValues vault={state} simulated={vaultFed(sources.vault, vaultOrigin) === "faux-coffre"} />}
         </Panel>
 
         <Panel title="Délais mesurés" id="titre-delais" source={sources.response} snapshot={response} now={now}>
@@ -39,11 +40,16 @@ export function DecisionsView({ view }: { view: ViewProps }) {
         </Panel>
       </div>
 
-      <Panel title="Décisions du contrat" id="titre-decisions" source={sources.relay} snapshot={relay} now={now}>
+      <Panel title="Décisions du contrat" id="titre-decisions" source={vaultFed(sources.relay, vaultOrigin)} snapshot={relay} now={now}>
         {(data) => {
           const refused = data.decisions.filter((d) => readDecision(d).kind === "refuse").length;
           return (
             <>
+              {fake && (
+                <p className="alerte-ligne" data-testid="decisions-simulees">
+                  Décisions d'un faux coffre : aucun contrat n'a jugé, aucun fonds n'a bougé.
+                </p>
+              )}
               <p className="discret">
                 Lues dans les événements <code>Decision</code> indexés, jamais dans le statut d'un reçu de transaction. {data.decisions.length}{" "}
                 événement{data.decisions.length > 1 ? "s" : ""}, dont {refused} refus.

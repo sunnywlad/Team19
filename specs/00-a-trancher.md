@@ -167,7 +167,7 @@ celui que l'agent envoie (étapes 1 à 3), que rien ne décrit, et la demande si
 
 Recommandation :
 
-- Reconnaître une sixième interface, minimale, entre les agents scriptés et la porte : [03-detecteur.md](03-detecteur.md) § 2. Sans elle, Joseph et Loris ne peuvent pas se brancher.
+- Reconnaître une sixième interface, minimale, entre les agents scriptés et la porte : [03-detecteur.md](03-detecteur.md) § 2, schéma [schemas/inbound.schema.json](schemas/inbound.schema.json) (amendement du 10/10). Sans elle, Joseph et Loris ne peuvent pas se brancher.
 - `request_id` est attribué par la porte à l'arrivée et recopié dans la demande signée : un seul identifiant de l'arrivée à la décision.
 - Le schéma strict de la demande signée s'applique à la mise en file et avant la soumission.
 

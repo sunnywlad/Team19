@@ -54,6 +54,11 @@ export class TokenRegistry {
     return { ok: true, agent: { agent_id: record.agent_id, client_id: record.client_id, mandate: [...record.mandate] } };
   }
 
+  /** Révoque tous les jetons en circulation, avant une nouvelle émission. */
+  revokeAll(): void {
+    for (const record of this.#byDigest.values()) record.revoked = true;
+  }
+
   /** Révoque définitivement tous les jetons d'un agent. Renvoie leur nombre. */
   revokeAgent(agentId: Hex): number {
     let count = 0;

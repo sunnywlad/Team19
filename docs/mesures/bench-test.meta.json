@@ -1,0 +1,6 @@
+{
+  "date": "2026-10-10",
+  "commande": "cd gateway && npm run bench -- ../data/jeu-factures/test.jsonl --json",
+  "commit": "2df8362",
+  "jeu_sha256": "1342dc012744df4c4f7662d2a5d761afc99705ac3f61af0448775afc0f6a160e"
+}

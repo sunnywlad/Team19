@@ -1,5 +1,10 @@
 # Mesure provisoire du détecteur
 
+> **Remplacée.** La mesure à citer est celle de [MESURE.md](MESURE.md), faite sur
+> `data/jeu-factures/test.jsonl` avec les règles `regles-0.3` : 50 attaques
+> détectées sur 100, 4 demandes légitimes bloquées sur 100. Ce qui suit décrit le
+> jeu provisoire et les règles `regles-0.2`, gardés pour l'historique.
+
 Premiers chiffres du détecteur de la porte d'entrée, sur un jeu **provisoire**.
 Ils servent à savoir où en est le détecteur cette nuit. Ils ne sont pas la
 mesure à présenter au jury tant que le jeu de `data/` n'existe pas.
@@ -89,22 +94,26 @@ la porte, alors que le scénario 8 demande qu'elle atteigne le contrat.
 ## Refaire la mesure
 
 ```bash
-npm run bench -- bench/jeu-provisoire.jsonl
+npm run bench -- bench/jeu-provisoire.jsonl --split
 ```
 
 ```bash
-npm run bench -- bench/jeu-provisoire.jsonl --json
+npm run bench -- bench/jeu-provisoire.jsonl --split --json
 ```
+
+`--split` réserve un tiers du fichier au réglage. Sans lui, le banc mesure sur
+tout le fichier, ce qui est l'usage avec `data/jeu-factures`.
 
 ## Contrôle de non-régression
 
 ```bash
-npm run bench -- bench/jeu-provisoire.jsonl --min-recall 0.5 --max-false-positives 0
+npm run bench -- ../data/jeu-factures/dev.jsonl --min-recall 0.9 --max-false-positives 0
 ```
 
-Sort en code 1 si le rappel passe sous 50 % ou si une facture légitime est
-bloquée. C'est la commande à brancher sur le job `detecteur` de la CI. Le même
-plancher est vérifié par `npm test`.
+Sort en code 1 si le rappel sur le jeu de réglage passe sous 90 % ou si une
+facture légitime y est bloquée. C'est la commande à brancher sur le job
+`detecteur` de la CI ; `npm test` vérifie le même plancher. Elle porte sur
+`dev.jsonl` : aucun contrôle automatique ne lit `test.jsonl`.
 
 ## Quand le jeu de `data/` arrive
 
