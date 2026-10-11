@@ -6,20 +6,31 @@ import { NODE_LABELS, STEP_STATE_WORDS, type FlowEdge, type FlowNode, type Outco
 import { formatTime } from "../lib/format.ts";
 import { OpaqueId, ToneBadge } from "./atoms.tsx";
 
-type Box = { x: number; y: number; w: number; h: number; sub: string };
+type Box = { x: number; y: number; w: number; sub: string };
 
-const H = 56;
-const W = 120;
-const ROW = 82;
+/** Pilules de la maquette : hauteur fixe, bouts ronds, icône à gauche, sous-titre dessous. */
+const H = 48;
 
 const BOXES: Record<Exclude<FlowNode, "paiement">, Box> = {
-  agent: { x: 10, y: ROW, w: W, h: H, sub: "demandeur" },
-  porte: { x: 170, y: ROW, w: W, h: H, sub: "détecteur à règles" },
-  ia: { x: 330, y: ROW, w: W, h: H, sub: "trésorerie, signe" },
-  relais: { x: 490, y: ROW, w: W, h: H, sub: "file, soumission" },
-  contrat: { x: 650, y: ROW, w: W, h: H, sub: "décide 0 · 1 · 2" },
-  humain: { x: 840, y: 22, w: W, h: H, sub: "cas 1, délai" },
-  reponse: { x: 350, y: 226, w: 240, h: 52, sub: "quarantaine · pause hors chaîne · alerte · rapport" },
+  agent: { x: 10, y: 116, w: 118, sub: "demandeur" },
+  porte: { x: 170, y: 116, w: 170, sub: "détecteur à règles" },
+  ia: { x: 382, y: 116, w: 152, sub: "trésorerie, signe" },
+  relais: { x: 576, y: 116, w: 122, sub: "file, soumission" },
+  contrat: { x: 740, y: 116, w: 130, sub: "décide 0 · 1 · 2" },
+  humain: { x: 896, y: 28, w: 200, sub: "cas 1, délai" },
+  reponse: { x: 412, y: 262, w: 140, sub: "quarantaine · pause hors chaîne · alerte · rapport" },
+};
+
+/** Icônes des nœuds, dessinées dans un carré de 20. */
+const NODE_ICONS: Record<FlowNode, ReactNode> = {
+  agent: <path d="M10 9.5a3 3 0 1 0 0-6a3 3 0 1 0 0 6M4.5 16.5c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5" />,
+  porte: <path d="M10 2.5l6 2.3v4.6c0 3.8-2.6 6.4-6 8.1-3.4-1.7-6-4.3-6-8.1V4.8zM7.4 10l1.8 1.8 3.5-3.6" />,
+  ia: <path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6zM15.5 14l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" />,
+  relais: <path d="M3.5 6h9M3.5 10h13M3.5 14h9M13.5 3.5 16 6l-2.5 2.5M10.5 11.5 13 14l-2.5 2.5" />,
+  contrat: <path d="M5.5 2.5h6.5l3 3v12h-9.5zM12 2.5v3h3M8 9.5h5M8 12.5h5M8 15.5h3" />,
+  humain: <path d="M6 3h8M6 17h8M7 3c0 4 6 4 6 7s-6 3-6 7M13 3c0 4-6 4-6 7s6 3 6 7" />,
+  paiement: <path d="M10 3a7 7 0 1 0 0 14a7 7 0 1 0 0-14M12.3 7.5c-.5-.7-1.3-1-2.3-1-1.4 0-2.3.7-2.3 1.7 0 2.4 4.7 1.2 4.7 3.6 0 1-1 1.7-2.4 1.7-1 0-1.9-.4-2.4-1.1M10 5v1.5M10 13.5V15" />,
+  reponse: <path d="M5 13.5V9a5 5 0 0 1 10 0v4.5l1.5 1.5h-13zM8.5 17.5h3" />,
 };
 
 /** Libellé du nœud Paiement selon ce que le relais a derrière lui : jamais « réseau de test » pour un faux coffre. */
@@ -31,15 +42,15 @@ export function paymentSub(origin: VaultOrigin): string {
 }
 
 const EDGES: Record<FlowEdge, string> = {
-  "agent-porte": "M130 110 H166",
-  "porte-ia": "M290 110 H326",
-  "ia-relais": "M450 110 H486",
-  "relais-contrat": "M610 110 H646",
-  "contrat-humain": "M770 100 C805 100 805 50 836 50",
-  "contrat-paiement": "M770 120 C805 120 805 190 836 190",
-  "humain-paiement": "M900 78 V158",
-  "porte-reponse": "M230 138 C230 220 290 252 346 252",
-  "contrat-reponse": "M710 138 C710 220 650 252 594 252",
+  "agent-porte": "M128 140 H166",
+  "porte-ia": "M340 140 H378",
+  "ia-relais": "M534 140 H572",
+  "relais-contrat": "M698 140 H736",
+  "contrat-humain": "M870 130 C886 130 876 52 892 52",
+  "contrat-paiement": "M870 150 C886 150 876 228 892 228",
+  "humain-paiement": "M1070 76 V200",
+  "porte-reponse": "M255 190 C255 258 330 286 408 286",
+  "contrat-reponse": "M805 190 C805 258 630 286 556 286",
 };
 
 const TONES = ["accepte", "humain", "refuse", "bloque", "repos"] as const;
@@ -61,7 +72,7 @@ export function FlowDiagram({ outcome, origin, pulse = null }: Props) {
   const tone = outcome?.tone ?? null;
   const onPath = (node: FlowNode): boolean => outcome?.nodes.includes(node) ?? false;
   const last = outcome?.nodes.filter((n) => n !== "reponse").at(-1) ?? null;
-  const boxes: Record<FlowNode, Box> = { ...BOXES, paiement: { x: 840, y: 162, w: W, h: H, sub: paymentSub(origin) } };
+  const boxes: Record<FlowNode, Box> = { ...BOXES, paiement: { x: 896, y: 204, w: 200, sub: paymentSub(origin) } };
 
   const node = (id: FlowNode): ReactNode => {
     const box = boxes[id];
@@ -74,11 +85,15 @@ export function FlowDiagram({ outcome, origin, pulse = null }: Props) {
         data-noeud={id}
         data-etat={active ? "actif" : "repos"}
       >
-        <rect x={box.x} y={box.y} width={box.w} height={box.h} rx="12" />
-        <text className="noeud-nom" x={box.x + box.w / 2} y={box.y + 24} textAnchor="middle">
+        <rect x={box.x} y={box.y} width={box.w} height={H} rx={H / 2} />
+        <circle className="noeud-pastille" cx={box.x + 25} cy={box.y + H / 2} r="15" />
+        <g className="noeud-icone" transform={`translate(${box.x + 15} ${box.y + H / 2 - 10})`}>
+          {NODE_ICONS[id]}
+        </g>
+        <text className="noeud-nom" x={box.x + 48} y={box.y + H / 2 + 5}>
           {NODE_LABELS[id]}
         </text>
-        <text className="noeud-sous" x={box.x + box.w / 2} y={box.y + 42} textAnchor="middle">
+        <text className="noeud-sous" x={box.x + box.w / 2} y={box.y + H + 16} textAnchor="middle">
           {box.sub}
         </text>
       </g>
@@ -96,7 +111,7 @@ export function FlowDiagram({ outcome, origin, pulse = null }: Props) {
     >
       <svg
         className="flux-svg"
-        viewBox="0 0 970 290"
+        viewBox="0 0 1100 336"
         role="img"
         aria-labelledby={captionId}
         focusable="false"

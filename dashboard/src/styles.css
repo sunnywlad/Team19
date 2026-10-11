@@ -1039,24 +1039,48 @@ tbody th {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 340px;
+  max-height: 380px;
 }
 
+/* Pilules au repos : fond blanc, filet violet pâle, comme la maquette. */
 .noeud rect {
-  fill: var(--surface-2);
+  fill: var(--surface);
   stroke: var(--trait);
   stroke-width: 1.5;
   transition: fill 0.4s ease, stroke 0.4s ease;
 }
 
+.noeud-pastille {
+  fill: var(--accent-fond);
+  transition: fill 0.4s ease;
+}
+
+.noeud-icone path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.4s ease;
+}
+
 .noeud-nom {
   fill: var(--texte);
-  font: 650 14px var(--sans);
+  font: 600 15px var(--sans);
 }
 
 .noeud-sous {
   fill: var(--discret);
-  font: 11px var(--sans);
+  font: 11.5px var(--sans);
+}
+
+/* Sur le chemin pris : la pastille prend la couleur de l'issue, l'icône passe en blanc. */
+.noeud[data-etat="actif"] .noeud-pastille {
+  fill: var(--ton);
+}
+
+.noeud[data-etat="actif"] .noeud-icone path {
+  stroke: var(--surface);
 }
 
 .noeud-passe rect {
@@ -1074,13 +1098,14 @@ tbody th {
 }
 
 .arete-repos {
-  stroke: var(--trait);
-  stroke-width: 2;
-  stroke-dasharray: 4 5;
+  stroke: var(--accent);
+  stroke-opacity: 0.35;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 6;
 }
 
 .arete-active {
-  stroke-width: 4.5;
+  stroke-width: 3.5;
 }
 
 .ton-accepte {
@@ -1229,22 +1254,22 @@ tbody th {
 .etape + .etape::before {
   content: "";
   position: absolute;
-  top: 13px;
-  right: calc(50% + 16px);
-  width: calc(100% - 32px);
+  top: 15px;
+  right: calc(50% + 20px);
+  width: calc(100% - 40px);
   height: 2px;
   background: var(--trait);
 }
 
 .etape-fait + .etape::before {
-  background: var(--accent);
+  background: var(--accepte);
 }
 
 .etape-icone {
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--trait);
   background: var(--surface);
@@ -1260,8 +1285,8 @@ tbody th {
 }
 
 .etape-fait .etape-icone {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--accepte);
+  background: var(--accepte);
   color: var(--surface);
 }
 
@@ -1287,6 +1312,40 @@ tbody th {
   display: block;
   color: var(--discret);
   font-size: 0.76rem;
+}
+
+/* Écran étroit : la frise devient une liste verticale, le trait suit à gauche. */
+@media (max-width: 900px) {
+  .frise {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .etape {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: 12px;
+    flex: none;
+    min-width: 0;
+    padding: 0;
+    text-align: left;
+  }
+
+  .etape-icone {
+    grid-row: span 2;
+  }
+
+  .etape-nom {
+    margin-top: 0;
+  }
+
+  .etape + .etape::before {
+    top: -10px;
+    right: auto;
+    left: 15px;
+    width: 2px;
+    height: 10px;
+  }
 }
 
 /* --- Clavier --- */
