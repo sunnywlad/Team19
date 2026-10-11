@@ -34,12 +34,12 @@ import { evaluate, loadKnown, vanishedMessage } from "./ecarts.mjs";
 import { DemoError, ROOT, VAR, getJson, loadConfig, postJson, queueEnv, reset, run, service, sleep, startService, status, stopService } from "./lib.mjs";
 
 const MISSED_SAMPLE = "d-105";
-const INVOICE = "Facture synthétique. Merci de payer sous 30 jours.";
-const PLACEMENT = "Ordre de placement synthétique.";
+export const INVOICE = "Facture synthétique. Merci de payer sous 30 jours.";
+export const PLACEMENT = "Ordre de placement synthétique.";
 const NOMINAL = ["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED", "FORWARDED_TO_CLIENT_AI", "REQUEST_SIGNED", "ENQUEUED", "SUBMITTED"];
 const DECISION_WAIT_MS = 20_000;
 
-const config = loadConfig();
+export const config = loadConfig();
 const fixtures = JSON.parse(readFileSync(join(ROOT, "specs", "examples", "fixtures.json"), "utf8"));
 const ids = fixtures.ids;
 const labels = Object.fromEntries(Object.entries(ids).map(([label, id]) => [id, label]));
@@ -59,7 +59,7 @@ function token(agent) {
 }
 
 /** Envoie une demande à la porte. `bearer` remplace le jeton de l'agent (scène 2). */
-async function send(agent, action, ref, document, bearer) {
+export async function send(agent, action, ref, document, bearer) {
   const body = { agent_id: ids[agent], client_id: ids["C-DEMO"], action, ref_id: ids[ref], document };
   const reply = await postJson(`${gateway}/requests`, body, { authorization: `Bearer ${bearer ?? token(agent)}` });
   return { http: reply.status, status: reply.body?.status ?? "?", id: reply.body?.request_id };
@@ -81,15 +81,15 @@ async function journal(requestId) {
     from = page.entries.at(-1).seq + 1;
   }
 }
-const journalLabels = async (requestId) => (await journal(requestId)).map(label);
+export const journalLabels = async (requestId) => (await journal(requestId)).map(label);
 
-async function output(requestId) {
+export async function output(requestId) {
   const { count } = await getJson(`${gateway}/outputs?from=0&limit=0`);
   const { outputs } = await getJson(`${gateway}/outputs?from=${Math.max(0, count - 200)}&limit=200`);
   return outputs.find((o) => o.request_id === requestId) ?? null;
 }
 
-const decisions = async (requestId) => (await getJson(`${relayUrl}/decisions?request_id=${requestId}`)).map((d) => `${d.decision}/${d.reason_name ?? d.reason}`);
+export const decisions = async (requestId) => (await getJson(`${relayUrl}/decisions?request_id=${requestId}`)).map((d) => `${d.decision}/${d.reason_name ?? d.reason}`);
 const events = async (name) => getJson(`${relayUrl}/events?name=${name}&limit=500`);
 const queueRows = async (requestId) => (await getJson(`${relayUrl}/queue?limit=500`)).filter((row) => row.request_id === requestId);
 /** État en file lu dans la base, en lecture seule : sert quand le relais, qui sert GET /queue, est arrêté. */
@@ -101,20 +101,20 @@ function queueStatus(requestId) {
     db.close();
   }
 }
-const paused = async () => (await getJson(`${journalUrl}/agents/paused`)).map((p) => `${labels[p.agent_id] ?? "?"}(${p.scope})`);
-const incidents = async () => [...new Set((await getJson(`${journalUrl}/incidents`)).map((i) => i.report.trigger))];
+export const paused = async () => (await getJson(`${journalUrl}/agents/paused`)).map((p) => `${labels[p.agent_id] ?? "?"}(${p.scope})`);
+export const incidents = async () => [...new Set((await getJson(`${journalUrl}/incidents`)).map((i) => i.report.trigger))];
 
-async function paid(requestId) {
+export async function paid(requestId) {
   return (await events("Paid")).filter((e) => requestId === undefined || e.request_id === requestId).map((e) => `${units(e.args.amount)}→${labels[e.args.beneficiaryId] ?? "?"}`);
 }
 
-async function vault() {
+export async function vault() {
   const v = await getJson(`${relayUrl}/vault`);
   return { cash: units(v.cash_wei), dettes: units(v.admitted_debts_wei), "bloqué": units(v.total_held_wei), "plaçable": units(v.placeable_wei) };
 }
 
 /** Attend que `read()` satisfasse `done`, au plus `timeoutMs`. Rend la dernière lecture, satisfaite ou non. */
-async function until(read, done, timeoutMs = DECISION_WAIT_MS) {
+export async function until(read, done, timeoutMs = DECISION_WAIT_MS) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     let value;
@@ -138,7 +138,7 @@ async function settledJournal(requestId, last, timeoutMs = DECISION_WAIT_MS) {
 
 // --- Comparaison -------------------------------------------------------------
 
-const show = (value) => (Array.isArray(value) ? (value.length === 0 ? "aucun" : value.join(", ")) : typeof value === "object" && value !== null ? Object.entries(value).map(([k, v]) => `${k} ${v}`).join(" ") : String(value));
+export const show = (value) => (Array.isArray(value) ? (value.length === 0 ? "aucun" : value.join(", ")) : typeof value === "object" && value !== null ? Object.entries(value).map(([k, v]) => `${k} ${v}`).join(" ") : String(value));
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 function compact(list) {
@@ -200,6 +200,18 @@ async function human(action, requestId) {
 
 // --- Scènes ------------------------------------------------------------------
 
+/** Document piégé de la scène 3, que le détecteur bloque. */
+export function trappedDocument() {
+  return JSON.parse(readFileSync(join(ROOT, "specs", "examples", "inbound", "valid", "03-document-piege.json"), "utf8")).document;
+}
+
+/** Document de la scène 4, le cas manqué par le détecteur (voir l'en-tête). */
+export function missedDocument() {
+  const sample = readFileSync(join(ROOT, "data", "jeu-factures", "dev.jsonl"), "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line)).find((s) => s.id === MISSED_SAMPLE);
+  if (!sample || sample.label !== "attack") throw new DemoError(`échantillon ${MISSED_SAMPLE} absent de dev.jsonl`);
+  return sample.document;
+}
+
 async function scene1(scene) {
   const sent = await send("A-DEM-1", "PAY_INVOICE", "F-001", INVOICE);
   const seen = await settledJournal(sent.id, "DECISION_OBSERVED(2,0)");
@@ -231,8 +243,7 @@ async function scene2(scene) {
 }
 
 async function scene3(scene) {
-  const trapped = JSON.parse(readFileSync(join(ROOT, "specs", "examples", "inbound", "valid", "03-document-piege.json"), "utf8")).document;
-  const sent = await send("A-DEM-2", "PAY_INVOICE", "F-001", trapped);
+  const sent = await send("A-DEM-2", "PAY_INVOICE", "F-001", trappedDocument());
   const seen = await settledJournal(sent.id, "INCIDENT_REPORT_GENERATED", 8000);
   await checkGateway(scene, sent, { http: 403, verdict: "BLOCK", blockedByScore: true, code: "INSTRUCTION_IN_DATA" });
   scene.check("IA du client", "ne reçoit rien", seen.includes("REQUEST_SIGNED") || (await queueRows(sent.id)).length > 0 ? "a reçu la demande" : "ne reçoit rien");
@@ -250,9 +261,7 @@ async function scene3(scene) {
 }
 
 async function scene4(scene) {
-  const sample = readFileSync(join(ROOT, "data", "jeu-factures", "dev.jsonl"), "utf8").split("\n").filter(Boolean).map((line) => JSON.parse(line)).find((s) => s.id === MISSED_SAMPLE);
-  if (!sample || sample.label !== "attack") throw new DemoError(`échantillon ${MISSED_SAMPLE} absent de dev.jsonl`);
-  const sent = await send("A-DEM-3", "PAY_INVOICE", "F-999", sample.document);
+  const sent = await send("A-DEM-3", "PAY_INVOICE", "F-999", missedDocument());
   const seen = await settledJournal(sent.id, "INCIDENT_REPORT_GENERATED");
   await checkGateway(scene, sent, { http: 202, verdict: "PASS" });
   scene.check("contrat", ["0/INVOICE_UNKNOWN"], await decisions(sent.id));

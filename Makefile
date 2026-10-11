@@ -1,6 +1,6 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
 .PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final \
-	demo demo-stop demo-status demo-reset scenes scene demo-smoke demo-chain-check demo-test
+	demo demo-stop demo-status demo-reset demo-peupler scenes scene demo-smoke demo-chain-check demo-test
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -101,6 +101,11 @@ scenes:
 # Une seule scène : make scene S=4   (1, 2, 3, 4, 5, 6a, 6b, 7a, 7b, 8)
 scene:
 	DEMO_MODE=1 node --disable-warning=ExperimentalWarning demo/scenes.mjs $(S)
+
+# Peuple le dashboard : les demandes des scènes à la suite, par la vraie porte
+# d'entrée, sans remise à zéro entre elles. Remet d'abord la démo à zéro.
+demo-peupler:
+	DEMO_MODE=1 node --disable-warning=ExperimentalWarning demo/peupler.mjs
 
 # Tests de demo/ sans aucun service : écarts connus, ports, hygiène.
 demo-test:
