@@ -1,5 +1,5 @@
 // Ce que la DOUBLURE StubVault (relay/test/fixtures/StubVault.sol) permet de
-// vérifier du mode chain, sur anvil, en attendant ArgentVault.
+// vérifier du mode chain, sur anvil, sans ArgentVault.
 //
 //   node demo/chain-check.mjs       (make demo-chain-check ; anvil et forge requis)
 //
@@ -9,7 +9,8 @@
 // recopiée dans le journal ; aucun port de contrôle en mode chain ; seed.mjs et
 // human.mjs qui s'arrêtent sur le premier appel que le contrat rejette.
 //
-// PAS vérifié, faute de contrat : le déploiement par forge script, l'inscription
+// PAS vérifié ici (« VAULT_MODE=chain make demo » puis « make scenes » le jouent contre
+// ArgentVault) : le déploiement par forge script, l'inscription
 // du monde de test, approve / refuse / expire, et toute règle de paiement. La
 // doublure accepte une demande sans rien payer : ce script ne prouve aucun
 // paiement.

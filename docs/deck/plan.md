@@ -43,20 +43,22 @@ montant et le bénéficiaire sont ceux déjà inscrits. Deux : deux filets, un
 détecteur à l'entrée, une règle de paiement derrière. Trois : la réponse est
 automatique mais ne fait que bloquer ; lever une pause est un geste humain.
 Dire que nous n'empêchons pas l'injection : nous en bornons les conséquences.
-Cadrage du paiement ([README](../../README.md)) : sur réseau de test, le
-contrat paie avec des fonds de test ; en production, un connecteur bancaire
-consommerait son autorisation, et ce connecteur est envisagé, non construit.
+Cadrage du paiement ([README](../../README.md)) : sur réseau de test local
+(anvil), le contrat paie avec des fonds de test ; en production, `Paid` serait
+l'autorisation qu'un connecteur bancaire consommerait : envisagé, non construit.
 
 ## 4. Comment ça marche
 
 **Texte.** Le schéma du [README](../../README.md) : dix composants, douze étapes,
-de l'agent au dashboard. En couleur : ce qui tourne. En gris : le contrat, à
-écrire.
+de l'agent au dashboard. En couleur : ce qui tourne, contrat compris, avec la
+mention « réseau de test local ». En gris : ce qui n'est pas construit, la pause
+sur la chaîne et le connecteur bancaire.
 
 **Notes orales.** Suivre une demande : porte d'entrée, IA du client, file,
 relais, contrat, indexeur, dashboard. Le document ne dépasse jamais la porte.
-Être net sur l'état : tout tourne sauf le contrat, remplacé par un faux coffre
-qui rejoue ses règles en mémoire.
+Être net sur l'état : le contrat existe, il décide et paie sur un réseau de
+test local (anvil), pas ailleurs. Le mode par défaut de la démo reste un faux
+coffre qui rejoue ses règles en mémoire : dire lequel des deux est à l'écran.
 
 ## 5. Démo
 
@@ -73,8 +75,8 @@ facture légitime. Délais d'attente en secondes. Repli : la vidéo.
 **Texte.** Le tableau de la fiche de défense, tel quel, avec ses cases « à
 mesurer ». En tête : 50 attaques détectées sur 100, 4 demandes légitimes
 bloquées sur 100, sur un jeu synthétique de 200 échantillons, une attaque pour
-une légitime. En dessous : données synthétiques, pas de contrat déployé, pas
-d'audit indépendant.
+une légitime. En dessous : données synthétiques, contrat déployé sur un réseau
+de test local seulement, pas d'audit indépendant.
 
 **Notes orales.** Lire les deux chiffres avec leur condition : jeu de test
 synthétique de 200 échantillons, une attaque pour une légitime, mesuré le
@@ -84,8 +86,9 @@ mieux tenue est `hors-mandat`, 8 sur 8 ; les plus faibles sont
 `doublon-facture`, 1 sur 8, et `fausse-autorite`, 2 sur 8. Nommer un cas
 manqué : `t-003`, une facture présentée en double, que la porte laisse passer.
 Les lignes encore « à mesurer » se disent telles quelles : règles fixes de
-référence, délais, et tout ce qui demande un contrat déployé. Ne citer aucun
-chiffre du jeu provisoire.
+référence et délais. Les lignes du contrat se lisent comme la fiche les
+affiche le jour du pitch, avec leur réserve, sans rien y ajouter. Ne citer
+aucun chiffre du jeu provisoire.
 
 ## 7. Conformité et modèle économique
 
@@ -105,4 +108,5 @@ annoncé.
 relais, dashboard, CI, livrables. Nicolas : pitch et relecture.
 
 **Notes orales.** Une phrase par personne. Finir sur ce qui reste à faire, dans
-l'ordre : écrire le contrat, brancher la scène de bout en bout.
+l'ordre : poser la pause d'un agent sur la chaîne, remplir les lignes encore
+« à mesurer », sortir du réseau de test local.

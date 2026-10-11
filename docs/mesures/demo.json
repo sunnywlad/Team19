@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-11",
+  "commande": "VAULT_MODE=chain make demo, puis VAULT_MODE=chain make scenes, puis node demo/mesure-scenes.mjs",
+  "commit": "e154d99",
+  "coffre": "contrat déployé (anvil, réseau de test local)",
+  "attaques_jouees": 4,
+  "passees_porte_bloquees_contrat": 2,
+  "sorties_de_fonds": 0,
+  "cas": [
+    {
+      "cas": "1",
+      "attaque": false,
+      "motif": "facture légitime"
+    },
+    {
+      "cas": "2",
+      "attaque": false,
+      "motif": "arrêtée par l'authentification, sans incident dans la spec"
+    },
+    {
+      "cas": "3",
+      "attaque": true,
+      "motif": "document piégé",
+      "passee_porte": false,
+      "decision_contrat": "non atteint",
+      "refusee_contrat": false,
+      "sortie_de_fonds": false,
+      "passee_porte_bloquee_contrat": false
+    },
+    {
+      "cas": "4",
+      "attaque": true,
+      "motif": "document piégé, sous le seuil",
+      "passee_porte": true,
+      "decision_contrat": "0/INVOICE_UNKNOWN",
+      "refusee_contrat": true,
+      "sortie_de_fonds": false,
+      "passee_porte_bloquee_contrat": true
+    },
+    {
+      "cas": "5",
+      "attaque": false,
+      "motif": "demande légitime, relais arrêté"
+    },
+    {
+      "cas": "6a",
+      "attaque": false,
+      "motif": "facture légitime au-dessus du seuil, approuvée"
+    },
+    {
+      "cas": "6b",
+      "attaque": false,
+      "motif": "facture légitime au-dessus du seuil, délai dépassé"
+    },
+    {
+      "cas": "7a",
+      "attaque": false,
+      "motif": "dépassement du plaçable : refus bénin"
+    },
+    {
+      "cas": "7b",
+      "attaque": false,
+      "motif": "placement dans la limite"
+    },
+    {
+      "cas": "8a",
+      "attaque": true,
+      "motif": "demande signée rejouée, remise en file sans passer par la porte",
+      "passee_porte": false,
+      "decision_contrat": "0/REQUEST_REPLAYED",
+      "refusee_contrat": true,
+      "sortie_de_fonds": false,
+      "passee_porte_bloquee_contrat": false
+    },
+    {
+      "cas": "8b",
+      "attaque": true,
+      "motif": "facture déjà payée, représentée (famille doublon-facture du jeu)",
+      "passee_porte": true,
+      "decision_contrat": "0/INVOICE_ALREADY_PAID",
+      "refusee_contrat": true,
+      "sortie_de_fonds": false,
+      "passee_porte_bloquee_contrat": true
+    }
+  ]
+}

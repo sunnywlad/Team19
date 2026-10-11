@@ -16,7 +16,7 @@ manque, dite sur la ligne), **humain** (geste d'une personne, outillé ou non),
 | Score du détecteur au-dessus du seuil | Porte d'entrée, étape 2 | Implémenté : `gateway/src/detector.ts`, seuil 70, borne incluse |
 | Demande rejetée par le schéma | Porte d'entrée, étape 3 | Implémenté : `gateway/schemas/inbound.schema.json` |
 | Rafale de demandes d'un même agent | Limite de débit | Implémenté : `gateway/src/ratelimit.ts`, 5 demandes sur 10 s. Incident sans quarantaine : le contenu n'a pas été lu |
-| Décision `0` du contrat | Événement lu dans l'indexeur du relais | Partiel : `response/src/relay-watch.ts` lit les décisions, mais aucun contrat n'est déployé. Rejoué en test sur un faux coffre |
+| Décision `0` du contrat | Événement lu dans l'indexeur du relais | Implémenté, sur réseau de test local seulement : `response/src/relay-watch.ts` lit les décisions dans l'indexeur. En `VAULT_MODE=chain`, elles viennent de `src/ArgentVault.sol` sur anvil ; par défaut, d'un faux coffre |
 
 Une décision `0` ne déclenche pas toujours tout le playbook. Les motifs
 hostiles (facture ou placement inconnu, agent sans mandat, action inconnue)
@@ -29,11 +29,11 @@ ouvrent un incident au troisième en 60 s pour un même agent
 
 | # | Étape | Automatique ou humain | Qui | Trace | État dans le dépôt |
 |---|---|---|---|---|---|
-| 1 | Détection : score, codes raison, horodatage | Automatique | Porte d'entrée ou contrat | Entrée de journal `DETECTION` ou `DECISION_OBSERVED` | **Implémenté** pour la porte. **Partiel** pour le contrat : pas de contrat déployé |
-| 2 | Confinement : la demande est mise en quarantaine, l'agent d'origine est mis en pause | Automatique | Service de réponse | `QUARANTINED`, `AGENT_PAUSED` | **Partiel**. Quarantaine et pause hors chaîne faites : la porte refuse l'agent (`gateway/src/pauses.ts`), le relais écarte ses demandes (`relay/src/pauses.ts`). La pause sur la chaîne n'est pas posée |
+| 1 | Détection : score, codes raison, horodatage | Automatique | Porte d'entrée ou contrat | Entrée de journal `DETECTION` ou `DECISION_OBSERVED` | **Implémenté** pour la porte. Pour le contrat : **implémenté** sur un réseau de test local (anvil) seulement, faux coffre par défaut |
+| 2 | Confinement : la demande est mise en quarantaine, l'agent d'origine est mis en pause | Automatique | Service de réponse | `QUARANTINED`, `AGENT_PAUSED` | **Partiel**. Quarantaine et pause hors chaîne faites : la porte refuse l'agent (`gateway/src/pauses.ts`), le relais écarte ses demandes (`relay/src/pauses.ts`). La pause sur la chaîne n'est pas posée : le contrat a `pauseAgent`, aucun composant ne l'appelle |
 | 3 | Alerte : faits bruts (demande, agent, codes raison, motif du contrat) | Automatique | Service de réponse → analyste sécurité et trésorier | `ALERT_SENT` | **Partiel**. L'alerte est affichée sur la sortie du service et journalisée, avec ses destinataires en rôles. Elle n'est envoyée à personne |
 | 4 | Qualification : attaque réelle ou faux positif | Humain | Analyste sécurité | `HUMAN_DECISION` | **Humain**, outillé : commande `human` de `response/`. L'auteur est déclaré, pas authentifié ; la décision n'est pas signée |
-| 5 | Décision : lever la pause, révoquer le jeton de l'agent, ou mettre le coffre en pause | Humain | Analyste, puis propriétaire pour la reprise | `HUMAN_DECISION` | **Humain**, outillé pour la levée de pause et la révocation du jeton, que la porte applique. **Non fait** pour le coffre : la décision est journalisée, aucun contrat ne la reçoit |
+| 5 | Décision : lever la pause, révoquer le jeton de l'agent, ou mettre le coffre en pause | Humain | Analyste, puis propriétaire pour la reprise | `HUMAN_DECISION` | **Humain**, outillé pour la levée de pause et la révocation du jeton, que la porte applique. **Non fait** pour le coffre : la décision est journalisée, aucun composant n'appelle `pauseVault` du contrat |
 | 6 | Documentation : rapport d'incident prérempli depuis le journal. Classification et notification éventuelle | Rapport automatique, classification humaine | Responsable conformité | `INCIDENT_REPORT_GENERATED`, rapport et empreinte du journal | **Implémenté** pour le rapport (`response/src/report.ts`), régénéré après la qualification. Le montant exposé reste vide : le service ne lit pas les registres du contrat. Classification : **humain**, hors de l'outil |
 | 7 | Retour d'expérience : le cas rejoint le jeu de mesure, le seuil est revu | Humain | Équipe sécurité | Version du jeu | **Humain**, sans outil. Le jeu de test ne se relance pas après retouche des règles : un cas nouveau entre dans une nouvelle version du jeu (`data/jeu-factures/README.md`) |
 
@@ -56,7 +56,7 @@ Ce que le dépôt montre pour chacune :
 | Faits bruts | Test « alerte l'analyste et le trésorier avec des faits bruts », `response/test/engine.test.ts`. Le schéma du rapport rejette tout champ libre | L'extrait du document gelé est servi au dashboard, borné et jamais interprété ; il n'entre ni dans le journal ni dans l'alerte |
 | Aucun déplacement de fonds | Test « n'écrit aucune action qui déplace des fonds ». Le service de réponse ne tient aucune clé | |
 | Pause levée par un humain | Test « seule une décision humaine lève une pause ». Aucune route de la porte ne lève une pause | « Habilité » n'est pas vérifié : quiconque atteint le port local du journal peut consigner une décision |
-| Délai dépassé vaut refus | En file : une demande expirée n'est jamais soumise (`relay/test/scenarios.test.ts`, scénario 5). Approbation : rejouée par le faux coffre (`relay/src/fake-vault.ts`) | Le délai d'approbation est une règle du contrat ([specs/02-contrat.md](../specs/02-contrat.md) § 6), qui n'est pas écrit |
+| Délai dépassé vaut refus | En file : une demande expirée n'est jamais soumise (`relay/test/scenarios.test.ts`, scénario 5). Approbation : `expire` du contrat (`src/ArgentVault.sol`, `test/ArgentVault.t.sol`), jouée par la scène 6b en `VAULT_MODE=chain` ; rejouée par le faux coffre (`relay/src/fake-vault.ts`) par défaut | Le délai d'approbation est une règle du contrat ([specs/02-contrat.md](../specs/02-contrat.md) § 6), jouée sur un réseau de test local (anvil) seulement |
 | Ni classement ni notification | Le rapport n'a aucun champ pour cela | |
 
 ## Commandes humaines

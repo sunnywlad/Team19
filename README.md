@@ -22,8 +22,9 @@ paiement part.
   rapport d'incident. Aucune action automatique ne déplace de fonds.
 - Chaque étape est journalisée dans un journal chaîné, vérifiable par un script.
 
-Le contrat est aujourd'hui une interface gelée, sans implémentation. Le reste
-du flux tourne contre un faux coffre.
+Le contrat existe : `src/ArgentVault.sol`. Il décide et paie sur un réseau de
+test local seulement (anvil, chaîne 31337), avec `VAULT_MODE=chain`. Par défaut,
+`VAULT_MODE=fake` : le flux tourne contre un faux coffre, sans fonds ni chaîne.
 
 ## Cadrage du paiement
 
@@ -38,9 +39,11 @@ s'applique plus, et le connecteur devient un composant de confiance à concevoir
 n'existe pas : ni code, ni spec.
 
 **État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](specs/02-contrat.md) § 1
-et § 8) et de l'interface gelée. Aucun contrat n'est écrit ni déployé : il est
-rejoué par un faux coffre, sans fonds. « Démontré » vaudra le jour où le contrat
-tournera sur le réseau de test ; ce paragraphe sera alors mis à jour.
+et § 8) et de l'interface gelée. Le contrat est écrit (`src/ArgentVault.sol`) et
+`VAULT_MODE=chain make demo` le déploie sur un réseau de test local (anvil,
+chaîne 31337) : « démontré » vaut pour ce réseau local et pour lui seul. Aucun
+réseau de test public n'est testé. En mode fake, le mode par défaut, rien n'est
+payé : un faux coffre rejoue les règles, sans fonds.
 
 ## Architecture
 
@@ -85,8 +88,8 @@ flowchart LR
 | 6 | Elle émet une demande signée par la clé du client | IA du client | `relay/` |
 | 7 | La demande entre dans la file | File | `relay/` |
 | 8 | Le relais soumet la demande signée | Relais | `relay/` |
-| 9 | Le contrat vérifie la signature, décide 0, 1 ou 2 et agit | Contrat | absent |
-| 10 | Cas 1 : un humain approuve, ou le délai expire et la demande est refusée | Contrat | absent |
+| 9 | Le contrat vérifie la signature, décide 0, 1 ou 2 et agit | Contrat | `src/` |
+| 10 | Cas 1 : un humain approuve, ou le délai expire et la demande est refusée | Contrat | `src/` |
 | 11 | Un indexeur lit les événements et alimente la base | Indexeur | `relay/` |
 | 12 | Le dashboard affiche décisions, plaçable, délais et rapports | Dashboard | `dashboard/` |
 
@@ -97,8 +100,8 @@ de réponse, qui les lit dans l'indexeur. Les étapes 5, 11 et 12 n'écrivent ri
 ## Installation
 
 Prérequis : Node 22, npm, make, curl et jq. Foundry (forge, anvil) est
-facultatif : il sert aux contrats de `src/` et au test du relais sur chaîne
-locale.
+facultatif en mode fake ; il est requis pour les contrats de `src/`, pour le
+test du relais sur chaîne locale et pour `VAULT_MODE=chain`.
 
 ```bash
 cp .env.example .env
@@ -229,11 +232,18 @@ annoncé « plus tard » par la spec, n'est jamais écrit. Aucun composant ne po
 de pause sur la chaîne ; la pause observée est hors chaîne.
 
 `VAULT_MODE=chain make demo` vise un vrai contrat sur un réseau de test local
-(anvil). Le contrat du coffre n'existe pas encore : la commande s'arrête sur
-« ArgentVault absent : VAULT_MODE=chain impossible », sans se replier sur le
-faux coffre. Ce qui ne se joue donc pas aujourd'hui : un paiement par un
-contrat, le refus d'une attaque par un contrat, la pause d'un agent sur la
-chaîne.
+(anvil) : la commande lance anvil, déploie `src/ArgentVault.sol` et inscrit le
+monde de test, sans jamais se replier sur le faux coffre. Elle lit six clés de
+rôle dans l'environnement (`OWNER_PRIVATE_KEY`, `ADMISSION_PRIVATE_KEY`,
+`RELAYER`, `APPROVER_PRIVATE_KEY`, `GUARDIAN_PRIVATE_KEY`, `CLIENT_SIGNER`) et
+s'arrête si l'une manque. **En mode chain, la démo utilise les clés de
+développement publiques d'anvil**, celles qu'anvil affiche à son lancement et
+qu'il approvisionne : en local uniquement, jamais sur un réseau partagé, où
+n'importe qui peut signer avec elles. Elles se passent par l'environnement du
+shell et ne s'écrivent pas dans le dépôt. `make scenes` se lance avec le même
+`VAULT_MODE=chain` et les mêmes clés ; la mesure qui en sort est dans
+[docs/mesures/demo.json](docs/mesures/demo.json). Fuji n'est pas testé. Ce qui
+ne se joue toujours pas : la pause d'un agent sur la chaîne.
 
 Le journal se vérifie, depuis `response/` :
 
@@ -288,17 +298,17 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne. L'alerte de disponibilité ne part pas tant que le relais est arrêté (écart E2) |
 | IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle. Balaie aussi la file pour expirer une demande, relais arrêté ou non |
 | File d'attente | `relay/src/queue.ts` | oui | oui | SQLite, idempotente |
-| Relais | `relay/src/relay.ts` | oui | au journal et aux pauses | Soumet à un faux coffre, en test comme dans `make demo`. Écarte un agent en pause en lisant le service de réponse |
-| Contrat (coffre) | `specs/contract/IArgentVault.sol` | **absent** | non | Interface gelée, aucune implémentation. `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
-| Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui, au faux coffre | Dans `make demo`, indexe les événements du faux coffre. Aucun contrat déployé |
-| Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; le coffre est simulé tant qu'aucun contrat n'est déployé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo` |
-| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; le mode chain attend le contrat. Deux écarts connus avec la spec, listés dans `demo/ecarts-connus.json` |
-| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par la [fiche de défense](docs/fiche-defense.md). Règles fixes de référence, délais et lignes qui demandent un contrat déployé : encore « à mesurer » |
+| Relais | `relay/src/relay.ts` | oui | au journal et aux pauses | Soumet au contrat sur anvil en `VAULT_MODE=chain`, à un faux coffre par défaut et dans ses tests. Écarte un agent en pause en lisant le service de réponse |
+| Contrat (coffre) | `src/ArgentVault.sol` | oui | en `VAULT_MODE=chain` | Implémente l'interface gelée `specs/contract/IArgentVault.sol`, tests dans `test/ArgentVault.t.sol`. Déployé par `make demo` sur un réseau de test local (anvil, 31337), nulle part ailleurs. En mode fake, `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
+| Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui | Dans `make demo`, indexe les événements du contrat sur anvil en `VAULT_MODE=chain`, ceux du faux coffre par défaut |
+| Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; en mode fake le coffre est simulé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo`. En mode chain, le bandeau ne s'affiche pas |
+| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; `VAULT_MODE=chain` déploie le contrat sur anvil. Deux écarts connus avec la spec, listés dans `demo/ecarts-connus.json` |
+| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par la [fiche de défense](docs/fiche-defense.md). Règles fixes de référence et délais : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
 
-`src/`, `test/`, `script/` et `offchain/` contiennent d'autres contrats et leurs
-services (un marché de vérification, `src/VerificationMarket.sol`). Ce n'est pas
-le coffre de [specs/02-contrat.md](specs/02-contrat.md), et ils ne sont pas dans
-le flux décrit ici.
+`src/`, `test/`, `script/` et `offchain/` contiennent aussi d'autres contrats et
+leurs services (un marché de vérification, `src/VerificationMarket.sol`). Ce
+n'est pas le coffre de [specs/02-contrat.md](specs/02-contrat.md), et ils ne
+sont pas dans le flux décrit ici : voir [docs-jury/](docs-jury/README.md).
 
 ## Limites connues
 
@@ -314,9 +324,11 @@ Du kit :
 
 Du dépôt :
 
-- Pas de contrat : aucune règle de paiement n'est prouvée sur une chaîne.
-- La pause d'un agent est appliquée par la porte d'entrée et par le relais,
-  pas par un contrat.
+- Le contrat n'a tourné que sur un réseau de test local (anvil) : aucune règle
+  de paiement n'est prouvée sur un réseau public, de test ou non.
+- La pause d'un agent est appliquée par la porte d'entrée et par le relais. Le
+  contrat sait mettre un agent en pause, mais aucun composant ne la pose sur
+  la chaîne.
 - Aucune authentification entre services : ils n'écoutent que sur la machine
   locale, et quiconque y accède peut écrire au journal ou consigner une
   décision humaine.

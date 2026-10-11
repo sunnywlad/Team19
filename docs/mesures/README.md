@@ -89,3 +89,9 @@ mesurer ». Le bloc `contrat` demande un contrat déployé.
 
 `coffre` s'affiche à côté du chiffre : une scène jouée sur le faux coffre ne
 prouve rien sur des fonds réels.
+
+Ce fichier ne s'écrit pas à la main : `node demo/mesure-scenes.mjs` le produit à
+partir de la sortie de `make scenes` jouée en `VAULT_MODE=chain`, et refuse de
+l'écrire sinon. Il y ajoute `commit` et `cas`, la classification de chaque scène
+(attaque ou non, passée la porte, décision du contrat, sortie de fonds) ; la
+règle est écrite en tête du script.

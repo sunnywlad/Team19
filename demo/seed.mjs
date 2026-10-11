@@ -10,8 +10,9 @@
 // Une clé par rôle. Les étapes s'exécutent dans l'ordre et le script s'arrête
 // à la première erreur.
 //
-// NON TESTÉ contre ArgentVault, qui n'existe pas encore. Sur la doublure
-// StubVault, seul l'arrêt à la première erreur est vérifié (chain-check.mjs).
+// Vérifié contre ArgentVault sur anvil, par « make demo » en VAULT_MODE=chain.
+// Sur la doublure StubVault, seul l'arrêt à la première erreur est vérifié
+// (chain-check.mjs).
 //
 // Réseau de test local uniquement (CHAIN_ID 31337) : les comptes des rôles y
 // sont crédités par anvil_setBalance, et chaque bénéficiaire reçoit une adresse

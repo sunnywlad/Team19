@@ -44,6 +44,7 @@ dashboard:
 # Livrables (README.md, docs/) : formules interdites, liens et chemins cités,
 # secrets, et fiche de défense égale à ce que donnent les fichiers de mesure.
 docs:
+	node --test "docs/outils/*.test.mjs"
 	node docs/outils/verifier-docs.mjs
 
 # Tests de offchain/ (cache, passerelle, vérificateur). Informatif tant que
@@ -110,7 +111,8 @@ demo-test:
 demo-smoke:
 	node demo/smoke.mjs
 
-# Mode chain, en attendant ArgentVault : ce que la doublure StubVault permet de
-# vérifier sur anvil (anvil et forge requis). Ne prouve aucun paiement.
+# Mode chain sur la doublure StubVault, sans ArgentVault : la chaîne de services
+# sur anvil (anvil et forge requis). Ne prouve aucun paiement : les règles de
+# paiement se jouent par « VAULT_MODE=chain make demo » puis « make scenes ».
 demo-chain-check:
 	node demo/chain-check.mjs

@@ -6,7 +6,8 @@
 // « expire » n'a pas de rôle dans le contrat : la même clé ne sert qu'à payer
 // le gaz. La décision ne se lit pas ici : elle est dans l'événement Decision.
 //
-// NON TESTÉ contre ArgentVault, qui n'existe pas encore. En mode fake, ce
+// Vérifié contre ArgentVault sur anvil (réseau de test local), par les scènes
+// 6a et 6b en VAULT_MODE=chain. Fuji non testé. En mode fake, ce
 // geste passe par le port de contrôle du faux coffre (relay/src/demo-control.ts).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

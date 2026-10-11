@@ -1,5 +1,10 @@
 # Dossier jury : la partie blockchain
 
+> **Où se situe ce dossier.** Le marché de vérification décrit ici est une
+> extension : il n'est pas sur le chemin de la démo (`make demo`,
+> `make scenes`). Le coffre de la démo, `src/ArgentVault.sol`, et ce qu'il
+> prouve aujourd'hui sont décrits dans le [README](../README.md) à la racine.
+
 Ce dossier décrit la partie blockchain du projet. Il s'adresse au jury. Nous
 rassemblons ici ce que la pile fait, comment elle est bâtie, et comment la
 rejouer.
