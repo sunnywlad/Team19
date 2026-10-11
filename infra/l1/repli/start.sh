@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Démarre le repli local CHK (réseau 1919) : nœud A = validateur primaire + validateur L1 (validatorOnly),
+# Démarre le repli local VETO (réseau 1919) : nœud A = validateur primaire + validateur L1 (validatorOnly),
 # nœud C = observateur non validateur, utile seulement pour le test de synchronisation.
 set -euo pipefail
 R="${CHK_REPLI_DIR:-$HOME/phaseF/repli}"; BIN="${AVALANCHEGO:-$HOME/phaseF/bin/avalanchego-v1.15.1/avalanchego}"

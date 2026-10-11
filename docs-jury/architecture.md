@@ -1,15 +1,15 @@
 # Architecture
 
-## Le L1 privé CHK
+## Le L1 privé VETO
 
-Nous faisons tourner un L1 Avalanche privé, de jeton natif CHK.
+Nous faisons tourner un L1 Avalanche privé, de jeton natif VETO.
 
 | Trait | Valeur |
 |---|---|
 | chainId | 191919 |
 | Consensus | PoA (preuve d'autorité) |
 | Écriture | TxAllowList : seule une adresse admise envoie une transaction. |
-| Frappe de CHK | Native Minter : un précompilé frappe le jeton natif. |
+| Frappe de VETO | Native Minter : un précompilé frappe le jeton natif. |
 | Messagerie inter-chaînes | Pas d'ICM applicatif : ni TeleporterMessenger ni relayer. Le warpConfig reste actif dans la genèse, requis par le ValidatorManager pour parler à la P-Chain. |
 | Validateurs | un seul validateur pour la démo. |
 
@@ -26,17 +26,17 @@ réécrire la précédente.
 
 | Contrat | Rôle |
 |---|---|
-| `VerificationMarket` | Reçoit une demande payée en CHK, retient un commit puis un reveal par membre, agrège en code 0/1/2, ouvre la contestation. Le comité de 3 est figé au déploiement. |
+| `VerificationMarket` | Reçoit une demande payée en VETO, retient un commit puis un reveal par membre, agrège en code 0/1/2, ouvre la contestation. Le comité de 3 est figé au déploiement. |
 
 ### Phase 2 : caution, sanctions, récompenses, guichet
 
 | Contrat | Rôle |
 |---|---|
-| `VerifierRegistry` | Inscrit les vérificateurs admis, garde leur caution en CHK, bloque une part par mission. |
+| `VerifierRegistry` | Inscrit les vérificateurs admis, garde leur caution en VETO, bloque une part par mission. |
 | `StakedVerificationMarket` | Le marché de phase 1 cautionné. Verrouille la caution à la création, saisit les absents et partage les frais à la finalisation, déverrouille à la clôture. |
 | `Slashing` | Constate les fautes, saisit la caution, tient les strikes et l'exclusion. |
-| `Rewards` | Partage les frais entre les reveals valides, en modèle pull ; frappe un bonus en CHK par reveal valide. |
-| `ChkDesk` | Guichet : un opérateur frappe des CHK pour un client payé hors chaîne. |
+| `Rewards` | Partage les frais entre les reveals valides, en modèle pull ; frappe un bonus en VETO par reveal valide. |
+| `VetoDesk` | Guichet : un opérateur frappe des VETO pour un client payé hors chaîne. |
 
 ### Phase 3 : tirage au sort et registres ERC-8004
 

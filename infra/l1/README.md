@@ -1,6 +1,6 @@
-# L1 CHK : configuration du réseau
+# L1 VETO : configuration du réseau
 
-Le L1 de l'équipe est une blockchain Subnet-EVM privée de bout en bout, avec un jeton natif CHK et le chainId 191919. Il en existe deux exemplaires aux propriétés identiques :
+Le L1 de l'équipe est une blockchain Subnet-EVM privée de bout en bout, avec un jeton natif VETO et le chainId 191919. Il en existe deux exemplaires aux propriétés identiques :
 - `fuji/` : le L1 de démo, sur la testnet publique Fuji, avec un validateur sur AWS EC2 ;
 - `repli/` : une copie sur un réseau local distinct, en secours si Fuji n'est pas joignable pendant la démo.
 
@@ -11,7 +11,7 @@ Aucune clé n'est dans ce dossier. Les clés de staking des nœuds et les clés 
 | Propriété | Où elle se lit |
 |---|---|
 | Écriture réservée aux adresses admises (TxAllowList) | `txAllowListConfig` dans `fuji/genesis-fuji.json` ; précompilé `0x0200000000000000000000000000000000000002` |
-| Frappe de CHK réservée (Native Minter) | `contractNativeMinterConfig` dans la même genèse ; précompilé `0x0200000000000000000000000000000000000001` |
+| Frappe de VETO réservée (Native Minter) | `contractNativeMinterConfig` dans la même genèse ; précompilé `0x0200000000000000000000000000000000000001` |
 | Synchronisation réservée aux validateurs | `subnet-config.json` = `{"validatorOnly": true}`, chargé par le validateur (`subnet-config-dir`) |
 | RPC privé | `"http-host": "127.0.0.1"` dans `node-validator.json` ; seul le port P2P 9651 est ouvert sur la VM, et l'accès au RPC se fait par tunnel SSH (`fuji/fuji-tunnel.sh`) |
 | APIs d'administration fermées | `chain-config.json` : ni `admin`, ni `personal`, ni `debug` |

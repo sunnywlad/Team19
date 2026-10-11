@@ -7,7 +7,7 @@ Voici le parcours d'une demande, du dépôt du contenu jusqu'au code final.
    (montant, devise, bénéficiaire, référence).
 2. La passerelle dépose le contenu au cache. Le cache rend `contentHash` et le
    hash H, avec `H = keccak256(abi.encode(facts, contentHash))`.
-3. La passerelle appelle `createRequest(H)` sur le marché et paie en CHK. Le
+3. La passerelle appelle `createRequest(H)` sur le marché et paie en VETO. Le
    marché rend un `requestId` croissant. Événement émis : `RequestCreated`.
 4. Le comité de 3 est désigné. En phase 1 il est fixe, et `CommitteeDrawn` sort
    dès la création. En phase 3 il est tiré par `drawCommittee(requestId)` à

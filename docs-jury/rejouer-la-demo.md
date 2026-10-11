@@ -20,7 +20,7 @@ ADMIN_PRIVATE_KEY=… ./script/deploy-all.sh <RPC>
 Ce script est idempotent et redéploie une pile complète à chaque appel.
 
 - Il admet les adresses de test sur la TxAllowList et leur frappe un plancher de
-  CHK, sans refrapper si le solde suffit.
+  VETO, sans refrapper si le solde suffit.
 - Il déploie les phases 1, 2 et 3, puis câble les contrats entre eux.
 - Il autorise les deux contrats `Rewards` à frapper sur le Native Minter.
 - Il écrit les adresses dans `deployments/<chainId>-<horodatage UTC>.json` et en

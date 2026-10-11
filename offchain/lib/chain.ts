@@ -9,12 +9,12 @@ import {
 import { privateKeyToAccount } from 'viem/accounts';
 import type { Hex } from 'viem';
 
-// Chaîne par défaut : CHK local (id 191919)
-export function chkChain(chainId: number = 191919) {
+// Chaîne par défaut : VETO local (id 191919)
+export function vetoChain(chainId: number = 191919) {
   return defineChain({
     id: chainId,
-    name: 'CHK Local',
-    nativeCurrency: { name: 'CHK', symbol: 'CHK', decimals: 18 },
+    name: 'VETO Local',
+    nativeCurrency: { name: 'VETO', symbol: 'VETO', decimals: 18 },
     rpcUrls: {
       default: { http: [] }, // surcharge à la création du client
     },
@@ -23,7 +23,7 @@ export function chkChain(chainId: number = 191919) {
 
 export function publicClient(rpcUrl: string, chainId: number = 191919) {
   return createPublicClient({
-    chain: chkChain(chainId),
+    chain: vetoChain(chainId),
     transport: http(rpcUrl),
     cacheTime: 0,
     pollingInterval: 500,
@@ -34,7 +34,7 @@ export function walletClient(privateKey: Hex, rpcUrl: string, chainId: number = 
   const account = privateKeyToAccount(privateKey);
   return createWalletClient({
     account,
-    chain: chkChain(chainId),
+    chain: vetoChain(chainId),
     transport: http(rpcUrl),
   });
 }

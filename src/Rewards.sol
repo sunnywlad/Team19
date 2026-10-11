@@ -5,7 +5,7 @@ import {INativeMinter, NATIVE_MINTER} from "./precompiles/INativeMinter.sol";
 
 /// @title Rewards
 /// @notice Phase 2 : partage des frais d'une demande entre les reveals valides, en modèle pull.
-/// @dev Chaque reveal valide touche une part égale ; le reste va au trésor. Un bonus optionnel en CHK
+/// @dev Chaque reveal valide touche une part égale ; le reste va au trésor. Un bonus optionnel en VETO
 ///      frais frappé par le précompilé NativeMinter récompense chaque reveal valide.
 contract Rewards {
     // ---------------------------------------------------------------------
@@ -33,7 +33,7 @@ contract Rewards {
 
     address public immutable admin;
     address public immutable treasury;
-    uint256 public immutable bonus; // CHK frappés par reveal valide, 0 = pas de frappe
+    uint256 public immutable bonus; // VETO frappés par reveal valide, 0 = pas de frappe
     address public market;
 
     // ---------------------------------------------------------------------
@@ -47,7 +47,7 @@ contract Rewards {
     // ---------------------------------------------------------------------
 
     /// @param treasury_ destinataire du reste et du cas sans reveal.
-    /// @param bonus_ montant de CHK frappé par reveal valide (0 pour désactiver).
+    /// @param bonus_ montant de VETO frappé par reveal valide (0 pour désactiver).
     constructor(address treasury_, uint256 bonus_) {
         if (treasury_ == address(0)) revert ZeroAddress();
         admin = msg.sender;
@@ -73,7 +73,7 @@ contract Rewards {
     // ---------------------------------------------------------------------
 
     /// @notice Crédite les frais reçus entre les reveals valides, part égale, reste au trésor.
-    ///         Si bonus > 0, frappe `bonus` CHK à chaque reveal valide via le précompilé.
+    ///         Si bonus > 0, frappe `bonus` VETO à chaque reveal valide via le précompilé.
     /// @dev Réservé au marché. Modèle pull : crédit interne, retrait par claim().
     function distribute(uint256 requestId, address[] calldata revealers) external payable {
         if (msg.sender != market) revert OnlyMarket(msg.sender);
