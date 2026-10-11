@@ -1,4 +1,4 @@
-# Fiche de défense : Argent Intelligent
+# Fiche de défense : VETO
 
 Secure Horizons, track 1 « Fintech Security: Guardians of Value ». État du dépôt au 11 octobre 2026. Mesures du détecteur et cas manqués : [fiche-defense-mesures.md](fiche-defense-mesures.md). Nouvelle campagne trimestrielle : [pitch-chiffres.pdf](pitch-chiffres.pdf).
 
