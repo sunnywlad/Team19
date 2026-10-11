@@ -1,16 +1,15 @@
 {
   "chainId": 191919,
-  "rpcUrl": "http://127.0.0.1:9670/ext/bc/RkJGt3ZenMaUz64EP1cUZeisftYMb9WaJdvYw54xfvkUccgke/rpc",
   "vaults": {
     "rehearsal": {
       "address": "0x12e611639ab72237cd8c3ca82b4e5f6db1f1a3a0",
       "block": 158,
-      "status": "consomm\u00e9"
+      "status": "consommé"
     },
     "scenes": {
       "address": "0x0bc40b79f1322ce6a3921ff6b7612f8f7a918e85",
       "block": 297,
-      "status": "consomm\u00e9"
+      "status": "consommé"
     },
     "demo": {
       "address": "0xc873ce84882339ead0d0c98598fb6e84c82b28af",
