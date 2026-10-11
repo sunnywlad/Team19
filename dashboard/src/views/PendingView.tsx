@@ -1,4 +1,5 @@
 import { Amount, ClockTag, OpaqueId } from "../components/atoms.tsx";
+import { CountdownRing } from "../components/CountdownRing.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { pendingCases } from "../domain/activity.ts";
 import { actionLabel } from "../domain/reasons.ts";
@@ -30,55 +31,59 @@ export function PendingView({ view }: { view: ViewProps }) {
                 {cases.map((c) => {
                   const remaining = c.deadline === null ? null : c.deadline - Math.floor(now / 1000);
                   return (
-                    <li key={c.requestId} data-testid="cas-en-attente">
-                      <dl className="fiche">
-                        <div>
-                          <dt>{c.action === 2 ? "Placement" : "Facture"}</dt>
-                          <dd data-testid="cas-reference">
-                            <OpaqueId value={c.refId} /> <span className="discret">· {actionLabel(c.action)}</span>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Montant bloqué</dt>
-                          <dd data-testid="cas-montant">
-                            <Amount wei={c.amountWei} />
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Bénéficiaire inscrit</dt>
-                          <dd data-testid="cas-beneficiaire">
-                            <OpaqueId value={c.beneficiaryId} missing="non disponible" />
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Délai restant</dt>
-                          <dd data-testid="cas-delai">
-                            {remaining === null ? (
-                              <span className="indisponible">non disponible</span>
-                            ) : remaining > 0 ? (
-                              <strong>{formatRemaining(remaining)}</strong>
-                            ) : (
-                              <strong>échéance dépassée : sans réponse humaine, la demande est refusée</strong>
-                            )}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Échéance</dt>
-                          <dd>
-                            {c.deadline === null ? <span className="indisponible">non disponible</span> : formatTime(c.deadline * 1000)}{" "}
-                            <ClockTag clock="bloc" />
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Demande</dt>
-                          <dd>
-                            <OpaqueId value={c.requestId} /> <span className="discret">· bloc {c.blockNumber}</span>
-                          </dd>
-                        </div>
-                      </dl>
-                      <p className="discret">
-                        Délai restant estimé : l'échéance est en heure de bloc, comparée ici à l'horloge locale du navigateur.
-                      </p>
+                    <li key={c.requestId} data-testid="cas-en-attente" className="cas-ligne">
+                      <CountdownRing deadline={c.deadline} decidedAt={c.blockTimestamp} now={now} />
+                      <div className="cas-corps">
+                        <dl className="fiche">
+                          <div>
+                            <dt>{c.action === 2 ? "Placement" : "Facture"}</dt>
+                            <dd data-testid="cas-reference">
+                              <OpaqueId value={c.refId} /> <span className="discret">· {actionLabel(c.action)}</span>
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Montant bloqué</dt>
+                            <dd data-testid="cas-montant">
+                              <Amount wei={c.amountWei} />
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Bénéficiaire inscrit</dt>
+                            <dd data-testid="cas-beneficiaire">
+                              <OpaqueId value={c.beneficiaryId} missing="non disponible" />
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Délai restant</dt>
+                            <dd data-testid="cas-delai">
+                              {remaining === null ? (
+                                <span className="indisponible">non disponible</span>
+                              ) : remaining > 0 ? (
+                                <strong>{formatRemaining(remaining)}</strong>
+                              ) : (
+                                <strong>échéance dépassée : sans réponse humaine, la demande est refusée</strong>
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Échéance</dt>
+                            <dd>
+                              {c.deadline === null ? <span className="indisponible">non disponible</span> : formatTime(c.deadline * 1000)}{" "}
+                              <ClockTag clock="bloc" />
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Demande</dt>
+                            <dd>
+                              <OpaqueId value={c.requestId} /> <span className="discret">· bloc {c.blockNumber}</span>
+                            </dd>
+                          </div>
+                        </dl>
+                        <p className="discret">
+                          Délai restant estimé : l'échéance est en heure de bloc, comparée ici à l'horloge locale du navigateur. L'anneau part du
+                          bloc de la décision et se vide jusqu'à l'échéance.
+                        </p>
+                      </div>
                     </li>
                   );
                 })}

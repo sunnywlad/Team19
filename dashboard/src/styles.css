@@ -1,60 +1,87 @@
 /* Aucune ressource externe : polices du système, icônes en SVG en ligne.
-   Aucun style en attribut : la CSP n'autorise que cette feuille. */
+   Aucun style en attribut : la CSP n'autorise que cette feuille.
+   Jetons de couleur : mêmes noms en clair et en sombre, contraste AA vérifié
+   pour le texte sur --surface et --fond, et sur --entete-fond pour l'en-tête. */
 :root {
   color-scheme: light dark;
-  --fond: #f4f5f7;
+  --fond: #f5f5f9;
   --surface: #ffffff;
-  --texte: #16202c;
-  --discret: #566273;
-  --trait: #d3d9e1;
-  --accent: #1d4f91;
-  --refuse: #a3162a;
-  --refuse-fond: #fdecee;
-  --humain: #8a5200;
-  --humain-fond: #fff3dc;
-  --accepte: #17663a;
-  --accepte-fond: #e6f5ec;
-  --simulation: #6b3fa0;
-  --simulation-fond: #f1eafa;
+  --surface-2: #f6f5fb;
+  --texte: #1b1d2b;
+  --discret: #585c6e;
+  --trait: #e3e2ec;
+  --accent: #5b41c8;
+  --accent-fond: #eeeafc;
+  --refuse: #b3202e;
+  --refuse-fond: #fdeced;
+  --humain: #875000;
+  --humain-fond: #fff2d6;
+  --accepte: #0f6b57;
+  --accepte-fond: #e1f4ef;
+  --bloque: #4c5363;
+  --bloque-fond: #eceef3;
+  --simulation: #0b5b6a;
+  --simulation-fond: #dff2f5;
+  --entete-fond: #1d2230;
+  --entete-texte: #f3f4f8;
+  --entete-discret: #bcc0cf;
+  --entete-accent: #bcaaff;
+  --entete-trait: #343a4c;
+  --ombre: 0 1px 2px rgb(27 29 43 / 5%), 0 8px 24px -12px rgb(27 29 43 / 14%);
+  --rayon: 16px;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sans: "Inter", "InterVariable", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --fond: #10151c;
-    --surface: #19212b;
-    --texte: #e7ecf2;
-    --discret: #9dabbb;
-    --trait: #33404f;
-    --accent: #8ab8f5;
-    --refuse: #ff9aa6;
-    --refuse-fond: #3d1a20;
-    --humain: #ffc766;
-    --humain-fond: #3b2c10;
-    --accepte: #7fdba3;
-    --accepte-fond: #143424;
-    --simulation: #c9a8f5;
-    --simulation-fond: #2c2140;
+    --fond: #111219;
+    --surface: #1a1c26;
+    --surface-2: #212330;
+    --texte: #ecedf3;
+    --discret: #a9adbf;
+    --trait: #33364a;
+    --accent: #b4a2ff;
+    --accent-fond: #2a2547;
+    --refuse: #ff939d;
+    --refuse-fond: #3c1a20;
+    --humain: #f4c262;
+    --humain-fond: #3a2c10;
+    --accepte: #6fd8bd;
+    --accepte-fond: #12342d;
+    --bloque: #b5bbc8;
+    --bloque-fond: #2a2d36;
+    --simulation: #7fd6e4;
+    --simulation-fond: #11343b;
+    --entete-fond: #0b0c12;
+    --entete-trait: #272a38;
+    --ombre: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px -14px rgb(0 0 0 / 60%);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --fond: #10151c;
-  --surface: #19212b;
-  --texte: #e7ecf2;
-  --discret: #9dabbb;
-  --trait: #33404f;
-  --accent: #8ab8f5;
-  --refuse: #ff9aa6;
-  --refuse-fond: #3d1a20;
-  --humain: #ffc766;
-  --humain-fond: #3b2c10;
-  --accepte: #7fdba3;
-  --accepte-fond: #143424;
-  --simulation: #c9a8f5;
-  --simulation-fond: #2c2140;
+  --fond: #111219;
+  --surface: #1a1c26;
+  --surface-2: #212330;
+  --texte: #ecedf3;
+  --discret: #a9adbf;
+  --trait: #33364a;
+  --accent: #b4a2ff;
+  --accent-fond: #2a2547;
+  --refuse: #ff939d;
+  --refuse-fond: #3c1a20;
+  --humain: #f4c262;
+  --humain-fond: #3a2c10;
+  --accepte: #6fd8bd;
+  --accepte-fond: #12342d;
+  --bloque: #b5bbc8;
+  --bloque-fond: #2a2d36;
+  --simulation: #7fd6e4;
+  --simulation-fond: #11343b;
+  --entete-fond: #0b0c12;
+  --entete-trait: #272a38;
+  --ombre: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px -14px rgb(0 0 0 / 60%);
 }
 
 :root[data-theme="light"] {
@@ -69,23 +96,34 @@ body {
   margin: 0;
   background: var(--fond);
   color: var(--texte);
-  font: 15px/1.45 var(--sans);
+  font: 15px/1.5 var(--sans);
 }
 
-.page {
+/* Largeur utile commune à l'en-tête, au contenu et au pied. */
+.cadre {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 16px 20px 32px;
+  padding: 0 24px;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
 }
 
 h2 {
   margin: 0;
   font-size: 1rem;
+  letter-spacing: -0.005em;
+}
+
+h3 {
+  margin: 18px 0 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--discret);
 }
 
 p {
@@ -96,7 +134,7 @@ code,
 .identifiant,
 .non-fiable {
   font-family: var(--mono);
-  font-size: 0.92em;
+  font-size: 0.9em;
 }
 
 .identifiant {
@@ -107,10 +145,10 @@ code,
 .non-fiable {
   unicode-bidi: plaintext;
   overflow-wrap: anywhere;
-  background: var(--fond);
+  background: var(--surface-2);
   border: 1px dashed var(--trait);
-  border-radius: 3px;
-  padding: 0 3px;
+  border-radius: 4px;
+  padding: 0 4px;
 }
 
 .discret {
@@ -123,47 +161,291 @@ code,
   font-style: italic;
 }
 
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* --- En-tête : une seule barre ardoise, comme la maquette. Marque, écrans, outils. --- */
 .entete {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--entete-fond);
+  color: var(--entete-texte);
+  border-bottom: 1px solid var(--entete-trait);
+  box-shadow: 0 6px 18px -14px rgb(0 0 0 / 60%);
+}
+
+.entete-barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0 28px;
+  min-height: 54px;
+}
+
+.marque {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.marque svg {
+  flex: none;
+}
+
+/* Sur l'ardoise de l'en-tête : table lavande, V et sièges clairs. Dans le pied : violet de la marque, sièges sombres. */
+.marque-fond {
+  fill: var(--entete-accent);
+}
+
+.marque-trait {
+  fill: none;
+  stroke: var(--entete-fond);
+  stroke-width: 2.2;
+}
+
+.marque-siege {
+  fill: var(--entete-discret);
+}
+
+.marque h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.onglets {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.onglets button {
+  position: relative;
+  min-height: 54px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  font-weight: 550;
+  color: var(--entete-discret);
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.onglets button:hover {
+  color: var(--entete-texte);
+  background: rgb(255 255 255 / 6%);
+}
+
+.onglets button[aria-current="page"] {
+  color: var(--entete-texte);
+}
+
+/* Trait de l'onglet courant : un seul élément dans la page, que la transition de vue fait glisser. */
+.onglet-trait {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--entete-accent);
+  animation: trait-pousse 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes trait-pousse {
+  from {
+    transform: scaleX(0.2);
+    opacity: 0;
+  }
+}
+
+.entete-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-left: auto;
+  padding: 8px 0;
+}
+
+.lecture-seule {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding-right: 14px;
+  border-right: 1px solid var(--entete-trait);
+  color: var(--entete-texte);
+  font-size: 0.86rem;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.lecture-seule svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.theme,
+.presenter {
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--entete-texte);
+  border: 1px solid var(--entete-trait);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease, transform 0.12s ease;
+}
+
+.theme {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.theme svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.theme:hover svg {
+  transform: rotate(40deg);
+}
+
+.theme:hover,
+.presenter:hover {
+  border-color: var(--entete-accent);
+  color: var(--entete-accent);
+  background: rgb(255 255 255 / 5%);
+}
+
+.theme:active,
+.presenter:active,
+.bouton-sortie:active {
+  transform: scale(0.97);
+}
+
+/* Le focus reste visible sur fond sombre. */
+.entete :focus-visible {
+  outline-color: var(--entete-accent);
+}
+
+/* --- Bande d'état : provenance et fraîcheur de chaque source, date du jour à droite. --- */
+.etat {
+  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+}
+
+.etat-barre {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px 24px;
-  margin-bottom: 12px;
+  gap: 6px 24px;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
-.lecture-seule {
+.etat-date {
   margin: 0;
-  color: var(--discret);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .fraicheur {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 18px;
+  gap: 4px 22px;
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  color: var(--discret);
+  font-variant-numeric: tabular-nums;
+}
+
+.fraicheur li {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Voyant : vert et qui bat tant que la source est lue, rouge et fixe quand elle est périmée. Le texte le dit aussi. */
+.fraicheur li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accepte);
+  animation: voyant 2s ease-out infinite;
 }
 
 .fraicheur-nom {
+  font-weight: 650;
+  color: var(--texte);
+}
+
+.fraicheur .perime {
+  color: var(--refuse);
   font-weight: 600;
 }
 
+.fraicheur .perime::before {
+  background: var(--refuse);
+  animation: none;
+}
+
+@keyframes voyant {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accepte) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.contenu {
+  padding-top: 20px;
+  padding-bottom: 8px;
+}
+
+/* --- Pastilles de provenance et d'horloge --- */
 .source,
 .horloge {
-  display: inline-block;
-  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 .source-reel {
   color: var(--accepte);
+  background: var(--accepte-fond);
 }
 
 .source-simulation {
@@ -173,12 +455,14 @@ code,
 
 .horloge {
   color: var(--accent);
+  background: var(--accent-fond);
 }
 
+/* --- Bandeaux --- */
 .bandeau {
-  margin: 0 0 10px;
-  padding: 10px 14px;
-  border-radius: 6px;
+  margin: 0 0 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
   border: 1px solid;
 }
 
@@ -188,10 +472,11 @@ code,
   border-color: var(--refuse);
 }
 
+/* Rayures : le bandeau de simulation se distingue même sans la couleur. */
 .bandeau-simule {
   color: var(--simulation);
-  background: var(--simulation-fond);
-  border-color: var(--simulation);
+  background: repeating-linear-gradient(-45deg, var(--simulation-fond) 0 14px, transparent 14px 28px), var(--surface);
+  border: 2px dashed var(--simulation);
 }
 
 .bandeau-alerte {
@@ -200,13 +485,21 @@ code,
   border-color: var(--humain);
 }
 
+/* --- Cartes --- */
 .panneau {
   background: var(--surface);
   border: 1px solid var(--trait);
-  border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
+  border-radius: var(--rayon);
+  box-shadow: var(--ombre);
+  padding: 18px 22px 20px;
+  margin-bottom: 20px;
   min-width: 0;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.panneau:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--trait));
+  box-shadow: var(--ombre), 0 14px 34px -22px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .panneau-entete {
@@ -214,23 +507,92 @@ code,
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 8px;
+  margin: -2px 0 14px;
+}
+
+.panneau-entete h2 {
+  font-size: 1.06rem;
+  font-weight: 650;
+}
+
+/* Titre d'écran, comme la maquette : grand titre, chapeau discret. */
+.vue-entete {
+  margin: 6px 0 18px;
+}
+
+.vue-titre {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.vue-chapeau {
+  margin: 2px 0 0;
+  color: var(--discret);
+}
+
+/* Un écran qui s'ouvre : son titre monte d'un cran, puis ses cartes, l'une après l'autre. */
+.vue-entete {
+  animation: entre 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.vue > .panneau,
+.vue > .grille-haut > .panneau,
+.vue > .grille-bas > .panneau {
+  animation: entre 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: 0.06s;
+}
+
+.vue > :nth-child(3),
+.vue > :nth-child(3) > .panneau {
+  animation-delay: 0.12s;
+}
+
+.vue > :nth-child(3) > .panneau + .panneau {
+  animation-delay: 0.18s;
+}
+
+.vue > :nth-child(n + 4),
+.vue > :nth-child(n + 4) > .panneau {
+  animation-delay: 0.22s;
+}
+
+.vue > :nth-child(n + 4) > .panneau + .panneau {
+  animation-delay: 0.28s;
+}
+
+@keyframes entre {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
 .grille-haut,
 .grille-bas {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 14px;
+  gap: 18px;
+}
+
+.grille-haut > .panneau,
+.grille-bas > .panneau {
+  margin-bottom: 0;
+}
+
+.grille-haut,
+.grille-bas {
+  margin-bottom: 18px;
 }
 
 .placable {
   margin: 4px 0 2px;
-  font-size: clamp(3rem, 8vw, 6rem);
-  font-weight: 700;
+  font-size: clamp(3rem, 7vw, 5.2rem);
+  font-weight: 750;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 
 .placable .unite {
@@ -246,31 +608,124 @@ code,
 
 .formule {
   color: var(--discret);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
+}
+
+/* --- Effet c : barre empilée du cash --- */
+.barre {
+  margin: 12px 0 4px;
+}
+
+.barre-svg {
+  display: block;
+  width: 100%;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.barre-fond {
+  fill: var(--surface-2);
+}
+
+/* Largeurs en attribut SVG, transition CSS : la barre glisse d'une lecture à l'autre. */
+.barre-segment {
+  stroke: var(--surface);
+  stroke-width: 3;
+  transition: x 0.8s ease, width 0.8s ease;
+}
+
+/* Chaque terme a sa couleur ET son motif dans la légende ; la valeur est écrite à côté. */
+.segment-dettes {
+  fill: var(--humain);
+  background: var(--humain);
+}
+
+.segment-reserve {
+  fill: var(--bloque);
+  background: var(--bloque);
+}
+
+.segment-placements-bloques {
+  fill: var(--refuse);
+  background: var(--refuse);
+}
+
+.segment-placable {
+  fill: var(--accent);
+  background: var(--accent);
+}
+
+.barre-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.84rem;
+}
+
+.barre-legende li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pastille-legende {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.barre-absente {
+  margin: 12px 0;
+}
+
+/* Compteur : la nouvelle valeur entre par le bas, sans valeur intermédiaire. */
+.roule {
+  display: inline-block;
+}
+
+.roule-actif {
+  animation: roule 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes roule {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .termes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
-  margin: 10px 0;
+  gap: 10px;
+  margin: 12px 0;
 }
 
 .termes div {
+  background: var(--surface-2);
   border: 1px solid var(--trait);
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  padding: 8px 12px;
 }
 
 .termes dt {
   color: var(--discret);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .termes dd {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
@@ -285,8 +740,7 @@ code,
   opacity: 0.55;
 }
 
-.perime-note,
-.fraicheur .perime {
+.perime-note {
   color: var(--refuse);
   font-weight: 600;
 }
@@ -295,14 +749,16 @@ code,
   color: var(--refuse);
   background: var(--refuse-fond);
   border-left: 4px solid var(--refuse);
-  padding: 6px 10px;
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
 }
 
 .alerte-ligne {
   color: var(--humain);
   background: var(--humain-fond);
   border-left: 4px solid var(--humain);
-  padding: 6px 10px;
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
 }
 
 .chargement,
@@ -311,8 +767,11 @@ code,
   padding: 10px 0;
 }
 
+/* --- Tableaux (décisions, délais, journal d'audit) --- */
 .defilement {
   overflow-x: auto;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
 }
 
 table {
@@ -330,15 +789,26 @@ th,
 td {
   text-align: left;
   vertical-align: top;
-  padding: 7px 10px 7px 0;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--trait);
 }
 
 thead th {
+  background: var(--surface-2);
   color: var(--discret);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   white-space: nowrap;
+}
+
+tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.defilement tbody tr:hover {
+  background: var(--surface-2);
 }
 
 tbody th {
@@ -347,16 +817,18 @@ tbody th {
 
 .duree {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 650;
 }
 
+/* --- Pastilles de statut : icône et mot, jamais la couleur seule --- */
 .decision {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 9px 2px 7px;
+  padding: 2px 10px 2px 7px;
   border: 1px solid currentColor;
   border-radius: 999px;
+  font-size: 0.86rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -384,6 +856,11 @@ tbody th {
   background: var(--accepte-fond);
 }
 
+.decision-bloque {
+  color: var(--bloque);
+  background: var(--bloque-fond);
+}
+
 .synthese {
   font-weight: 600;
 }
@@ -395,65 +872,84 @@ tbody th {
 }
 
 .hors-contrat li {
-  padding: 8px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--trait);
 }
 
+.hors-contrat li:last-child {
+  border-bottom: 0;
+}
+
+/* --- Pied de page --- */
 .pied {
-  margin-top: 8px;
+  margin-top: 12px;
+  padding: 14px 0 26px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--trait);
   color: var(--discret);
-  font-size: 0.85rem;
+  font-size: 0.84rem;
 }
 
-/* --- Navigation et écrans Incident, Journal, En attente --- */
-h3 {
-  margin: 16px 0 6px;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--discret);
-}
-
-button {
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.onglets {
+.pied-haut {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.pied-marque {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texte);
+}
+
+.pied-marque .marque-fond {
+  fill: var(--accent);
+}
+
+.pied-marque .marque-trait {
+  stroke: var(--surface);
+}
+
+.pied-marque .marque-siege {
+  fill: var(--texte);
+}
+
+.pied-texte {
+  margin-top: 6px;
+}
+
+.pied-mention {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--trait);
+  margin: 0 0 6px;
+  padding: 2px 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--simulation);
+  background: var(--simulation-fond);
+  font-weight: 700;
 }
 
-.onglets button {
-  padding: 8px 14px;
-  background: none;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  font-weight: 600;
-  color: var(--discret);
-}
-
-.onglets button[aria-current="page"] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
+/* --- Écrans Incident, Journal, En attente --- */
 .fiche,
 .compteurs {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 6px 18px;
+  gap: 10px 18px;
   margin: 0;
 }
 
 .fiche dt,
 .compteurs dt {
   color: var(--discret);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .fiche dd,
@@ -461,30 +957,44 @@ button {
   margin: 0;
 }
 
+.compteurs > div {
+  background: var(--surface-2);
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
 .compteurs dd {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 1.9rem;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
+  color: var(--accent);
 }
 
 .selecteur {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 12px 0;
+  gap: 8px;
+  margin: 14px 0;
   padding: 0;
   list-style: none;
 }
 
 .selecteur button {
-  padding: 5px 10px;
-  background: var(--fond);
+  padding: 6px 12px;
+  background: var(--surface-2);
   border: 1px solid var(--trait);
-  border-radius: 6px;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.selecteur button:hover {
+  border-color: var(--accent);
 }
 
 .selecteur button[aria-pressed="true"] {
   border-color: var(--accent);
+  background: var(--accent-fond);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
@@ -499,14 +1009,14 @@ button {
 
 .extrait {
   margin: 0;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border: 1px dashed var(--refuse);
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .extrait figcaption {
   color: var(--refuse);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -523,9 +1033,9 @@ button {
 }
 
 .verdict {
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-left: 4px solid;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 10px 10px 0;
 }
 
 .verdict-ok {
@@ -544,9 +1054,10 @@ button {
 }
 
 .limite {
+  background: var(--surface-2);
   border: 1px solid var(--trait);
-  border-radius: 6px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
 }
 
 .cas {
@@ -556,19 +1067,637 @@ button {
 }
 
 .cas li {
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--trait);
+}
+
+.cas li:last-child {
+  border-bottom: 0;
 }
 
 .cas dd {
   font-size: 1.1rem;
 }
 
-/* --- Finition : clavier, thème, écrans étroits --- */
+.cas-ligne {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.cas-corps {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Effet b : anneau de compte à rebours, redessiné à chaque seconde de l'horloge locale --- */
+.anneau {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  color: var(--humain);
+}
+
+.anneau-absent {
+  color: var(--discret);
+  font-size: 1.2rem;
+}
+
+.anneau-fond {
+  fill: none;
+  stroke: var(--humain-fond);
+  stroke-width: 7;
+}
+
+.anneau-reste {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s linear;
+}
+
+.anneau-urgent {
+  color: var(--refuse);
+}
+
+.anneau-urgent .anneau-fond {
+  stroke: var(--refuse-fond);
+}
+
+.anneau-echu {
+  color: var(--refuse);
+}
+
+.anneau-texte {
+  fill: var(--texte);
+  font: 700 13px var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.attente-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attente-liste li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- Diagramme du flux --- */
+.flux {
+  margin: 0;
+}
+
+.flux-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+}
+
+/* Pilules au repos : fond blanc, filet violet pâle, comme la maquette. */
+.noeud rect {
+  fill: var(--surface);
+  stroke: var(--trait);
+  stroke-width: 1.5;
+  transition: fill 0.4s ease, stroke 0.4s ease;
+}
+
+.noeud-pastille {
+  fill: var(--accent-fond);
+  transition: fill 0.4s ease;
+}
+
+.noeud-icone path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.4s ease;
+}
+
+.noeud-nom {
+  fill: var(--texte);
+  font: 600 15px var(--sans);
+}
+
+.noeud-sous {
+  fill: var(--discret);
+  font: 11.5px var(--sans);
+}
+
+/* Sur le chemin pris : la pastille prend la couleur de l'issue, l'icône passe en blanc. */
+.noeud[data-etat="actif"] .noeud-pastille {
+  fill: var(--ton);
+}
+
+.noeud[data-etat="actif"] .noeud-icone path {
+  stroke: var(--surface);
+}
+
+.noeud-passe rect {
+  stroke-width: 2.5;
+}
+
+/* Nœud d'arrivée : trait double, l'issue se lit sans la couleur. */
+.noeud-fin rect {
+  stroke-width: 4;
+}
+
+.arete {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.arete-repos {
+  stroke: var(--accent);
+  stroke-opacity: 0.35;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 6;
+}
+
+.arete-active {
+  stroke-width: 3.5;
+}
+
+.ton-accepte {
+  --ton: var(--accepte);
+  --ton-fond: var(--accepte-fond);
+}
+
+.ton-humain {
+  --ton: var(--humain);
+  --ton-fond: var(--humain-fond);
+}
+
+.ton-refuse {
+  --ton: var(--refuse);
+  --ton-fond: var(--refuse-fond);
+}
+
+.ton-bloque {
+  --ton: var(--bloque);
+  --ton-fond: var(--bloque-fond);
+}
+
+.ton-repos {
+  --ton: var(--trait);
+}
+
+.arete-active,
+.noeud[data-etat="actif"] rect {
+  stroke: var(--ton);
+}
+
+.noeud[data-etat="actif"] rect {
+  fill: var(--ton-fond);
+}
+
+.fleche path {
+  fill: var(--ton);
+}
+
+.flux-legende {
+  margin-top: 8px;
+  line-height: 1.9;
+}
+
+/* Effet a : une issue neuve trace son chemin, arête après arête, dans le sens
+   de la demande, puis son nœud d'arrivée s'auréole. Une fois par arrivée. */
+.flux-nouveau .arete-active {
+  stroke-dasharray: 100;
+  animation: trace 0.42s ease-out both;
+}
+
+.flux-nouveau .noeud[data-etat="actif"] rect {
+  animation: allume 0.42s ease-out both;
+}
+
+.flux-nouveau .noeud-fin rect {
+  animation: allume 0.42s ease-out both, halo 1.4s ease-out both;
+}
+
+.flux-nouveau .rang-1 { animation-delay: 0.3s; }
+.flux-nouveau .rang-2 { animation-delay: 0.6s; }
+.flux-nouveau .rang-3 { animation-delay: 0.9s; }
+.flux-nouveau .rang-4 { animation-delay: 1.2s; }
+.flux-nouveau .rang-5 { animation-delay: 1.5s; }
+.flux-nouveau .rang-6 { animation-delay: 1.8s; }
+.flux-nouveau .rang-7 { animation-delay: 2.1s; }
+
+.flux-nouveau .noeud.rang-1 rect { animation-delay: 0.3s; }
+.flux-nouveau .noeud.rang-2 rect { animation-delay: 0.6s; }
+.flux-nouveau .noeud.rang-3 rect { animation-delay: 0.9s; }
+.flux-nouveau .noeud.rang-4 rect { animation-delay: 1.2s; }
+.flux-nouveau .noeud.rang-5 rect { animation-delay: 1.5s; }
+.flux-nouveau .noeud.rang-6 rect { animation-delay: 1.8s; }
+.flux-nouveau .noeud.rang-7 rect { animation-delay: 2.1s; }
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes allume {
+  from {
+    fill: var(--surface-2);
+    stroke: var(--trait);
+  }
+}
+
+@keyframes halo {
+  0% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  40% {
+    filter: drop-shadow(0 0 10px var(--ton));
+  }
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+}
+
+
+/* --- Effet d : incidents récents en cartes, l'arrivée glisse en tête --- */
+.incidents-grille {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.incidents-titre {
+  margin-top: 0;
+}
+
+.incidents-liste {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carte-incident button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 14px 12px 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.carte-incident button:hover {
+  border-color: var(--accent);
+  transform: translateX(2px);
+}
+
+/* Carte choisie : liseré gauche, comme la maquette ; aria-pressed le dit aussi. */
+.carte-incident button[aria-pressed="true"] {
+  background: var(--accent-fond);
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.carte-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.carte-heure {
+  margin-left: auto;
+  color: var(--discret);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.carte-titre {
+  font-weight: 650;
+}
+
+.carte-agent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  color: var(--discret);
+  font-size: 0.86rem;
+}
+
+.statut {
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+}
+
+.statut-ouvert {
+  color: var(--refuse);
+  background: var(--refuse-fond);
+}
+
+.statut-qualifie {
+  color: var(--bloque);
+  background: var(--bloque-fond);
+}
+
+.carte-arrivee {
+  animation: glisse 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.carte-arrivee button {
+  animation: repere 1.6s ease-out both;
+}
+
+@keyframes glisse {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes repere {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow: 0 0 0 4px var(--accent-fond), 0 0 0 5px var(--accent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Pastille « en pause » : un point qui pulse tant que l'agent est en pause. */
+.pastille-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px 0 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--refuse);
+  background: var(--refuse-fond);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pastille-pause svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.pastille-pause-point {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pastille-pause-point::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.8s ease-out infinite;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
+/* --- Effet e : mode présentation --- */
+.presenter kbd,
+.bouton-sortie kbd {
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  font: 600 0.75rem var(--mono);
+}
+
+
+.mode-presentation .entete {
+  display: none;
+}
+
+.mode-presentation .contenu {
+  max-width: none;
+  padding-top: 16px;
+}
+
+.presentation-barre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bouton-sortie {
+  padding: 6px 14px;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 999px;
+}
+
+.bouton-sortie:hover {
+  border-color: var(--accent);
+}
+
+.mode-presentation .panneau-flux-grand {
+  animation: entre 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.mode-presentation .panneau-flux-grand .flux-svg {
+  max-height: 64vh;
+}
+
+@media (max-width: 1100px) {
+  .incidents-grille {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Lu par les lecteurs d'écran, invisible à l'œil. */
+.visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.flux-titre {
+  font-weight: 650;
+}
+
+.flux-note {
+  font-size: 0.84rem;
+}
+
+/* --- Frise d'étapes --- */
+.frise {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 14px 0 6px;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+}
+
+.etape {
+  position: relative;
+  flex: 1 1 110px;
+  min-width: 110px;
+  padding: 0 8px 6px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+/* Trait entre deux étapes. */
+.etape + .etape::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  right: calc(50% + 20px);
+  width: calc(100% - 40px);
+  height: 2px;
+  background: var(--trait);
+}
+
+.etape-fait + .etape::before {
+  background: var(--accepte);
+}
+
+.etape-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--trait);
+  background: var(--surface);
+  color: var(--discret);
+}
+
+.etape-icone svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.etape-fait .etape-icone {
+  border-color: var(--accepte);
+  background: var(--accepte);
+  color: var(--surface);
+}
+
+.etape-echec .etape-icone {
+  border-color: var(--refuse);
+  background: var(--refuse-fond);
+  color: var(--refuse);
+}
+
+.etape-attente .etape-icone {
+  border-color: var(--humain);
+  background: var(--humain-fond);
+  color: var(--humain);
+}
+
+.etape-nom {
+  display: block;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.etape-etat {
+  display: block;
+  color: var(--discret);
+  font-size: 0.76rem;
+}
+
+/* Écran étroit : la frise devient une liste verticale, le trait suit à gauche. */
+@media (max-width: 900px) {
+  .frise {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .etape {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    column-gap: 12px;
+    flex: none;
+    min-width: 0;
+    padding: 0;
+    text-align: left;
+  }
+
+  .etape-icone {
+    grid-row: span 2;
+  }
+
+  .etape-nom {
+    margin-top: 0;
+  }
+
+  .etape + .etape::before {
+    top: -10px;
+    right: auto;
+    left: 15px;
+    width: 2px;
+    height: 10px;
+  }
+}
+
+/* --- Clavier --- */
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 main:focus {
@@ -582,28 +1711,15 @@ main:focus {
   top: 8px;
   padding: 8px 14px;
   background: var(--surface);
+  color: var(--texte);
   border: 2px solid var(--accent);
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
   z-index: 10;
 }
 
 .evitement:focus {
   left: 12px;
-}
-
-.theme {
-  padding: 5px 12px;
-  background: var(--surface);
-  border: 1px solid var(--trait);
-  border-radius: 999px;
-  font-size: 0.85rem;
-}
-
-.onglets button:hover,
-.selecteur button:hover,
-.theme:hover {
-  color: var(--accent);
 }
 
 .chargement::before {
@@ -624,12 +1740,6 @@ main:focus {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .chargement::before {
-    animation: none;
-  }
-}
-
 /* Portable et fenêtre partagée : les panneaux passent en une colonne. */
 @media (max-width: 1100px) {
   .grille-haut,
@@ -640,11 +1750,11 @@ main:focus {
 
 /* Écran étroit : chaque ligne de tableau devient une fiche, chaque cellule porte son intitulé. */
 @media (max-width: 760px) {
-  .page {
-    padding: 10px 12px 24px;
+  .cadre {
+    padding: 0 12px;
   }
 
-  .entete {
+  .entete-haut {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -672,12 +1782,367 @@ main:focus {
   td,
   tbody th {
     border: 0;
-    padding: 2px 0;
+    padding: 2px 12px;
   }
 
   td[data-label]::before {
     content: attr(data-label) " : ";
     color: var(--discret);
     font-size: 0.8rem;
+  }
+}
+
+/* --- Chargement : silhouette du contenu, balayée par un reflet --- */
+.squelette {
+  display: grid;
+  gap: 10px;
+  padding: 2px 0 6px;
+}
+
+.squelette span {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(100deg, var(--surface-2) 30%, var(--accent-fond) 50%, var(--surface-2) 70%);
+  background-size: 300% 100%;
+  animation: reflet 1.4s ease-in-out infinite;
+}
+
+.squelette span:nth-child(1) {
+  width: 46%;
+  height: 28px;
+}
+
+.squelette span:nth-child(2) {
+  width: 88%;
+}
+
+.squelette span:nth-child(3) {
+  width: 64%;
+}
+
+@keyframes reflet {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* --- Transition de vue : l'écran sortant s'efface, l'entrant monte ; le trait de l'onglet glisse --- */
+@media (prefers-reduced-motion: no-preference) {
+  .vue {
+    view-transition-name: vue;
+  }
+
+  .onglet-trait {
+    view-transition-name: onglet-trait;
+  }
+
+  .pied {
+    view-transition-name: pied;
+  }
+}
+
+::view-transition-old(vue) {
+  animation: vue-sort 0.14s ease-in both;
+}
+
+::view-transition-new(vue) {
+  animation: vue-entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
+}
+
+::view-transition-group(onglet-trait) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+
+::view-transition-group(pied) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes vue-sort {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes vue-entre {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* --- Compteurs : la tuile se soulève au survol --- */
+.compteurs > div {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compteurs > div:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--trait));
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* --- Flux : des tirets clairs circulent sur le chemin pris, dans le sens de la demande --- */
+.arete-flot {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.9;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 3 17;
+  pointer-events: none;
+  animation: flot 0.9s linear infinite;
+}
+
+@keyframes flot {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Issue neuve : les tirets n'apparaissent qu'une fois l'arête tracée. */
+.flux-nouveau .arete-flot {
+  opacity: 0;
+  animation: flot 0.9s linear infinite, apparait 0.3s ease-out forwards;
+}
+
+.flux-nouveau .arete-flot.rang-0 { animation-delay: 0s, 0.42s; }
+.flux-nouveau .arete-flot.rang-1 { animation-delay: 0s, 0.72s; }
+.flux-nouveau .arete-flot.rang-2 { animation-delay: 0s, 1.02s; }
+.flux-nouveau .arete-flot.rang-3 { animation-delay: 0s, 1.32s; }
+.flux-nouveau .arete-flot.rang-4 { animation-delay: 0s, 1.62s; }
+.flux-nouveau .arete-flot.rang-5 { animation-delay: 0s, 1.92s; }
+.flux-nouveau .arete-flot.rang-6 { animation-delay: 0s, 2.22s; }
+.flux-nouveau .arete-flot.rang-7 { animation-delay: 0s, 2.52s; }
+
+@keyframes apparait {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pilule au survol : elle se détache légèrement. */
+.noeud {
+  transition: filter 0.2s ease;
+}
+
+.noeud:hover {
+  filter: drop-shadow(0 4px 8px color-mix(in srgb, var(--accent) 28%, transparent));
+}
+
+/* --- Frise : les étapes s'allument l'une après l'autre à l'ouverture --- */
+.etape-icone {
+  animation: eclot 0.4s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.etape:nth-child(2) .etape-icone { animation-delay: 0.07s; }
+.etape:nth-child(3) .etape-icone { animation-delay: 0.14s; }
+.etape:nth-child(4) .etape-icone { animation-delay: 0.21s; }
+.etape:nth-child(5) .etape-icone { animation-delay: 0.28s; }
+.etape:nth-child(6) .etape-icone { animation-delay: 0.35s; }
+.etape:nth-child(7) .etape-icone { animation-delay: 0.42s; }
+.etape:nth-child(n + 8) .etape-icone { animation-delay: 0.49s; }
+
+@keyframes eclot {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* --- Rapport d'incident : carte de détail, comme la maquette --- */
+.rapport {
+  min-width: 0;
+  padding: 18px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 14px;
+  animation: entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.rapport-entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.rapport-titre {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.rapport-entete .statut {
+  padding: 2px 12px;
+  font-size: 0.86rem;
+}
+
+.rapport-date {
+  margin: 0 0 0 auto;
+  color: var(--discret);
+  font-size: 0.86rem;
+}
+
+.rapport h3 {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--trait);
+}
+
+.tuiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.tuile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  animation: entre 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+}
+
+.tuile:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.tuile:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.tuile:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--trait));
+}
+
+.tuile-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  color: var(--accent);
+}
+
+.tuile-icone svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tuile-corps {
+  display: grid;
+  min-width: 0;
+}
+
+.tuile-titre {
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+.tuile-valeur {
+  font-size: 1.25rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.tuile-vide .tuile-valeur {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--discret);
+}
+
+.tuile-vide .tuile-icone {
+  color: var(--discret);
+}
+
+.tuile-mesure {
+  color: var(--discret);
+  font-size: 0.76rem;
+}
+
+/* Trois compteurs tiennent sur une rangée ; la liste d'incidents respire sous eux. */
+.compteurs {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.incidents-grille {
+  margin-top: 18px;
+}
+
+/* --- Pied : marque à gauche, mention à droite --- */
+.pied {
+  margin-top: 28px;
+}
+
+/* Écran étroit : la barre passe sur plusieurs rangées, les écrans défilent de côté. */
+@media (max-width: 900px) {
+  .entete {
+    position: static;
+  }
+
+  .entete-barre {
+    padding-top: 6px;
+  }
+
+  .marque {
+    min-height: 42px;
+  }
+
+  .onglets {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .onglets button {
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
+  .lecture-seule {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .rapport-date {
+    margin-left: 0;
+  }
+}
+
+/* Mouvement réduit : aucune animation, aucune transition, partout. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

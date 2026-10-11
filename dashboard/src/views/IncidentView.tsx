@@ -3,8 +3,11 @@ import type { IncidentItem } from "../api/types.ts";
 import { ClockTag, Amount, DecisionBadge, OpaqueId, SourceTag, Untrusted } from "../components/atoms.tsx";
 import { DelaysNote, DelaysTable } from "../components/DelaysPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
+import { Counter } from "../components/Rolling.tsx";
 import { chainPausedAgents, latestIncidents } from "../domain/activity.ts";
-import { chainPauseTimestamp } from "../domain/delays.ts";
+import { useArrival } from "../hooks/useArrival.ts";
+import { PauseBadge } from "../components/PauseBadge.tsx";
+import { chainPauseTimestamp, computeDelays, type Delay } from "../domain/delays.ts";
 import {
   ACTION_TAKEN_LABELS,
   HUMAN_DECISION_LABELS,
@@ -14,32 +17,83 @@ import {
   detectorCodeLabel,
 } from "../domain/labels.ts";
 import { readDecision } from "../domain/reasons.ts";
-import { formatDateTime, formatTime } from "../lib/format.ts";
+import { formatDateTime, formatDurationMs, formatDurationS, formatTime } from "../lib/format.ts";
 import { EXCERPT_MAX } from "../lib/safeText.ts";
 import { sameWorld, vaultFed, type ViewProps } from "./shared.ts";
+
+/** Les trois temps de la réponse, en tuiles. Chaque tuile nomme la mesure qu'elle montre et son horloge. */
+const TILES = [
+  { key: "detection", title: "Détection", main: "arrivee-detection", other: "arrivee-observation", icon: <path d="M9 3.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11M13 13l4 4" /> },
+  { key: "pause", title: "Mise en pause", main: "detection-pause", other: "observation-pause", icon: <path d="M10 3a7 7 0 1 0 0 14a7 7 0 1 0 0-14M8 7.5v5M12 7.5v5" /> },
+  { key: "alerte", title: "Alerte", main: "detection-alerte", other: "observation-alerte", icon: <path d="M5 13.5V9a5 5 0 0 1 10 0v4.5l1.5 1.5h-13zM8.5 17.5h3" /> },
+] as const;
+
+function DelayTiles({ delays }: { delays: Delay[] }) {
+  const find = (key: string): Delay | undefined => delays.find((d) => d.key === key);
+  return (
+    <ul className="tuiles" aria-label="Temps de la réponse" data-testid="tuiles-delais">
+      {TILES.map((tile) => {
+        // La mesure de la spec si elle tient sur une seule horloge ; sinon celle de la même attaque qui y tient.
+        const main = find(tile.main);
+        const other = find(tile.other);
+        const shown = main && main.value !== null ? main : other && other.value !== null ? other : main;
+        const measured = shown !== undefined && shown.value !== null && shown.clock !== null;
+        return (
+          <li key={tile.key} className={measured ? "tuile" : "tuile tuile-vide"} data-tuile={tile.key}>
+            <span className="tuile-icone">
+              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+                {tile.icon}
+              </svg>
+            </span>
+            <span className="tuile-corps">
+              <span className="tuile-titre">{tile.title}</span>
+              <span className="tuile-valeur">
+                {shown && shown.value !== null && shown.clock !== null
+                  ? shown.clock === "bloc"
+                    ? formatDurationS(shown.value)
+                    : formatDurationMs(shown.value)
+                  : "non mesuré"}
+              </span>
+              <span className="tuile-mesure">
+                {shown ? shown.label : "mesure absente"}
+                {shown && shown.clock !== null && (
+                  <>
+                    {" "}
+                    <ClockTag clock={shown.clock} />
+                  </>
+                )}
+              </span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function Report({ item, chainPause, fakeVault }: { item: IncidentItem; chainPause: number | null; fakeVault: boolean }) {
   const { report } = item;
   const contract = report.contract ? readDecision({ ...report.contract, effective_decision: report.contract.decision }) : null;
   return (
     <div className="rapport" data-testid="rapport">
+      <header className="rapport-entete">
+        <p className="rapport-titre">
+          <OpaqueId value={report.incident_id} /> <span aria-hidden="true">—</span> {TRIGGER_LABELS[report.trigger]}
+        </p>
+        <span className={report.human_decision === null ? "statut statut-ouvert" : "statut statut-qualifie"}>
+          <strong data-testid="etat-incident">{report.human_decision === null ? "ouvert" : "qualifié par un humain"}</strong>
+        </span>
+        <p className="rapport-date">
+          Rapport généré le {formatDateTime(report.generated_at_ms)} <ClockTag clock="journal" />
+        </p>
+      </header>
+
+      <DelayTiles delays={computeDelays(report, chainPause)} />
+
       <dl className="fiche">
-        <div>
-          <dt>Incident</dt>
-          <dd>
-            <OpaqueId value={report.incident_id} /> ·{" "}
-            <strong data-testid="etat-incident">{report.human_decision === null ? "ouvert" : "qualifié par un humain"}</strong>
-          </dd>
-        </div>
         <div>
           <dt>Déclencheur</dt>
           <dd>{TRIGGER_LABELS[report.trigger]}</dd>
-        </div>
-        <div>
-          <dt>Rapport généré</dt>
-          <dd>
-            {formatDateTime(report.generated_at_ms)} <ClockTag clock="journal" />
-          </dd>
         </div>
         <div>
           <dt>Demandes</dt>
@@ -203,6 +257,9 @@ export function IncidentView({ view }: { view: ViewProps }) {
   const { relay, response, sources, now } = view;
   const [selected, setSelected] = useState<string | null>(null);
   const linked = sameWorld(sources);
+  // Effet d : un incident apparu depuis l'ouverture de la page. Les plus anciens d'abord pour useArrival.
+  const known = response.data ? latestIncidents(response.data.incidents) : null;
+  const arrival = useArrival<{ key: string }>([known ? [...known].reverse().map((i) => ({ key: i.report.incident_id })) : null]);
   return (
     <>
       <Panel title="Incidents" id="titre-incidents" source={sources.response} snapshot={response} now={now}>
@@ -215,39 +272,67 @@ export function IncidentView({ view }: { view: ViewProps }) {
             current && linked && relay.data && current.report.contract
               ? chainPauseTimestamp(relay.data.events, current.report.authority_chain.agent_id, current.report.contract.block_number)
               : null;
+          // Agents en pause : hors chaîne (service de réponse), sur la chaîne (événements, seulement s'ils sont du même monde).
+          const offchain = new Set(data.pausedAgents.filter((p) => p.scope === "OFFCHAIN").map((p) => p.agent_id));
+          const onchain = new Set(linked && relay.data ? chainPausedAgents(relay.data.events).map((p) => p.agentId) : []);
           return (
             <>
               <dl className="compteurs">
                 <div>
                   <dt>Incidents ouverts</dt>
-                  <dd data-testid="compteur-ouverts">{open}</dd>
+                  <dd data-testid="compteur-ouverts">
+                    <Counter value={open} />
+                  </dd>
                 </div>
                 <div>
                   <dt>Passées la porte puis bloquées par le contrat</dt>
-                  <dd data-testid="compteur-manquees">{missed}</dd>
+                  <dd data-testid="compteur-manquees">
+                    <Counter value={missed} />
+                  </dd>
                 </div>
               </dl>
               {incidents.length === 0 ? (
                 <p className="vide">Aucun incident.</p>
               ) : (
-                <>
-                  <ul className="selecteur" aria-label="Choisir un incident">
-                    {incidents.map((i) => (
-                      <li key={i.report.incident_id}>
-                        <button
-                          type="button"
-                          data-ui="navigation"
-                          aria-pressed={i === current}
-                          onClick={() => setSelected(i.report.incident_id)}
-                        >
-                          <OpaqueId value={i.report.incident_id} /> · {TRIGGER_LABELS[i.report.trigger]} ·{" "}
-                          {i.report.human_decision === null ? "ouvert" : "qualifié"}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  {current && <Report fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
-                </>
+                <div className="incidents-grille">
+                  <div className="incidents-colonne">
+                    <h3 className="incidents-titre">Incidents récents</h3>
+                    <ul className="incidents-liste" aria-label="Choisir un incident">
+                      {incidents.map((i) => {
+                        const id = i.report.incident_id;
+                        const agent = i.report.authority_chain.agent_id;
+                        const fresh = arrival !== null && arrival.item.key === id;
+                        const scopes = [offchain.has(agent) ? "hors chaîne" : null, onchain.has(agent) ? "sur la chaîne" : null].filter((x) => x !== null);
+                        return (
+                          <li
+                            // Nouvelle clé à l'arrivée : la carte rejoue son entrée, une fois.
+                            key={fresh ? `${id}:${arrival.count}` : id}
+                            className={fresh ? "carte-incident carte-arrivee" : "carte-incident"}
+                            data-testid="carte-incident"
+                            data-arrivee={fresh ? "true" : "false"}
+                          >
+                            <button type="button" data-ui="navigation" aria-pressed={i === current} onClick={() => setSelected(id)}>
+                              <span className="carte-ligne">
+                                <OpaqueId value={id} />
+                                <span className={i.report.human_decision === null ? "statut statut-ouvert" : "statut statut-qualifie"}>
+                                  {i.report.human_decision === null ? "ouvert" : "qualifié"}
+                                </span>
+                                <span className="carte-heure">{formatTime(i.report.generated_at_ms)}</span>
+                              </span>
+                              <span className="carte-titre">{TRIGGER_LABELS[i.report.trigger]}</span>
+                              <span className="carte-agent">
+                                Agent <OpaqueId value={agent} />
+                                {scopes.length > 0 && <PauseBadge scopes={scopes} />}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  {/* Nouvelle clé à chaque incident choisi : le rapport entre en fondu. */}
+                  {current && <Report key={current.report.incident_id} fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
+                </div>
               )}
             </>
           );
@@ -264,7 +349,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
               <ul className="hors-contrat">
                 {offchain.map((p) => (
                   <li key={`${p.agent_id}:${p.paused_at_ms}`} data-testid="agent-en-pause">
-                    Agent <OpaqueId value={p.agent_id} /> en pause depuis {formatTime(p.paused_at_ms)} <ClockTag clock="journal" />{" "}
+                    <PauseBadge scopes={["hors chaîne"]} /> Agent <OpaqueId value={p.agent_id} /> en pause depuis {formatTime(p.paused_at_ms)} <ClockTag clock="journal" />{" "}
                     <span className="discret">
                       · incident <OpaqueId value={p.incident_id} />
                     </span>
@@ -283,7 +368,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
               <ul className="hors-contrat">
                 {onchain.map((p) => (
                   <li key={p.agentId} data-testid="agent-en-pause-chaine">
-                    Agent <OpaqueId value={p.agentId} /> en pause depuis le bloc {p.blockNumber} ({formatTime(p.blockTimestamp * 1000)}){" "}
+                    <PauseBadge scopes={["sur la chaîne"]} /> Agent <OpaqueId value={p.agentId} /> en pause depuis le bloc {p.blockNumber} ({formatTime(p.blockTimestamp * 1000)}){" "}
                     <ClockTag clock="bloc" />
                   </li>
                 ))}
