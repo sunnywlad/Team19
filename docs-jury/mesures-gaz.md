@@ -5,10 +5,9 @@ Nous avons mesuré les deux branches séparément, sans modifier le code :
 révision `cf7d1f3` pour le coffre. Les chiffres ci-dessous viennent de
 `forge build --sizes`, `forge test --gas-report` et des tests ciblés indiqués.
 
-Les sorties brutes sont conservées dans
-`Team19-notes/logs/gas-report-marche.log` et
-`Team19-notes/logs/gas-report-vault.log`. Ces journaux contiennent aussi les
-sorties `forge test --summary` et `forge config --json`.
+Les extraits des sorties sont dans
+[preuves/gas-report-marche.md](preuves/gas-report-marche.md) et
+[preuves/gas-report-vault.md](preuves/gas-report-vault.md).
 
 ## Compilateur et méthode
 

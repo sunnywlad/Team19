@@ -21,11 +21,11 @@ Nous avons exécuté :
 
 Pour le coffre, Forge a utilisé une sortie et un cache temporaires distincts. Slither a analysé une copie temporaire du worktree, sans .git. La bibliothèque forge-std existante a été référencée en lecture seule pour le marché : le worktree neuf avait un sous-module vide, et la tentative automatique de téléchargement a échoué avant la compilation réussie.
 
-Les sorties brutes Slither sont conservées hors dépôt dans Team19-notes/logs/slither-marche.log et Team19-notes/logs/slither-vault.log. Résultats : 36 alertes sur le marché, 57 sur la branche du coffre, dont 36 communes et 21 propres à ArgentVault. Le code de sortie 255 de Slither correspond ici à des alertes trouvées ; les deux analyses se sont achevées.
+Les alertes Slither sont extraites dans docs-jury/preuves/slither-marche.md et docs-jury/preuves/slither-vault.md. Résultats : 36 alertes sur le marché, 57 sur la branche du coffre, dont 36 communes et 21 propres à ArgentVault. Le code de sortie 255 de Slither correspond ici à des alertes trouvées ; les deux analyses se sont achevées.
 
 La configuration L1 est revue manuellement : Slither n'analyse ni une genèse JSON ni validatorOnly. Les précompilés sont appelés par interface ; leur implémentation Subnet-EVM et les contrats préalloués en bytecode dans la genèse ne sont pas audités en source. Les preuves d'accès au réseau restent celles des contrôles historiques lus.
 
-Nous avons lu les preuves historiques de la scène dans Team19-notes/logs/scene-aws.log et les contrôles réseau dans Team19-notes/etat-phase-F.md. Nous n'avons rejoué ni déploiement ni scène sur le réseau pendant cette revue. Les tests hors chaîne ne sont pas réexécutés ici.
+Nous avons lu les preuves historiques de la scène dans docs-jury/preuves/scene-aws.md. Les contrôles réseau du L1 (validatorOnly, RPC lié à l'interface locale) ont été faits à la mise en place du nœud ; nous en avons relu le compte rendu, sans les rejouer. Nous n'avons rejoué ni déploiement ni scène sur le réseau pendant cette revue. Les tests hors chaîne ne sont pas réexécutés ici.
 
 ### Tests mesurés par fichier
 
@@ -97,9 +97,9 @@ Sources : src/VerificationMarket.sol:60, :92, :110, :137, :197 ; src/DrawnVerifi
 | Plaçable limité par dettes, réserve et placements Held | ArgentVault.sol:384, :491 | test_Scenario7_PlacementTropEleve, test_Cas1_placementBloque_heldPlacements ; invariant_I3_PlacementSousReserve | Prouvé dans les séquences testées ; mutation des engagements pendant hold non couverte, M4 |
 | Pause interdit les paiements ; reprise propriétaire ; libération sans paiement reste possible | ArgentVault.sol:211, :238, :313, :340 | test_Pause_coffre_aucuneSortie_seulProprietaireReprend, test_Cas1_approbationAgentEnPause_echoue_expirePossible | Prouvé par un test |
 | Aucun retrait libre du coffre | ArgentVault.sol:160, :208 ; IArgentVault.sol:208 | Lecture exhaustive de l'interface et de l'implémentation ; test_Fund_montantNulEtEnvoiDirect pour l'envoi direct | Conçu, absence de fonction constatée |
-| Transaction d'une adresse extérieure refusée | infra/l1/fuji/genesis-fuji.json:30 | Team19-notes/logs/scene-aws.log:29 et :33, adresse financée puis rejetée | Prouvé par la scène historique |
-| Synchronisation réservée aux validateurs | infra/l1/fuji/subnet-config.json:2 | Team19-notes/etat-phase-F.md:37 et :39, observateur non synchronisé ; contre-épreuve locale | Prouvé par les contrôles historiques lus |
-| RPC lié à l'interface locale, accès par tunnel | infra/l1/fuji/node-validator.json:11 ; infra/l1/README.md:16 | Team19-notes/etat-phase-F.md:38 | Prouvé par les contrôles historiques ; intrusion complète non couverte |
+| Transaction d'une adresse extérieure refusée | infra/l1/fuji/genesis-fuji.json:30 | docs-jury/preuves/scene-aws.md, étape (a), adresse financée puis rejetée | Prouvé par la scène historique |
+| Synchronisation réservée aux validateurs | infra/l1/fuji/subnet-config.json:2 | Contrôle à la mise en place : un nœud observateur non validateur reste non synchronisé ; contre-épreuve locale avec validatorOnly désactivé | Prouvé par les contrôles historiques lus |
+| RPC lié à l'interface locale, accès par tunnel | infra/l1/fuji/node-validator.json:11 ; infra/l1/README.md:16 | Contrôle à la mise en place : RPC écouté sur 127.0.0.1 seulement, port RPC jamais ouvert dans le pare-feu | Prouvé par les contrôles historiques ; intrusion complète non couverte |
 
 ## Constats
 
@@ -109,7 +109,7 @@ Les gravités expriment l'effet sur les propriétés annoncées, avec les préco
 
 Un acteur capable d'atteindre le RPC peut signer comme les comptes de démo déjà admis. Il peut usurper demandeur et vérificateurs, déplacer leurs jetons disponibles et produire leurs votes. La TxAllowList protège les adresses, pas le secret des clés. Le contrôle réseau limite l'accès, sans restaurer l'indépendance des identités.
 
-Preuves : script/deploy-all.sh:96 et :175 ; script/attack-scene.sh:20 ; Team19-notes/etat-run.md:61 et :76. La genèse Fuji remplace l'admin de test public, mais le déploiement admet ensuite les comptes de test.
+Preuves : script/deploy-all.sh:96 et :175 ; script/attack-scene.sh:20 ; docs-jury/preuves/scene-aws.md, comptes de test admis aux index 1 à 4. La genèse Fuji remplace l'admin de test public, mais le déploiement admet ensuite les comptes de test.
 
 Statut : **accepté**, uniquement pour un réseau de test à accès restreint et des fonds de démo. Des identités secrètes et distinctes seraient nécessaires pour un usage réel.
 
@@ -125,7 +125,7 @@ Statut : **accepté** pour la démo à validateur et admission de confiance. La 
 
 Une fenêtre écoulée ne déclenche aucun appel automatiquement. Sans transaction, les lectures du dernier bloc gardent un timestamp ancien ; une estimation de gaz peut donc refuser prématurément un appel qui serait valide dans un nouveau bloc. Les verrous restent jusqu'à close. À caution inchangée et lockBps = 2000, cinq missions simultanées peuvent épuiser la caution libre. Un demandeur admis peut saturer ce budget pendant les fenêtres en payant les frais ; sans finaliseur actif, le blocage se prolonge.
 
-Preuves : src/VerificationMarket.sol:137, :197, :281 ; src/VerifierRegistry.sol:128, :154 ; src/DrawnVerificationMarket.sol:337 ; test/DrawnVerificationMarket.t.sol:365 ; Team19-notes/etat-run.md:97. La scène termine avec des cautions encore verrouillées, Team19-notes/logs/scene-aws.log:129.
+Preuves : src/VerificationMarket.sol:137, :197, :281 ; src/VerifierRegistry.sol:128, :154 ; src/DrawnVerificationMarket.sol:337 ; test/DrawnVerificationMarket.t.sol:365. La scène termine avec des cautions encore verrouillées, docs-jury/preuves/scene-aws.md, étape (d).
 
 Statut : **ouvert**. Finalize et close sont accessibles à tous, ce qui permet la récupération après les délais, mais aucune continuité du service de clôture n'est prouvée. Les services existants réalisent les appels dans les cycles lus ; cela ne garantit pas leur disponibilité permanente.
 
@@ -187,7 +187,7 @@ Statut : **accepté** pour les paramètres nominaux lus : minStake 100 unités n
 
 Le marché de phase 1 n'a aucun retrait des frais ni remboursement du surplus envoyé à createRequest. Dans ArgentVault, aucun retrait libre n'existe : un dépôt erroné ne ressort que par un règlement inscrit et autorisé. Une ancienne pile conserve ses cautions tant que ses missions ne sont pas clôturées ; redéployer ne les migre pas.
 
-Preuves : src/VerificationMarket.sol:11, :62 et :78 ; src/ArgentVault.sol:354 ; specs/02-contrat.md:265 ; Team19-notes/fiche-questions-jury.md, question 37.
+Preuves : src/VerificationMarket.sol:11, :62 et :78 ; src/ArgentVault.sol:354 ; specs/02-contrat.md:265. Une répétition peut échouer après deux redéploiements réussis si l'ancienne pile garde des cautions verrouillées.
 
 Statut : **accepté** pour des fonds de test. La récupération des dépôts erronés et la migration des anciennes piles restent non couvertes.
 
@@ -233,13 +233,11 @@ Nous reprenons les questions jury 6 à 21 et 30 à 35, et leur tableau final de 
 | docs-jury/fautes.md:39 | Injection de canaris et indiscernabilité affirmées, sans preuve d'exécution lue. |
 | docs-jury/fautes.md:51 et :64 | Non-manipulation absolue du tirage et tolérance à la dérive temporelle non mesurées, M1 et M2. |
 | docs-jury/fautes.md:33 | Dix demandes d'exclusion annoncées, borne stricte donnant neuf futures demandes dans l'exemple séquentiel, B1. |
-| docs-jury/rejouer-la-demo.md:9 ; script/deploy-all.sh:15 | « Aucune clé jamais écrite » est trop général : Team19-notes/etat-phase-F.md:57 consigne une importation CLI hors dépôt. L'absence exhaustive de secrets n'est pas auditée ici. |
 | docs-jury/architecture.md:57 | H seul décrit le contenu initial ; contest publie Facts et contentHash, Slashing.sol:157 ; les reveals exposent votes et motifs. |
 | docs-jury/architecture.md:62 | Le tunnel permet aussi des clients RPC directs. La passerelle n'est pas l'unique voie pour un acteur ayant cet accès. |
 | docs-jury/architecture.md:50 | Registres adaptés localement, sans preuve d'interopérabilité ERC-8004 complète ; signatures ABI et événements sont adaptés dans les NatSpec. |
 | docs-jury/architecture.md:13 | warpConfig est présent ; la nécessité alléguée pour le run n'est pas démontrée par un essai comparatif. |
-| Team19-notes/fiche-questions-jury.md, questions 30 à 35 | « En construction » et « conçu » sont dépassés pour les propriétés locales désormais testées. Le déploiement et le flux complet coffre/marché restent à prouver séparément. |
-| Même fiche, question 30 ; specs/02-contrat.md:51 | Cinq rôles distincts sont décrits ; le code impose aussi que clientSigner soit différent, soit six adresses. |
+| specs/02-contrat.md:51 | Cinq rôles distincts sont décrits ; le code impose aussi que clientSigner soit différent, soit six adresses. |
 | specs/acceptance/scenarios.md:281 | « Aucune action automatique ne déplace de fonds » ne décrit pas le mode natif : submit sous le seuil paie immédiatement. Dans la production envisagée, Paid serait une autorisation de virement ; le connecteur n'est pas construit. |
 
 Statut : **ouvert** pour les formulations encore présentes aux commits cités. Nous ne modifions pas ces fichiers pendant la revue. Les notes historiques peuvent citer d'anciens numéros de ligne ; les références de contrats de ce rapport visent les révisions auditées.
@@ -332,8 +330,8 @@ Décompte des classements : marché, 12 faux positifs, 5 vraies alertes et 19 al
 
 ## Limites assumées
 
-1. **Un seul validateur.** Aucune décentralisation effective ni continuité d'état après panne n'est démontrée. Le repli est un autre réseau, pas une réplication. Sources : infra/l1/README.md:4 et :48 ; Team19-notes/etat-phase-F.md:67.
-2. **Clés de test du mnemonic public admises sur le L1 AWS.** La frontière pratique de la démo repose sur l'accès réseau au RPC ; les comptes ne prouvent pas des identités indépendantes. Sources : script/deploy-all.sh:96 ; Team19-notes/etat-run.md:61 et :76.
+1. **Un seul validateur.** Aucune décentralisation effective ni continuité d'état après panne n'est démontrée. Le repli est un autre réseau, pas une réplication. Sources : infra/l1/README.md:4 et :48 ; le ValidatorManager PoA n'est pas initialisé, le L1 tourne avec son seul validateur de conversion.
+2. **Clés de test du mnemonic public admises sur le L1 AWS.** La frontière pratique de la démo repose sur l'accès réseau au RPC ; les comptes ne prouvent pas des identités indépendantes. Sources : script/deploy-all.sh:96 ; docs-jury/preuves/scene-aws.md.
 3. **Évaluateur factice à ce jour.** Le processus hors chaîne existe, mais son évaluation par défaut applique des règles fixes. Aucune qualité, latence ou robustesse d'un LLM réel n'est mesurée dans cette revue. Source : offchain/DESIGN.md:61 et :99.
 4. **Centralisation de l'administration.** Admission réseau, frappe et politiques restent des pouvoirs de confiance. VetoDesk n'atteste pas un paiement externe ; aucun plafond global Native Minter ni contrôle multisignature n'est démontré. Sources : infra/l1/fuji/genesis-fuji.json:30 et :36 ; src/Slashing.sol:100 ; src/VetoDesk.sol:59.
 5. **Transfert natif d'ArgentVault = virement simulé.** Le contrat audité transfère réellement le jeton natif de test. Dans la production envisagée, Paid serait une autorisation consommée par un connecteur bancaire, qui n'est pas construit ni éprouvé ici. Source : src/ArgentVault.sol:11 à :14.

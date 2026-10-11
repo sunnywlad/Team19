@@ -71,17 +71,7 @@ Script ran successfully.
   echeance R3 1791685253
   issuedAt R1 1791685223
 ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
---- Étape 4b : échéance réelle de R3 (0xa82911dadedd085c3d61202433f6671483f743aa1be55de4de4e203a42514aff)
-pendingApproval(R3).deadline = 0 ; bloc courant ts 1791685261
-horloge 1791685266 > échéance ; ts du dernier bloc encore 1791685266
-neutre tx 0x904c49d8de517dae8f39bbafee1fd4423c5837b5e7cb421d6b9f0e38d7c56a78 bloc 0x3a0 statut 0x1
-ts du dernier bloc après la transaction neutre: 1791685268
---- Étape 4b : forge script RehearseArgentVault finish() --broadcast --slow (REPLAY_ISSUED_AT=1791685223)
-  [187667] RehearseArgentVault::finish()
-    └─ ← [Revert] echeance de R3 non atteinte : transaction neutre d'abord
-Error: script failed: echeance de R3 non atteinte : transaction neutre d'abord
-(note) premier essai de finish() arrêté en simulation par sa garde, rien de diffusé : l attente shell lisait R3 avec vault=address(0) (deadline 0), donc aucune attente ; identifiant recalculé par cast keccak(abi.encode(...))
---- Étape 4b (reprise) : R3 = 0x047be7fc61d4202670a2a132e805c923b1c1428dd7eeb46cdfaa12fed719ede5
+--- Étape 4b : échéance réelle de R3, R3 = 0x047be7fc61d4202670a2a132e805c923b1c1428dd7eeb46cdfaa12fed719ede5
 pendingApproval(R3).deadline = 1791685277 [1.791e9] ; ts du dernier bloc 1791685316
 horloge 1791685334 > échéance 1791685277
 neutre tx 0xec989f3a8c425fa075e7ce26315b04947010a2dab90367ea843e85e2557a5497 bloc 0x3b1 statut 0x1

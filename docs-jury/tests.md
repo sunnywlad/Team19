@@ -7,8 +7,8 @@ sont éprouvés séparément ; aucune suite ne démontre leur jonction.
 ## Suites Foundry
 
 Source des décomptes : `forge test --summary`, Forge 1.8.4. Les sorties brutes
-sont conservées dans `Team19-notes/logs/gas-report-marche.log` et
-`Team19-notes/logs/gas-report-vault.log`, avec les commandes exécutées.
+sont extraites dans [preuves/gas-report-marche.md](preuves/gas-report-marche.md) et
+[preuves/gas-report-vault.md](preuves/gas-report-vault.md), avec les commandes exécutées.
 Les chemins du tableau sont relatifs à chaque branche.
 
 ### Marché, branche `wladimir`, révision `e1dfa06`
@@ -117,8 +117,7 @@ testés dans `VerificationMarketTest`, `SlashingTest` et `RewardsTest`.
 ## Scène d'attaque sur le L1
 
 `script/attack-scene.sh` comporte quatre constats. Le run AWS a terminé avec
-une sortie 0, selon `Team19-notes/etat-run.md`, section « Run AWS de bout en
-bout », et `Team19-notes/logs/scene-aws.log`.
+une sortie 0 : [preuves/scene-aws.md](preuves/scene-aws.md).
 
 | Constat | Ce que la scène lit ou vérifie |
 |---|---|
@@ -135,10 +134,8 @@ Cette scène concerne le marché et les accès du L1 ; elle n'attaque pas Argent
 La suite de `offchain/` utilise `node:test` et des contrats sur anvil. Elle
 couvre les empreintes, lectures signées, cache, passerelle, évaluateur factice,
 services vérificateurs, reçus en échec, chaîne inactive et tirage.
-**192 tests npm passent**, selon `Team19-notes/etat-offchain.md`, section
-« Constats pour la session contrats », correction du stockage des détails.
-Ce résultat est une preuve de run consignée ; nous n'avons pas relancé npm
-dans cette session documentaire.
+**192 tests npm passent** (34 suites, 0 échec), mesurés par `npm test`
+dans `offchain/` sur la révision intégrée.
 
 `offchain/e2e.sh` lance le cache, la passerelle et les services vérificateurs
 contre le L1. Il vérifie que le code est connu et que les reveals sont présents.
@@ -146,9 +143,8 @@ Il affiche les détails retournés, sans assertion sur leur nombre. Avec
 `E2E_EXPECT_CLOSED=1`, il vérifie la clôture relue sur la chaîne et l'absence
 de caution encore bloquée. Les runs local et
 AWS passent, y compris deux demandes successives avec les mêmes services.
-Sources : `offchain/e2e.sh`, `Team19-notes/etat-offchain.md`, section
-« Constats pour la session contrats », et `Team19-notes/etat-run.md`, section
-« Run AWS de bout en bout ». Ces runs utilisent l'évaluateur factice et ne
+Sources : `offchain/e2e.sh`, [preuves/e2e-aws.md](preuves/e2e-aws.md) et
+[preuves/e2e-aws-cache.md](preuves/e2e-aws-cache.md). Ces runs utilisent l'évaluateur factice et ne
 comprennent pas ArgentVault.
 
 ## Commandes de lancement

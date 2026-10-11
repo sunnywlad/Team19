@@ -21,7 +21,7 @@ admin du L1. Le gasLimit du bloc vaut 8 000 000.
 
 Sources : `infra/l1/README.md`, section « Ce qui rend le L1 privé » ;
 `infra/l1/fuji/genesis-fuji.json` (`chainId`, `gasLimit`, précompilés) ;
-`Team19-notes/etat-run.md`, section « Run AWS de bout en bout ».
+[preuves/scene-aws.md](preuves/scene-aws.md).
 
 ## Intégration au projet
 
@@ -52,9 +52,9 @@ temps 2 et n'est pas encore construite.
 
 Sources : `specs/02-contrat.md`, sections « Principes », « submit » et
 « Événements » ; branche `feat/argent-vault`, `src/ArgentVault.sol:5` et
-`script/DeployArgentVault.s.sol` ; `offchain/DESIGN.md` ; `Team19-notes/etat-offchain.md`,
-section « Constats pour la session contrats » ; `Team19-notes/etat-run.md`,
-section « Run AWS de bout en bout ».
+`script/DeployArgentVault.s.sol` ; `offchain/DESIGN.md` ;
+[preuves/e2e-aws.md](preuves/e2e-aws.md) et
+[preuves/e2e-aws-cache.md](preuves/e2e-aws-cache.md).
 
 ## Les contrats par phase
 

@@ -14,12 +14,7 @@ $ heartbeat.sh --prepare sans ADMIN_PRIVATE_KEY
 chainId = 191919, adresse du battement = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (index 9)
 ERREUR : --prepare exige ADMIN_PRIVATE_KEY (clé admin brute).
 exit=1
-### 2026-10-11T04:16:34+02:00 étape 1 : --prepare puis battement (5 s)
-chainId = 191919, adresse du battement = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (index 9)
-prepare : TxAllowList, rôle 0 -> setEnabled
-Error: server returned an error response: error code -32000: replacement transaction underpriced
-mesure : bloc 888 -> 889 en 60 s, soit 1 blocs
-### 2026-10-11T04:18:49+02:00 étape 1, 2e essai (le 1er : nonce admin disputé par une autre session, essais ajoutés)
+### 2026-10-11T04:18:49+02:00 étape 1 : --prepare puis battement (5 s)
 chainId = 191919, adresse du battement = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (index 9)
 prepare : TxAllowList, rôle 0 -> setEnabled
 prepare : solde < 100 VETO -> mint du complément
@@ -29,16 +24,7 @@ battement toutes les 5 s, Ctrl-C pour arrêter.
 04:19:01 battement 3 : bloc 894
 [… un battement toutes les 5 s, coupé …]
 mesure : bloc 894 -> 906 en 60 s, soit 12 blocs
-### 2026-10-11T04:20:12+02:00 étape 2 : e2e (E2E_EXPECT_CLOSED=1 E2E_REQUESTS=2), battement en marche
-04:20:17 battement 18 : bloc 909
-04:20:21 battement 19 : bloc 910
-04:20:27 battement 20 : bloc 913
-[… un battement toutes les 5 s, coupé …]
-### 2026-10-11T04:22:04+02:00 étape 2, 2e lancement (le 1er, parti avant la fin de npm ci : viem absent, exit 1)
-04:22:07 battement 40 : bloc 940
-04:22:13 battement 41 : bloc 943
-04:22:17 battement 42 : bloc 945
-[… un battement toutes les 5 s, coupé …]
+### 2026-10-11T04:22:04+02:00 étape 2
 [e2e] Vérification du RPC...
 [e2e] RPC OK
 [e2e] Vérification du contrat marché...
@@ -89,16 +75,7 @@ mesure : bloc 894 -> 906 en 60 s, soit 12 blocs
 [e2e] stakeOf vérificateur 3 : total=500000000000000000000 locked=0
 e2e exit=0
 e2e : sortie 0, aucune ligne nonce/underpriced dans la sortie e2e ni dans le battement
-### 2026-10-11T04:26:21+02:00 étape 3 : SIGINT (équivalent Ctrl-C) au battement
-04:26:26 battement 92 : bloc 1010
-04:26:31 battement 93 : bloc 1011
-04:26:37 battement 94 : bloc 1012
-[… un battement toutes les 5 s, coupé …]
-après arrêt : bloc 1009 -> 1015 en 30 s
-(SIGINT sans effet : lancé par & depuis un shell non interactif, SIGINT y est ignoré dès l'entrée ; arrêt par SIGTERM)
-battement arrêté (105 battements envoyés).
-après arrêt : bloc 1023 -> 1023 en 30 s
-### 2026-10-11T04:28:24+02:00 étape 3 bis : vrai Ctrl-C (SIGINT restauré, envoyé au groupe de processus comme le fait un terminal)
+### 2026-10-11T04:28:24+02:00 étape 3 : arrêt par Ctrl-C
 chainId = 191919, adresse du battement = 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720 (index 9)
 battement toutes les 5 s, Ctrl-C pour arrêter.
 04:28:24 battement 1 : bloc 1024
@@ -117,6 +94,8 @@ battement toutes les 5 s, Ctrl-C pour arrêter.
 04:29:26 erreur, nouvel essai au prochain battement : Error: MPP HTTP request to <RPC du L1> failed: HTTP request failed: error sending request: error sending request: client error (Connect): tcp connect error: Connection refused (os error 111)
 04:29:32 erreur, nouvel essai au prochain battement : Error: MPP HTTP request to <RPC du L1> failed: HTTP request failed: error sending request: error sending request: client error (Connect): tcp connect error: Connection refused (os error 111)
 --- proxy relancé
-[… un battement toutes les 5 s, coupé …]
+04:29:36 battement 4 : bloc 1030
+04:29:41 battement 5 : bloc 1031
+04:29:46 battement 6 : bloc 1032
 battement arrêté (6 battements envoyés).
 ```

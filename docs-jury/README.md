@@ -20,7 +20,7 @@ leur jonction appartient au temps 2.
 
 Sources : `src/VerificationMarket.sol`, `src/VetoDesk.sol`,
 `infra/l1/README.md` ; branche `feat/argent-vault`, `src/ArgentVault.sol` ;
-`Team19-notes/etat-run.md`, section « Run AWS de bout en bout ».
+[preuves/scene-aws.md](preuves/scene-aws.md) et [preuves/e2e-aws.md](preuves/e2e-aws.md).
 
 ## Les fichiers de ce dossier
 
