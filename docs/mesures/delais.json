@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-11",
+  "commande": "scènes 3 et 4 jouées sur le L1 de test (VAULT_MODE=chain, CHAIN_ID=191919), puis lecture du champ timestamps des deux rapports d'incident produits par le service de réponse",
+  "porte": {
+    "arrivee_detection": { "n": 1, "mediane_ms": 226, "max_ms": 226 },
+    "detection_pause": { "n": 1, "mediane_ms": 24, "max_ms": 24 },
+    "detection_alerte": { "n": 1, "mediane_ms": 32, "max_ms": 32 }
+  },
+  "contrat": {
+    "detection_pause": { "n": 1, "mediane_ms": 6474, "max_ms": 6474 },
+    "detection_alerte": { "n": 1, "mediane_ms": 6482, "max_ms": 6482 }
+  }
+}
