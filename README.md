@@ -169,20 +169,29 @@ make demo-stop
 `make scenes` joue les scénarios de
 [specs/acceptance/scenarios.md](specs/acceptance/scenarios.md) par la vraie porte
 d'entrée, en HTTP, avec le jeton de chaque agent, puis compare ce que les
-services ont fait à ce que la spec attend : une ligne par scène, « OK » ou
-« ÉCART », code de sortie non nul au moindre écart. Chaque scène repart d'un état
-neuf. Une seule scène : `make scene S=4`. Les scènes 5 et 6b attendent pour de
-bon : 30 secondes chacune.
+services ont fait à ce que la spec attend. En mode fake, toute décision, tout
+montant et tout « payé » que les scènes lisent vient d'un **coffre simulé** :
+aucun fonds, aucune chaîne. Une ligne par scène : « OK », « ÉCART CONNU (E1) »
+ou « ÉCART ». Les écarts connus sont listés dans
+[demo/ecarts-connus.json](demo/ecarts-connus.json), avec leur responsable ; la
+commande les réaffiche à chaque passage. Elle sort en échec pour un écart qui
+n'est pas dans la liste, et aussi pour un écart de la liste qui ne se produit
+plus, pour que la liste reste vraie. Chaque scène repart d'un état neuf, donc
+d'un coffre simulé neuf. Une seule scène : `make scene S=4`. Les scènes 5 et 6b
+attendent pour de bon : 30 secondes chacune.
 
 | Commande | Effet |
 |---|---|
 | `make demo-status` | Service, port, état |
 | `make demo-reset` | Archive le journal, les rapports et les bases du relais, réémet les jetons, relance les services. Rien n'est effacé |
-| `make demo-smoke` | Lance, joue les scènes 1, 2, 3, 4 et 8 deux fois avec une remise à zéro entre les deux, vérifie le journal, arrête tout |
+| `make demo-smoke` | Lance, joue les scènes 1, 2, 3, 4 et 8 deux fois sur le coffre simulé avec une remise à zéro entre les deux, vérifie le journal, cherche jeton, clé ou signature complète dans les logs, contrôle les droits de `var/demo/`, arrête tout |
+| `make demo-test` | Tests de `demo/` sans aucun service : écarts connus, ports, recherche de secrets |
 | `make demo-chain-check` | Mode chain sur anvil avec une doublure de contrat : la chaîne de services, sans aucune règle de paiement |
 
 Les pid, un log par service et les bases du relais sont sous `var/demo/`, jamais
-versionné. `make demo-stop` n'arrête que ce que `make demo` a lancé.
+versionné. `make demo-stop` n'arrête que ce que `make demo` a lancé. Les ports
+sont fixes : ni un `.env` ni l'environnement ne les déplacent, parce que
+`GATEWAY_PORT` sert aussi à `offchain/`.
 
 ### Ce qui est réel, ce qui est simulé
 
@@ -199,22 +208,25 @@ chaîne.
 | Clé du client | Tirée à chaque `make demo`, gardée sous `var/demo/`, lisible par son seul propriétaire |
 | Approbateur (scènes 6a et 6b) | Simulé : un port de contrôle de démo (8788) appelle `approve`, `refuse`, `expire` du faux coffre |
 | Pause d'un agent sur la chaîne | Absente : aucun composant ne la pose |
-| Dashboard | Lancé en mode réel, branché sur le relais et le service de réponse. Ses écrans n'ont pas été relus pour ce README |
+| Dashboard | Lancé en mode réel, branché sur le relais et le service de réponse. Bandeau permanent « COFFRE SIMULÉ : aucun fonds, aucune chaîne » ; étiquette « simulation » sur le plaçable, les décisions, les cas en attente et les pauses sur la chaîne. Écrans regardés après les scènes 3, 4, 6a et 1 ; pas pendant la scène 5 |
 
-Ce que `make scenes` a montré le jour de cette rédaction, en mode fake : les
-décisions, les motifs, les montants et les réactions attendus par la spec sont
-observés dans les dix scènes. Trois écarts restent, et la commande sort en
-échec tant qu'ils ne sont pas tranchés :
+Ce que `make scenes` a montré le jour de cette rédaction, en mode fake, donc
+sur le coffre simulé : les décisions, les motifs, les montants et les réactions
+attendus par la spec sont observés dans les dix scènes. Deux écarts connus
+restent, corrigés hors de `relay/` et de `demo/` :
 
-- **Ordre du journal.** La spec place `FORWARDED_TO_CLIENT_AI` avant
+- **E1, ordre du journal.** La spec place `FORWARDED_TO_CLIENT_AI` avant
   `REQUEST_SIGNED` et `ENQUEUED` ; la porte l'écrit après le retour de l'IA du
   client, donc après. Toutes les scènes qui passent la porte sont touchées.
-- **Scène 5, relais arrêté.** L'alerte de disponibilité à 15 secondes et
-  `QUEUE_EXPIRED` n'arrivent pas tant que le relais est arrêté : c'est lui qui
-  balaie la file et qui la sert au service de réponse. Elles arrivent à sa
-  relance, dans l'ordre inverse. Rien n'est soumis ni payé.
-- **Scènes 3 et 4.** `AGENT_PAUSED (ONCHAIN)`, annoncé « plus tard » par la spec,
-  n'est jamais écrit. Signalé en note, sans faire échouer la commande.
+- **E2, scène 5, relais arrêté.** L'alerte de disponibilité ne part pas tant
+  que le relais est arrêté : le service de réponse la tire de la file que le
+  relais lui sert. Elle arrive à sa relance, après `QUEUE_EXPIRED`.
+  `QUEUE_EXPIRED`, lui, s'écrit à l'échéance, relais arrêté : l'IA du client
+  balaie aussi la file. Rien n'est soumis ni payé.
+
+Hors liste, signalé en note par les scènes 3 et 4 : `AGENT_PAUSED (ONCHAIN)`,
+annoncé « plus tard » par la spec, n'est jamais écrit. Aucun composant ne pose
+de pause sur la chaîne ; la pause observée est hors chaîne.
 
 `VAULT_MODE=chain make demo` vise un vrai contrat sur un réseau de test local
 (anvil). Le contrat du coffre n'existe pas encore : la commande s'arrête sur
@@ -267,14 +279,14 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Porte d'entrée | `gateway/` | oui | oui, au journal | Transmet à l'IA du client par `CLIENT_AI_URL` : enchaînement joué par `make scenes` |
 | Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesure finale absente |
 | Journal chaîné | `response/src/journal.ts` | oui | oui | Écrivain unique. « Au moins une fois » : une entrée peut apparaître deux fois, jamais zéro |
-| Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne |
-| IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle |
+| Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne. L'alerte de disponibilité ne part pas tant que le relais est arrêté (écart E2) |
+| IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle. Balaie aussi la file pour expirer une demande, relais arrêté ou non |
 | File d'attente | `relay/src/queue.ts` | oui | oui | SQLite, idempotente |
 | Relais | `relay/src/relay.ts` | oui | au journal et aux pauses | Soumet à un faux coffre, en test comme dans `make demo`. Écarte un agent en pause en lisant le service de réponse |
 | Contrat (coffre) | `specs/contract/IArgentVault.sol` | **absent** | non | Interface gelée, aucune implémentation. `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
 | Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui, au faux coffre | Dans `make demo`, indexe les événements du faux coffre. Aucun contrat déployé |
-| Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; le coffre est simulé tant qu'aucun contrat n'est déployé |
-| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; le mode chain attend le contrat |
+| Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; le coffre est simulé tant qu'aucun contrat n'est déployé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo` |
+| Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; le mode chain attend le contrat. Deux écarts connus avec la spec, listés dans `demo/ecarts-connus.json` |
 | Mesure du détecteur | `docs/mesures/` | **absent** | | Jeu prêt dans `data/jeu-factures/`, non lancé |
 
 `src/`, `test/`, `script/` et `offchain/` contiennent d'autres contrats et leurs
