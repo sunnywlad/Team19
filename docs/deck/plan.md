@@ -4,8 +4,8 @@ Huit slides, le maximum admis. Pitch du tour 1 : 5 minutes puis 2 minutes de
 questions. Finale : 3 minutes, en gardant les slides 1, 3, 4, 5 et 8.
 
 Règles de ce plan : aucun chiffre qui ne sorte de la
-[fiche de défense](../fiche-defense.md) ; tant qu'elle affiche « à mesurer », la
-slide le dit aussi. Les formules écartées sont dans
+[fiche de défense](../fiche-defense.md), et chacun avec sa condition ; une
+ligne qu'elle affiche encore « à mesurer », la slide la dit « à mesurer » aussi. Les formules écartées sont dans
 [questions-reponses.md](../pitch/questions-reponses.md).
 
 Les slides 2 et 7 (cible, modèle économique) ne s'appuient sur aucune source du
@@ -71,13 +71,21 @@ facture légitime. Délais d'attente en secondes. Repli : la vidéo.
 ## 6. Ce que nous avons mesuré, et nos limites
 
 **Texte.** Le tableau de la fiche de défense, tel quel, avec ses cases « à
-mesurer ». En dessous : données synthétiques, pas de contrat déployé, pas
+mesurer ». En tête : 50 attaques détectées sur 100, 4 demandes légitimes
+bloquées sur 100, sur un jeu synthétique de 200 échantillons, une attaque pour
+une légitime. En dessous : données synthétiques, pas de contrat déployé, pas
 d'audit indépendant.
 
-**Notes orales.** Lire les chiffres avec leur condition : taille du jeu, date,
-une attaque pour une légitime. Si rien n'est mesuré, le dire en une phrase et
-montrer comment la mesure se fera : un jeu de test lancé une seule fois, règles
-figées. Ne citer aucun chiffre du jeu provisoire. Nommer un cas manqué.
+**Notes orales.** Lire les deux chiffres avec leur condition : jeu de test
+synthétique de 200 échantillons, une attaque pour une légitime, mesuré le
+10 octobre 2026. Dire la réserve : en production les attaques sont rares, et
+la majorité des blocages seraient des demandes légitimes. Par famille : la
+mieux tenue est `hors-mandat`, 8 sur 8 ; les plus faibles sont
+`doublon-facture`, 1 sur 8, et `fausse-autorite`, 2 sur 8. Nommer un cas
+manqué : `t-003`, une facture présentée en double, que la porte laisse passer.
+Les lignes encore « à mesurer » se disent telles quelles : règles fixes de
+référence, délais, et tout ce qui demande un contrat déployé. Ne citer aucun
+chiffre du jeu provisoire.
 
 ## 7. Conformité et modèle économique
 
@@ -97,5 +105,4 @@ annoncé.
 relais, dashboard, CI, livrables. Nicolas : pitch et relecture.
 
 **Notes orales.** Une phrase par personne. Finir sur ce qui reste à faire, dans
-l'ordre : écrire le contrat, lancer la mesure finale, brancher la scène de bout
-en bout.
+l'ordre : écrire le contrat, brancher la scène de bout en bout.
