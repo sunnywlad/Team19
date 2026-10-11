@@ -1,4 +1,4 @@
-# Argent Intelligent
+# VETO
 
 Passerelle de confiance entre des agents IA et la trésorerie d'une entreprise.
 Projet du hackathon Secure Horizons, track 1 « Fintech Security ».
