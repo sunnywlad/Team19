@@ -1405,6 +1405,64 @@ tbody tr:last-child > * {
   border-top: 1px solid var(--trait-doux);
 }
 
+
+/* Validation : le cas, puis la commande à signer ailleurs. */
+.cas-reste {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  color: var(--moutarde);
+}
+
+.cas-reste .discret {
+  font-size: 1rem;
+}
+
+.cas-gros {
+  font-size: 1.25rem;
+}
+
+.signature {
+  margin-top: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--moutarde);
+  border-radius: 18px;
+  background: var(--nuit);
+}
+
+.signature h3 {
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--moutarde);
+}
+
+.commandes {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.commande-verbe {
+  display: block;
+  font-size: 0.86rem;
+  color: var(--discret);
+}
+
+/* Une commande se sélectionne d'un clic, pour être copiée. */
+.commande {
+  display: block;
+  margin-top: 2px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--trait);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
 /* ───────────── Mouvement ───────────── */
 
 /* Une valeur lue qui change entre deux lectures entre par le bas, une fois. */

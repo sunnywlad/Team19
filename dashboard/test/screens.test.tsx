@@ -138,7 +138,7 @@ describe("écran En attente", () => {
     expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
     expect(await value("cas-montant")).toBe("30 u");
     expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
-    expect(await value("cas-delai")).toMatch(/^2\d s$/);
+    expect(await value("cas-delai")).toMatch(/^2\d s avant refus automatique$/);
     expect(await screen.findByText(/La justification rédigée par un agent n'est jamais affichée/)).toBeTruthy();
   });
 
@@ -173,5 +173,26 @@ describe("écran En attente", () => {
     });
     open("Validation");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
+  });
+});
+
+describe("page Validation", () => {
+  it("scénario 6 : la commande de l'approbateur, avec l'identifiant complet, et aucun bouton qui approuve", async () => {
+    renderScenario("6");
+    open("Validation");
+    const approve = text(await screen.findByTestId("commande-approve"));
+    expect(approve).toMatch(/^node demo\/human\.mjs approve 0x[0-9a-f]{64}$/);
+    expect(text(screen.getByTestId("commande-refuse"))).toMatch(/^node demo\/human\.mjs refuse 0x[0-9a-f]{64}$/);
+    expect(screen.queryByTestId("commande-expire")).toBeNull();
+    expect(document.body.textContent).toContain("À signer par l'approbateur");
+    expect(document.body.textContent).not.toContain("PRIVATE_KEY=");
+    for (const button of screen.queryAllByRole("button")) expect(button.textContent ?? "").not.toMatch(/approuv|refus|sign/i);
+  });
+
+  it("échéance dépassée : seule la commande « expire » est proposée", async () => {
+    renderScenario("6", { t0: Date.now() - 120_000 });
+    open("Validation");
+    expect(text(await screen.findByTestId("commande-expire"))).toMatch(/^node demo\/human\.mjs expire 0x[0-9a-f]{64}$/);
+    expect(screen.queryByTestId("commande-approve")).toBeNull();
   });
 });
