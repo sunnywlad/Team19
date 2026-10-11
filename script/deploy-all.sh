@@ -107,7 +107,7 @@ VERIFIERS=("$ADDR_1" "$ADDR_2" "$ADDR_3" "$ADDR_4")
 # forge. Consignés dans le JSON ; les scripts forge relisent ces mêmes
 # variables (on les ré-exporte pour qu'elles leur parviennent à coup sûr).
 # --------------------------------------------------------------------------
-FEE="${FEE:-$(cast to-wei 1 ether)}"
+FEE="${FEE:-$(cast to-wei 3 ether)}"
 COMMIT_WINDOW="${COMMIT_WINDOW:-180}"
 REVEAL_WINDOW="${REVEAL_WINDOW:-60}"
 CONTEST_WINDOW="${CONTEST_WINDOW:-600}"

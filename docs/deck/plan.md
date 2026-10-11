@@ -4,7 +4,7 @@ Huit slides, le maximum admis. Pitch du tour 1 : 5 minutes puis 2 minutes de
 questions. Finale : 3 minutes, en gardant les slides 1, 3, 4, 5 et 8.
 
 Règles de ce plan : aucun chiffre qui ne sorte de la
-[fiche de défense](../fiche-defense.md), et chacun avec sa condition ; une
+[fiche de défense](../../docs-jury/rendus/fiche-defense-mesures.md), et chacun avec sa condition ; une
 ligne qu'elle affiche encore « à mesurer », la slide la dit « à mesurer » aussi. Les formules écartées sont dans
 [questions-reponses.md](../pitch/questions-reponses.md).
 
@@ -92,7 +92,7 @@ aucun chiffre du jeu provisoire.
 
 ## 7. Conformité et modèle économique
 
-**Texte.** À gauche, le tableau de [conformite.md](../conformite.md) : ce que
+**Texte.** À gauche, le tableau de [conformite.md](../../docs-jury/rendus/conformite.md) : ce que
 l'outil apporte, ce qu'on ne revendique pas. À droite, hypothèse : un
 abonnement par coffre protégé.
 

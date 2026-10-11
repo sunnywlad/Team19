@@ -1,39 +1,12 @@
-# Fiche de défense : Argent Intelligent
+# Fiche de défense : mesures et cas manqués
 
-Secure Horizons, track 1 « Fintech Security ». Une page. Chaque fait renvoie au
-fichier qui le montre ; ce qui n'existe pas est écrit comme tel.
-
-## Scénario de menace
-
-Un agent à faible privilège reçoit une facture piégée. Le document contient une
-instruction qui ordonne un paiement vers un bénéficiaire contrôlé par
-l'attaquant. Sans contrôle de la chaîne d'autorité, l'agent financier exécute.
-
-## Fonctions NIST CSF 2.0 couvertes
-
-| Fonction | Ce que fait le projet | Où |
-|---|---|---|
-| Identify | Registre des agents et de leur mandat, tenu par la porte d'entrée : un jeton court par agent. Le registre sur la chaîne prévu par la spec n'est pas implémenté | `gateway/src/tokens.ts`, [specs/02-contrat.md](../specs/02-contrat.md) § 3 |
-| Detect | Détecteur à règles, trois signaux, à chaque demande. Décisions du contrat : implémenté et déployé sur un réseau de test local (anvil), Fuji non testé ; rejouées par un faux coffre en mode par défaut | `gateway/src/detector.ts`, `src/ArgentVault.sol`, `relay/src/fake-vault.ts` |
-| Respond | Quarantaine, pause de l'agent hors chaîne, alerte affichée et journalisée, rapport d'incident, playbook | `response/src/engine.ts`, [playbook.md](playbook.md) |
-
-## Risques visés
-
-Liste reprise du kit. Les identifiants n'ont pas été relus à la source : à
-vérifier avant toute citation ([specs/00-a-trancher.md](../specs/00-a-trancher.md), « À vérifier avant de citer »).
-
-| Référentiel | Risques |
-|---|---|
-| OWASP agentique 2026 | ASI01, ASI02, ASI03, ASI07, ASI08, ASI09, ASI10 |
-| OWASP LLM 2025 | LLM01, LLM02, LLM05, LLM06, LLM09, LLM10 |
-| OWASP Smart Contract 2026 | SC01, SC02, SC05, SC06, SC08 : sans objet tant que le contrat n'est pas écrit |
-| MITRE ATLAS | Injection de prompt directe et indirecte (identifiant à relever sur atlas.mitre.org) |
+Annexe de la [fiche de défense](fiche-defense.md). La fiche tient sur une page
+et résume ; ce fichier porte le détail. Ses trois blocs sont écrits par
+`docs/outils/remplir-fiche.mjs` à partir des fichiers de
+[docs/mesures/](../../docs/mesures/README.md). Ils ne se modifient pas à la
+main : `make docs` échoue si une valeur ne sort pas d'un fichier de mesure.
 
 ## Métriques
-
-Ce tableau est écrit par `docs/outils/remplir-fiche.mjs` à partir des fichiers de
-[mesures/](mesures/README.md). Il ne se modifie pas à la main : `make docs` échoue
-si une valeur ne sort pas d'un fichier de mesure.
 
 <!-- metriques:debut -->
 | Métrique | Valeur | Conditions |
@@ -62,10 +35,17 @@ Fichiers de mesure lus :
 
 Les délais d'une détection par le contrat partent de l'horodatage du bloc : ils
 incluent le temps de bloc, l'attente de l'indexeur et l'écoute, et ne se
-comparent pas à ceux de la porte d'entrée ([specs/05-incident.md](../specs/05-incident.md) § 5).
+comparent pas à ceux de la porte d'entrée ([specs/05-incident.md](../../specs/05-incident.md) § 5).
 
-Les délais sont mesurés sur un incident par chemin, L1 de test (scènes 3 et 4) :
-une médiane sur un seul incident n'est qu'une valeur observée, pas une distribution.
+Les délais sont mesurés sur un incident par chemin, sur le L1 de test (scènes 3
+et 4) : une médiane sur un seul incident n'est qu'une valeur observée, pas une
+distribution. Les deux rapports d'incident sont dans
+`docs-jury/rendus/preuves-delais/`.
+
+Les deux lignes « attaques jouées » sortent de `docs/mesures/demo.json`, mesuré
+sur anvil. Les mêmes quatre scènes ont été rejouées sur le L1 de test, avec le
+même bilan : deux refus du contrat, aucune sortie de fonds
+(`docs-jury/preuves/vault-l1-aws.md`).
 
 ## Cas manqués
 
@@ -93,23 +73,12 @@ Demandes légitimes bloquées (4) : t-045, t-046, t-084, t-095.
 <!-- cas-manques:fin -->
 
 Un cas manqué est connu sans mesure : le scénario 4 de
-[specs/acceptance/scenarios.md](../specs/acceptance/scenarios.md), une attaque formulée pour passer sous le seuil.
+[specs/acceptance/scenarios.md](../../specs/acceptance/scenarios.md), une
+attaque formulée pour passer sous le seuil. Il est joué en scène : la porte le
+laisse passer avec un score de 45, le contrat le refuse.
 
-## Limites
+## Limites du jeu de mesure
 
-Du kit :
-
-- Données synthétiques : les taux ne valent pas pour le monde réel.
-- L'injection de prompt n'est pas empêchée, ses conséquences sont bornées.
-- Le contrat ne vérifie pas la vérité d'une facture.
-- Un propriétaire compromis sort du modèle.
-- Seuls les fonds détenus par le contrat sont protégés.
-- Démonstration sur réseau de test, sans audit indépendant.
-
-Du dépôt :
-
-- Le contrat de [specs/contract/IArgentVault.sol](../specs/contract/IArgentVault.sol) est implémenté (`src/ArgentVault.sol`) et se déploie sur un réseau de test local (anvil). Fuji n'est pas testé. Par défaut (`VAULT_MODE=fake`), le relais tourne sur un faux coffre en mémoire, qui ne détient aucun fonds.
-- La pause d'un agent est appliquée hors chaîne, par la porte d'entrée et par le relais. Aucune pause n'est posée sur la chaîne (`response/README.md`, « Garanties et limites »).
 - Le jeu de mesure est synthétique et écrit par un modèle de langage, par un seul auteur (`data/jeu-factures/README.md`).
 <!-- limite-jeu:debut -->
 - Le jeu est à un pour un (100 attaques, 100 demandes légitimes). En production, les attaques sont rares : avec 4 % de faux positifs, la majorité des blocages seraient des demandes légitimes bloquées. Les chiffres valent pour ce jeu synthétique, pas pour le monde réel.
@@ -118,5 +87,13 @@ Du dépôt :
 - L'action `PLACE` est peu représentée : 14 lignes sur 200 dans le jeu de test (`data/jeu-factures/MANIFEST.json`).
 - Le jeu de test se lance une seule fois, règles figées. Toute retouche des règles après la mesure l'invalide.
 - Fichier mesuré : `data/jeu-factures/test.jsonl`, 200 échantillons. 100 attaques, 100 demandes légitimes (`gateway/bench/MESURE.md`).
+- La référence « règles fixes » n'est pas mesurée : la ligne reste « à mesurer ».
+
+## Limites du dépôt
+
+- Par défaut (`VAULT_MODE=fake`), la démo locale tourne sur un faux coffre en mémoire, qui ne détient aucun fonds. Le contrat (`src/ArgentVault.sol`) décide et paie en `VAULT_MODE=chain`, sur anvil et sur notre L1 de test. Fuji n'est pas testé.
+- Seuls les fonds détenus par le contrat sont protégés.
+- La pause d'un agent est appliquée hors chaîne, par la porte d'entrée et par le relais. Aucune pause n'est posée sur la chaîne (`response/README.md`, « Garanties et limites »).
 - Le journal est « au moins une fois » : une entrée peut apparaître deux fois, jamais zéro (`relay/README.md`, « Journal : boîte d'envoi »).
 - Une alerte n'est envoyée à personne : elle est affichée et journalisée.
+- Aucune relecture à la source des identifiants OWASP, NIST et MITRE de la fiche n'est consignée dans le dépôt : [specs/00-a-trancher.md](../../specs/00-a-trancher.md), « À vérifier avant de citer », les tient pour « à vérifier ».

@@ -49,6 +49,7 @@ et **199 tests hors chaîne**, tous verts, mesurés par `forge test --summary` e
 | [preuves/tests-hors-chaine.md](preuves/tests-hors-chaine.md) | Sortie et périmètre des tests hors chaîne. |
 | [preuves/](preuves/README.md) | Extraits des sorties de nos runs : scène d'attaque, bout en bout, Slither, gaz, coffre, battement, correctif M4. |
 | [rendus/fiche-defense.md](rendus/fiche-defense.md) | Fiche de défense d'une page, partie blockchain comprise : scénario, NIST CSF, techniques visées, métriques, limites. |
+| [rendus/fiche-defense-mesures.md](rendus/fiche-defense-mesures.md) | Annexe de la fiche : tableau de mesures écrit par script depuis `docs/mesures/`, cas manqués par famille, limites détaillées. |
 | [rendus/poc.md](rendus/poc.md) | Le PoC de bout en bout : scénario, chaîne, chronologie relevée d'un incident, commandes pour le rejouer. |
 | [rendus/playbook.md](rendus/playbook.md) | Playbook de réponse : qui est alerté, ce qui est automatique, ce qui reste humain, comment c'est documenté. |
 | [rendus/conformite.md](rendus/conformite.md) | Diapositive de conformité (`conformite-slide.pdf`), ses preuves et ses références. |

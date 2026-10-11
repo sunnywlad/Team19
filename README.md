@@ -246,7 +246,7 @@ Le journal se vérifie, depuis `response/` :
 npm run verify-journal -- var/journal.jsonl
 ```
 
-Une pause ne se lève que par la commande humaine du [playbook](docs/playbook.md).
+Une pause ne se lève que par la commande humaine du [playbook](docs-jury/rendus/playbook.md).
 
 ## Vérifier
 
@@ -275,7 +275,7 @@ réel : en production les attaques sont rares, et la part des blocages à tort
 serait bien plus forte.
 
 Le tableau complet, les cas manqués et les lignes encore « à mesurer » vivent
-dans la [fiche de défense](docs/fiche-defense.md), remplie par un script depuis
+dans l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.md), remplie par un script depuis
 [docs/mesures/](docs/mesures/README.md). Les chiffres du jeu provisoire écrit
 par l'auteur des règles ne sont pas repris ici.
 
@@ -288,7 +288,7 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 |---|---|---|---|---|
 | Agents scriptés | `relay/src/agents.ts` | oui | non | Ceux des tests passent par un bouchon de porte (`relay/src/gateway-stub.ts`). Les scènes de `make scenes` passent par `gateway/` |
 | Porte d'entrée | `gateway/` | oui | oui, au journal | Transmet à l'IA du client par `CLIENT_AI_URL` : enchaînement joué par `make scenes` |
-| Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesuré sur un jeu synthétique, une attaque pour une légitime : 50 attaques détectées sur 100, 4 demandes légitimes bloquées sur 100 ([fiche de défense](docs/fiche-defense.md)) |
+| Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesuré sur un jeu synthétique, une attaque pour une légitime : 50 attaques détectées sur 100, 4 demandes légitimes bloquées sur 100 ([fiche de défense](docs-jury/rendus/fiche-defense-mesures.md)) |
 | Journal chaîné | `response/src/journal.ts` | oui | oui | Écrivain unique. « Au moins une fois » : une entrée peut apparaître deux fois, jamais zéro |
 | Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne |
 | IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle. Balaie aussi la file pour expirer une demande, relais arrêté ou non |
@@ -298,7 +298,7 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui | Dans `make demo`, indexe les événements du contrat sur anvil en `VAULT_MODE=chain`, ceux du faux coffre par défaut |
 | Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; en mode fake le coffre est simulé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo`. En mode chain, le bandeau ne s'affiche pas |
 | Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; `VAULT_MODE=chain` déploie le contrat sur anvil. Aucun écart connu avec la spec : `demo/ecarts-connus.json` est vide |
-| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par la [fiche de défense](docs/fiche-defense.md). Règles fixes de référence et délais : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
+| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.md). Règles fixes de référence et délais : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
 | Marché de vérification | `src/` | oui | oui, sur le L1 AWS | Prouvé sur le L1 de démo (`docs-jury/preuves/`) ; son verdict n'entre pas encore dans la décision du coffre |
 | L1 VETO | `infra/l1/` | oui | oui | L1 privé Avalanche, chainId 191919, VETO natif, TxAllowList et Native Minter |
 | Passerelle, cache et vérificateurs | `offchain/` | oui | oui, au marché | Services de vérification ; l'évaluateur est factice, le vérificateur LLM est en construction |
@@ -337,15 +337,16 @@ Du dépôt :
 - Le jeu de mesure est synthétique, écrit par un modèle, à 1 attaque pour 1
   légitime : ses taux ne valent pas pour le monde réel.
 
-Détail : [fiche de défense](docs/fiche-defense.md), « Limites ».
+Détail : [fiche de défense](docs-jury/rendus/fiche-defense.md), « Limites connues », et son [annexe](docs-jury/rendus/fiche-defense-mesures.md).
 
 ## Livrables
 
 | Document | Contenu |
 |---|---|
-| [docs/fiche-defense.md](docs/fiche-defense.md) | Fiche de défense d'une page, métriques |
-| [docs/playbook.md](docs/playbook.md) | Playbook de réponse, état de chaque étape |
-| [docs/conformite.md](docs/conformite.md) | Contenu de la slide conformité |
+| [docs-jury/rendus/fiche-defense.md](docs-jury/rendus/fiche-defense.md) | Fiche de défense d'une page |
+| [docs-jury/rendus/fiche-defense-mesures.md](docs-jury/rendus/fiche-defense-mesures.md) | Annexe de la fiche : tableau de mesures généré, cas manqués, limites |
+| [docs-jury/rendus/playbook.md](docs-jury/rendus/playbook.md) | Playbook de réponse, état de chaque étape |
+| [docs-jury/rendus/conformite.md](docs-jury/rendus/conformite.md) | Contenu de la slide conformité, preuves et références |
 | [docs/pitch/questions-reponses.md](docs/pitch/questions-reponses.md) | Réponses aux questions du jury, et ce que nous ne disons pas |
 | [docs/demo/script-video.md](docs/demo/script-video.md) | Script de la vidéo de démo |
 | [docs/deck/plan.md](docs/deck/plan.md) | Plan du deck en huit slides |
