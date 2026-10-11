@@ -10,7 +10,7 @@ enregistré sur la P-Chain Fuji, plutôt que la C-Chain Fuji.
 |---|---|
 | chainId | 191919 |
 | Consensus | PoA (preuve d'autorité) |
-| Écriture | TxAllowList : seule une adresse admise envoie une transaction. |
+| Écriture | TxAllowList : seule une adresse admise envoie une transaction ; le nœud filtre l'émetteur avant tout contrat. |
 | Frappe de VETO | Native Minter : un précompilé frappe le jeton natif. |
 | Messagerie inter-chaînes | Pas d'ICM applicatif : ni TeleporterMessenger ni relayer. Le warpConfig reste actif dans la genèse, requis par le ValidatorManager pour parler à la P-Chain. |
 | Validateurs | un seul validateur pour la démo. |
@@ -22,6 +22,12 @@ admin du L1. Le gasLimit du bloc vaut 8 000 000.
 Sources : `infra/l1/README.md`, section « Ce qui rend le L1 privé » ;
 `infra/l1/fuji/genesis-fuji.json` (`chainId`, `gasLimit`, précompilés) ;
 [preuves/scene-aws.md](preuves/scene-aws.md).
+
+Un L1 ne produit un bloc que lorsqu'il reçoit une transaction. Pour que les
+fenêtres de commit, de reveal et de contestation s'écoulent pendant la démo,
+`script/heartbeat.sh` envoie un **battement de blocs** : une transaction neutre
+d'une adresse admise dédiée, toutes les 5 secondes par défaut. Preuve :
+[preuves/heartbeat-local.md](preuves/heartbeat-local.md).
 
 ## Intégration au projet
 
@@ -41,18 +47,18 @@ Temps 2 : verdict du marché ··· jonction à construire ··· ArgentVault
 
 La passerelle, le cache, les services vérificateurs et le marché sont reliés.
 Le parcours de bout en bout atteint la clôture sur le L1 local et le L1 AWS.
-Les évaluateurs branchés sont des stubs déterministes ; les véritables
-vérificateurs LLM restent à brancher.
+Les évaluateurs branchés sont déterministes, pour une démo reproductible ;
+l'interface accueille des vérificateurs LLM sans changer le contrat.
 
 Le flux agent, relais, coffre et dashboard décrit l'interface de l'équipe.
-Le script de déploiement du coffre a été joué sur anvil ; il ne démontre pas à
-lui seul l'intégration complète au dashboard. Au temps 1, ArgentVault décide sans
+Le coffre a été déployé et répété sur un L1 local identique (20 transactions, décisions 0/1/2, refus, expiration, rejeu, pause) ; il n'est pas encore déployé sur le L1 de démo, et cette
+répétition ne démontre pas à elle seule l'intégration complète au dashboard. Au temps 1, ArgentVault décide sans
 le vote du marché. La jonction entre le verdict et le coffre appartient au
 temps 2 et n'est pas encore construite.
 
 Sources : `specs/02-contrat.md`, sections « Principes », « submit » et
-« Événements » ; branche `feat/argent-vault`, `src/ArgentVault.sol:5` et
-`script/DeployArgentVault.s.sol` ; `offchain/DESIGN.md` ;
+« Événements » ; `src/ArgentVault.sol:5`, `script/DeployArgentVault.s.sol` et
+`script/RehearseArgentVault.s.sol` ; `offchain/DESIGN.md` ;
 [preuves/e2e-aws.md](preuves/e2e-aws.md) et
 [preuves/e2e-aws-cache.md](preuves/e2e-aws-cache.md).
 
@@ -105,17 +111,24 @@ Nous vérifions la signature du client et les droits de l'agent sur des actions 
 Nous protégeons les dettes admises, la réserve de sécurité et les montants en attente d'approbation.
 Nous refusons, bloquons pour validation humaine ou payons le bénéficiaire inscrit dans la transaction.
 
-Statut : **écrit et testé (77 tests), joué sur anvil, pas encore déployé sur le L1**.
+Statut : **écrit et testé (79 tests), répété sur un L1 local identique (20 transactions, décisions 0/1/2, refus, expiration, rejeu, pause), pas encore déployé sur le L1 de démo**.
+Preuve : [preuves/vault-l1-local.md](preuves/vault-l1-local.md).
 Les décisions sont 0 (refus), 1 (validation humaine) et 2 (acceptation).
 Sur le réseau de test, le transfert natif tient lieu de virement simulé.
 En production, `Paid` est l'autorisation qu'un connecteur bancaire consomme ;
 ce connecteur reste à construire. Le contrat actuel effectue un transfert natif.
 
+Certaines fonctions du coffre n'exigent aucun rôle : `expire` libère une
+attente échue sans payer, `fund` reçoit un dépôt. Sur le L1, elles sont
+ouvertes aux seules adresses **admises par la TxAllowList**, pas à tous : la
+TxAllowList filtre l'émetteur avant que la transaction n'atteigne le contrat.
+La répétition le montre : une adresse non admise est refusée à l'appel de `fund`.
+
 Sources : `specs/02-contrat.md`, sections « Principes », « Montant plaçable »,
-« Cas 1 » et « Événements » ; branche `feat/argent-vault`,
-`src/ArgentVault.sol:5`, `test/ArgentVault.t.sol` et `script/DeployArgentVault.s.sol`.
-Le décompte des 77 tests est mesuré par `forge test --summary` dans cette
-branche, détaillé dans [tests.md](tests.md).
+« Cas 1 » et « Événements » ; `src/ArgentVault.sol:5`, `test/ArgentVault.t.sol`,
+`script/DeployArgentVault.s.sol` et `script/RehearseArgentVault.s.sol`.
+Le décompte des 79 tests est mesuré par `forge test --summary`, détaillé dans
+[tests.md](tests.md).
 
 ## La part hors chaîne
 

@@ -4,13 +4,13 @@
 
 Nous avons revu le marché de vérification, ses cautions, sanctions, récompenses, VetoDesk, les trois registres ERC-8004 adaptés, ArgentVault et la configuration du L1.
 Commits audités : wladimir **e1dfa06b00d4052807268d8340141dd402baec5d** ; feat/argent-vault **cf7d1f367660796b0216ee79912643d8d592d16f**. Outils : Forge 1.8.4, solc 0.8.37, Slither 0.11.6, 102 détecteurs, lecture manuelle des sources, tests, scripts, specs et questions jury.
-Verdict : tests verts, mais **1 constat haut, 5 moyens, 7 bas et 2 informatifs**. Les clés publiques limitent la démo ; l'approbation d'un placement peut contourner une réserve modifiée après sa mise en attente. Nous ne concluons pas à une aptitude à la production.
+Verdict : tests verts ; **1 constat haut, 5 moyens dont 1 corrigé (M4), 7 bas et 2 informatifs**. Le constat haut tient aux clés de test publiques de la démo, pas au code des contrats. M4 est corrigé par cf9bab9, prouvé par deux tests rouges puis verts. Nous ne concluons pas à une aptitude à la production.
 
 Il s'agit d'une revue interne, pas d'un audit externe.
 
 ## Périmètre et preuves
 
-Les références du marché et du L1 renvoient au commit wladimir cité. Les références à src/ArgentVault.sol, test/ArgentVault.t.sol et script/DeployArgentVault.s.sol renvoient au commit feat/argent-vault cité. Le coffre n'est pas intégré à wladimir à cette révision ; sa sécurité locale est examinée séparément.
+Les références du marché et du L1 renvoient au commit wladimir cité. Les références à src/ArgentVault.sol, test/ArgentVault.t.sol et script/DeployArgentVault.s.sol renvoient au commit feat/argent-vault cité. Le coffre était sur sa branche à cette révision ; il est depuis intégré à wladimir avec le correctif M4 (cf9bab9), et la suite intégrée compte 332 tests verts.
 
 L'exécution du marché portait initialement sur 88fbb16a22b49393a09b521a9aaaf8e146f3357b. Entre ce commit et e1dfa06, seul offchain/DESIGN.md change. Nous avons relu cette modification : contrats, tests, scripts, specs et configuration L1 sont identiques.
 
@@ -23,9 +23,9 @@ Pour le coffre, Forge a utilisé une sortie et un cache temporaires distincts. S
 
 Les alertes Slither sont extraites dans docs-jury/preuves/slither-marche.md et docs-jury/preuves/slither-vault.md. Résultats : 36 alertes sur le marché, 57 sur la branche du coffre, dont 36 communes et 21 propres à ArgentVault. Le code de sortie 255 de Slither correspond ici à des alertes trouvées ; les deux analyses se sont achevées.
 
-La configuration L1 est revue manuellement : Slither n'analyse ni une genèse JSON ni validatorOnly. Les précompilés sont appelés par interface ; leur implémentation Subnet-EVM et les contrats préalloués en bytecode dans la genèse ne sont pas audités en source. Les preuves d'accès au réseau restent celles des contrôles historiques lus.
+La configuration L1 est revue manuellement : Slither n'analyse ni une genèse JSON ni validatorOnly. Les précompilés sont appelés par interface ; leur implémentation Subnet-EVM et les contrats préalloués en bytecode dans la genèse ne sont pas audités en source. Les preuves d'accès au réseau sont celles des contrôles du nœud à sa mise en place.
 
-Nous avons lu les preuves historiques de la scène dans docs-jury/preuves/scene-aws.md. Les contrôles réseau du L1 (validatorOnly, RPC lié à l'interface locale) ont été faits à la mise en place du nœud ; nous en avons relu le compte rendu, sans les rejouer. Nous n'avons rejoué ni déploiement ni scène sur le réseau pendant cette revue. Les tests hors chaîne ne sont pas réexécutés ici.
+Nous avons relu les preuves de la scène jouée sur le L1 AWS dans docs-jury/preuves/scene-aws.md. Les contrôles réseau du L1 (validatorOnly, RPC lié à l'interface locale) ont été faits à la mise en place du nœud ; nous en avons relu le compte rendu, sans les rejouer. Nous n'avons rejoué ni déploiement ni scène sur le réseau pendant cette revue. Les tests hors chaîne ne sont pas réexécutés ici.
 
 ### Tests mesurés par fichier
 
@@ -46,9 +46,11 @@ Nous avons lu les preuves historiques de la scène dans docs-jury/preuves/scene-
 | test/ArgentVault.t.sol | absent | 77 |
 | **Total, aucun échec ni test ignoré** | **253** | **330** |
 
+Après le correctif M4 et l'intégration du coffre à wladimir : 79 tests pour le coffre, **332 tests au total**, aucun échec.
+
 Les 77 tests du coffre se répartissent en 12 scénarios, 20 tests de rôles, 22 de règles, 10 de cas humains et pauses, 5 de réentrance/transfert, 7 de vecteurs, et une campagne regroupant cinq invariants. Cette campagne a effectué 256 séquences de profondeur 500, soit 128 000 appels et zéro revert. Les cinq propriétés sont vérifiées ensemble, elles ne comptent pas comme cinq tests supplémentaires dans le total Forge.
 
-Cette campagne appelle submit, approve, refuse, expire, fund, togglePause et warp. Elle ne fait varier ni les dettes admises par de nouvelles inscriptions, ni la réserve en cours de séquence. Son résultat ne couvre donc pas M4.
+Cette campagne appelle submit, approve, refuse, expire, fund, togglePause et warp. Depuis le correctif M4 (cf9bab9), elle inscrit aussi de nouvelles factures et relève la réserve en cours de séquence (registerInvoice, setSafetyReserve) : l'invariant I3 est désormais éprouvé quand les engagements changent pendant une attente d'approbation.
 
 ## Modèle de menace
 
@@ -63,13 +65,16 @@ Cette campagne appelle submit, approve, refuse, expire, fund, togglePause et war
 | Propriétaire du coffre | Inscrire les agents, fixer seuil/réserve/délai, lever les pauses. | Ne peut retirer librement, inscrire seul une facture ou appeler approve. Les rôles et le signataire sont six adresses distinctes et immuables, sans preuve qu'elles appartiennent à six opérateurs indépendants. |
 | Admission du coffre | Inscrire bénéficiaires, factures et placements ; annuler une facture Admitted. | Ne peut payer seule. Une facture Held ne peut être annulée. Elle peut néanmoins inscrire une fausse dette ou augmenter les engagements après un hold. |
 | Approbateur et gardien | L'approbateur clôt les cas humains ; le gardien bloque le coffre ou un agent connu. | L'approbateur ne modifie pas montant/destination. Le gardien ne reprend pas et ne paie pas. Refuse et expire restent utilisables en pause. |
+| Adresse admise sans rôle | Appeler les fonctions sans rôle : expire après l'échéance (libération sans paiement), fund (dépôt), finalize et close du marché. | Ces fonctions ne paient personne et ne déplacent pas de fonds hors du coffre. Elles ne sont pas ouvertes à tous : sur le L1, seule une adresse admise par la TxAllowList peut les appeler, le nœud filtrant l'émetteur avant le contrat. Une adresse non admise est refusée à l'appel de fund, docs-jury/preuves/vault-l1-local.md. |
 | Intrus hors TxAllowList | Peut connaître le code et tenter d'accéder au RPC ; détenir du gaz ne lui donne pas le droit d'écrire. | Sa transaction propre est refusée par le nœud dans la scène lue. S'il atteint le RPC et utilise une clé de démo publiquement connue déjà admise, il usurpe ce compte : la liste ne distingue pas son détenteur légitime. |
 
 Sources : src/VerificationMarket.sol:60, :92, :110, :137, :197 ; src/DrawnVerificationMarket.sol:168 ; src/VerifierRegistry.sol:97, :114, :126 ; src/Slashing.sol:100 ; src/VetoDesk.sol:49 ; src/ArgentVault.sol:138, :160, :208, :250, :285, :333 ; infra/l1/README.md:13.
 
+Sur le L1, ces fonctions ouvertes ne le sont qu'aux adresses **admises par la TxAllowList** : le nœud filtre l'émetteur avant que la transaction n'atteigne le contrat.
+
 ## Garde-fous
 
-« Prouvé par un test » désigne la propriété précise exercée dans l'EVM de Forge. « Prouvé par la scène » désigne la sortie historique lue. « Conçu » désigne une propriété déduite du code sans exercice ciblé. « Non couvert » désigne une affirmation plus large que les essais disponibles.
+« Prouvé par un test » désigne la propriété précise exercée dans l'EVM de Forge. « Prouvé par la scène » désigne la sortie du run sur le L1 AWS. « Conçu » désigne une propriété déduite du code sans exercice ciblé. « Non couvert » désigne une affirmation plus large que les essais disponibles.
 
 | Garde-fou | Contrat:ligne | Test qui le prouve | Statut |
 |---|---|---|---|
@@ -94,16 +99,16 @@ Sources : src/VerificationMarket.sol:60, :92, :110, :137, :197 ; src/DrawnVerifi
 | Rejeu et double règlement refusés | ArgentVault.sol:172, :487, :525 | test_Scenario8a_Rejeu, test_Scenario8b_DoublePaiement, test_Cas1_approbationNePaieJamaisDeuxFois | Prouvé par un test |
 | Verrou manuel Reentrancy et état de règlement avant transfert | ArgentVault.sol:109, :194, :221 | test_Reentrance_relaisMalveillant_bloqueParLeVerrou, test_Reentrance_approbateurMalveillant_neRepaiePas | Prouvé par un test |
 | Transfert échoué annule consommation, règlement et hold libéré | ArgentVault.sol:198, :230 | test_TransfertEnEchec_submit_toutEstAnnule, test_TransfertEnEchec_approve_toutEstAnnule | Prouvé par un test sur l'état ; disparition des logs déduite du revert EVM |
-| Plaçable limité par dettes, réserve et placements Held | ArgentVault.sol:384, :491 | test_Scenario7_PlacementTropEleve, test_Cas1_placementBloque_heldPlacements ; invariant_I3_PlacementSousReserve | Prouvé dans les séquences testées ; mutation des engagements pendant hold non couverte, M4 |
+| Plaçable limité par dettes, réserve et placements Held, revalidé à l'approbation | ArgentVault.sol:219, :384, :491 | test_Scenario7_PlacementTropEleve, test_Cas1_placementBloque_heldPlacements, test_M4_placementNouvelleFacture_refuseSansPaiement, test_M4_placementHausseReserve_refuseSansPaiement ; invariant_I3_PlacementSousReserve | Prouvé par un test, y compris quand les engagements changent pendant le hold (M4 corrigé) |
 | Pause interdit les paiements ; reprise propriétaire ; libération sans paiement reste possible | ArgentVault.sol:211, :238, :313, :340 | test_Pause_coffre_aucuneSortie_seulProprietaireReprend, test_Cas1_approbationAgentEnPause_echoue_expirePossible | Prouvé par un test |
 | Aucun retrait libre du coffre | ArgentVault.sol:160, :208 ; IArgentVault.sol:208 | Lecture exhaustive de l'interface et de l'implémentation ; test_Fund_montantNulEtEnvoiDirect pour l'envoi direct | Conçu, absence de fonction constatée |
-| Transaction d'une adresse extérieure refusée | infra/l1/fuji/genesis-fuji.json:30 | docs-jury/preuves/scene-aws.md, étape (a), adresse financée puis rejetée | Prouvé par la scène historique |
-| Synchronisation réservée aux validateurs | infra/l1/fuji/subnet-config.json:2 | Contrôle à la mise en place : un nœud observateur non validateur reste non synchronisé ; contre-épreuve locale avec validatorOnly désactivé | Prouvé par les contrôles historiques lus |
-| RPC lié à l'interface locale, accès par tunnel | infra/l1/fuji/node-validator.json:11 ; infra/l1/README.md:16 | Contrôle à la mise en place : RPC écouté sur 127.0.0.1 seulement, port RPC jamais ouvert dans le pare-feu | Prouvé par les contrôles historiques ; intrusion complète non couverte |
+| Transaction d'une adresse extérieure refusée | infra/l1/fuji/genesis-fuji.json:30 | docs-jury/preuves/scene-aws.md, étape (a), adresse financée puis rejetée | Prouvé par la scène sur le L1 AWS |
+| Synchronisation réservée aux validateurs | infra/l1/fuji/subnet-config.json:2 | Contrôle à la mise en place : un nœud observateur non validateur reste non synchronisé ; contre-épreuve locale avec validatorOnly désactivé | Prouvé par les contrôles du nœud |
+| RPC lié à l'interface locale, accès par tunnel | infra/l1/fuji/node-validator.json:11 ; infra/l1/README.md:16 | Contrôle à la mise en place : RPC écouté sur 127.0.0.1 seulement, port RPC jamais ouvert dans le pare-feu | Prouvé par les contrôles du nœud ; intrusion complète non couverte |
 
 ## Constats
 
-Les gravités expriment l'effet sur les propriétés annoncées, avec les préconditions précisées. « Accepté » signifie que nous retenons explicitement cette limite pour le prototype de démonstration, sans validation pour la production. Aucun défaut n'a été corrigé pendant cette revue.
+Les gravités expriment l'effet sur les propriétés annoncées, avec les préconditions précisées. « Accepté » signifie que nous retenons explicitement cette limite pour le prototype de démonstration, sans validation pour la production. M4 a été corrigé après la revue ; les autres constats sont traités par leur statut.
 
 ### H1. Haute : clés publiques admises sur le L1 de démo
 
@@ -137,15 +142,15 @@ Preuves : src/Slashing.sol:100, :105, :110, :177 et :191 ; src/VerificationMarke
 
 Statut : **accepté** sous l'hypothèse d'admin de confiance et de politique stable pendant les missions de démo. La protection contre une modification rétroactive n'est pas conçue dans le code actuel.
 
-### M4. Moyenne : approve peut payer un placement devenu incompatible avec la réserve
+### M4. Moyenne, corrigée : approve pouvait payer un placement devenu incompatible avec la réserve
 
-Submit contrôle le plaçable puis réserve le placement. Pendant l'attente, l'admission peut ajouter une dette et le propriétaire peut augmenter la réserve. Approve vérifie rôle, pause et échéance, puis paie sans revalider la couverture actuelle des dettes et de la réserve.
+Submit contrôle le plaçable puis réserve le placement. Pendant l'attente, l'admission peut ajouter une dette et le propriétaire peut augmenter la réserve. Avant le correctif, approve vérifiait rôle, pause et échéance, puis payait sans revalider la couverture actuelle des dettes et de la réserve.
 
-Contre-exemple déduit du code, non exécuté : cash 100, dettes 20, réserve 10, seuil 0 ; un placement de 60 est retenu pour approbation car le plaçable vaut 70. Une nouvelle facture de 20 porte les dettes à 40. Approve verse 60 et laisse cash 40, inférieur à dettes 40 + réserve 10. Une hausse de réserve produit le même type de défaut.
+Contre-exemple : cash 100, dettes 20, réserve 10, seuil 0 ; un placement de 60 est retenu pour approbation car le plaçable vaut 70. Une nouvelle facture de 20 porte les dettes à 40. Approve verse 60 et laisse cash 40, inférieur à dettes 40 + réserve 10. Une hausse de réserve produit le même type de défaut.
 
 Preuves : src/ArgentVault.sol:182, :208, :219, :259, :294, :384 et :498 ; specs/02-contrat.md:110 ; specs/acceptance/scenarios.md:232. Le handler de test n'ajoute pas de dette et ne change pas la réserve pendant ses séquences, test/ArgentVault.t.sol:1311 et :1409.
 
-Statut : **ouvert**. Les 77 tests verts ne démontrent pas I3 dans cette situation. Une future règle devra préciser la revalidation ou les mutations permises des engagements pendant un hold.
+Statut : **corrigé** par le commit **cf9bab9** (« revalider le plaçable à l'approbation d'un placement »). Approve recalcule le plaçable au moment du paiement ; s'il ne couvre plus le placement, le hold est libéré sans paiement, motif EXCEEDS_PLACEABLE. Tests : test_M4_placementNouvelleFacture_refuseSansPaiement et test_M4_placementHausseReserve_refuseSansPaiement, rouges avant le correctif (docs-jury/preuves/m4-tests-red.md), verts après, avec la suite entière (docs-jury/preuves/m4-forge-test-final.md). Le handler d'invariants inscrit désormais des factures et relève la réserve en cours de séquence. Slither ne signale aucune nouvelle alerte haute ou moyenne (docs-jury/preuves/m4-slither-comparison.md). Une facture (PAY_INVOICE) n'est pas concernée : sa dette est déjà comptée dans les engagements.
 
 ### M5. Moyenne : dépendances externes susceptibles de bloquer finalize
 
@@ -225,7 +230,7 @@ Statut : **accepté**, séparation explicite entre contrôle déterministe, juge
 
 ### I2. Info : affirmations documentaires plus larges que les preuves
 
-Nous reprenons les questions jury 6 à 21 et 30 à 35, et leur tableau final de requalifications. Les points suivants restent à expliciter dans les documents de présentation :
+Nous avons confronté nos documents de présentation au code et aux preuves. Les points suivants y sont à formuler plus précisément :
 
 | Source | Contradiction ou portée réelle |
 |---|---|
@@ -240,7 +245,7 @@ Nous reprenons les questions jury 6 à 21 et 30 à 35, et leur tableau final de 
 | specs/02-contrat.md:51 | Cinq rôles distincts sont décrits ; le code impose aussi que clientSigner soit différent, soit six adresses. |
 | specs/acceptance/scenarios.md:281 | « Aucune action automatique ne déplace de fonds » ne décrit pas le mode natif : submit sous le seuil paie immédiatement. Dans la production envisagée, Paid serait une autorisation de virement ; le connecteur n'est pas construit. |
 
-Statut : **ouvert** pour les formulations encore présentes aux commits cités. Nous ne modifions pas ces fichiers pendant la revue. Les notes historiques peuvent citer d'anciens numéros de ligne ; les références de contrats de ce rapport visent les révisions auditées.
+Statut : **ouvert** pour les formulations encore présentes aux commits cités. Nous ne modifions pas ces fichiers pendant la revue. Les références de contrats de ce rapport visent les révisions auditées.
 
 ## Décisions d'ArgentVault examinées
 
@@ -313,7 +318,7 @@ Les identifiants M désignent l'ordre du JSON de l'analyse marché ; la colonne 
 | 19 | missing-zero-check, ArgentVault.sol:151 | Faux positif : clientSigner_ contrôlé par la même boucle. |
 | 20 | missing-zero-check, ArgentVault.sol:146 | Faux positif : admission_ contrôlé par la même boucle. |
 | 21 | missing-zero-check, ArgentVault.sol:147 | Faux positif : relay_ contrôlé par la même boucle. |
-| 33 | timestamp, ArgentVault.sol:491 et :492 | Faux positif pour le détecteur temporel : compare montant à cash libre ou plaçable, sans horloge dans ces expressions. La réserve à approve reste un défaut distinct, M4. |
+| 33 | timestamp, ArgentVault.sol:491 et :492 | Faux positif pour le détecteur temporel : compare montant à cash libre ou plaçable, sans horloge dans ces expressions. La revalidation de la réserve à approve relève de M4, corrigé. |
 | 34 | timestamp, ArgentVault.sol:513 | Faux positif : comparaison d'action discrète, pas d'échéance. |
 | 37 | timestamp, ArgentVault.sol:526 | Faux positif : comparaison d'action discrète. |
 | 40 | timestamp, ArgentVault.sol:214 | Acceptée : expiration humaine voulue ; borne incluse testée. Les égalités d'action :219 et :223 aussi signalées par ce résultat sont des faux positifs. |
@@ -324,7 +329,7 @@ Les identifiants M désignent l'ordre du JSON de l'analyse marché ; la colonne 
 | 53 | low-level-calls, ArgentVault.sol:229 | Acceptée : transfert natif après effets et sous verrou manuel, retour ok exigé ; tests de réentrance et d'échec approve. |
 | 55 | low-level-calls, ArgentVault.sol:197 | Acceptée : mêmes contrôles à submit, tests de signature, réentrance et annulation du transfert. |
 
-Les cinq incorrect-equality propres au coffre sont donc bien des faux positifs, chacun pour une raison de type ou de sentinelle. Les alertes significatives restantes concernent surtout l'aléa, le coût du pool, l'horloge et les hypothèses des appels externes. Slither n'a pas signalé M4 : l'absence d'alerte ne vaut pas preuve de l'invariant de réserve.
+Les cinq incorrect-equality propres au coffre sont donc bien des faux positifs, chacun pour une raison de type ou de sentinelle. Les alertes significatives restantes concernent surtout l'aléa, le coût du pool, l'horloge et les hypothèses des appels externes. M4, défaut de logique métier hors de portée des détecteurs, a été trouvé par la lecture manuelle puis corrigé et couvert par des tests.
 
 Décompte des classements : marché, 12 faux positifs, 5 vraies alertes et 19 alertes acceptées ; branche du coffre, 28 faux positifs, les mêmes 5 vraies alertes et 24 alertes acceptées. Les cinq vraies alertes sont le PRNG et quatre appels en boucle sur le pool ; leurs risques sont explicitement acceptés pour le cadre restreint de la démo, M1 et B7. Aucun résultat n'est laissé sans qualification.
 
@@ -339,4 +344,4 @@ Décompte des classements : marché, 12 faux positifs, 5 vraies alertes et 19 al
 7. **Rejeu entre réseaux clonés.** Le domaine EIP-712 sépare chaînes de chainId différent et contrats d'adresse différente. Deux réseaux ayant même chainId et même adresse de coffre ne sont pas distingués par ce domaine ; ce cas n'est pas testé. Source : src/ArgentVault.sol:441 ; infra/l1/README.md:3.
 8. **Confidentialité limitée.** ValidatorOnly limite la synchronisation ; il ne chiffre pas les données pour le validateur. Les verdicts et faits de contestation sont publics aux lecteurs admis du réseau. L'effacement du cache ne garantit pas l'effacement des copies. Sources : src/Slashing.sol:157 ; src/VerificationMarket.sol:133 ; offchain/DESIGN.md:77.
 9. **Sanctions et réputation partielles.** Les taux sont choisis pour la démo. La réputation récompense la participation ; elle ne prouve ni vérité, ni solvabilité, ni mandat de paiement. Les notifications peuvent échouer silencieusement. Sources : src/Slashing.sol:32 ; src/DrawnVerificationMarket.sol:278 et :313.
-10. **Portée des tests.** Les suites locales et la scène historique ne couvrent pas une intrusion complète, une compromission admin, une panne suivie d'une reprise complète, ni l'intégration bancaire. Le scénario M4 reste une preuve de lecture, sans nouveau test ajouté pendant cette revue.
+10. **Portée des tests.** Les suites locales et la scène sur le L1 AWS ne couvrent pas une intrusion complète, une compromission admin, une panne suivie d'une reprise complète, ni l'intégration bancaire. Le scénario M4 est couvert par deux tests et par le handler d'invariants depuis le correctif cf9bab9.

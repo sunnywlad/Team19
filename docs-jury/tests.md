@@ -9,9 +9,9 @@ sont éprouvés séparément ; aucune suite ne démontre leur jonction.
 Source des décomptes : `forge test --summary`, Forge 1.8.4. Les sorties brutes
 sont extraites dans [preuves/gas-report-marche.md](preuves/gas-report-marche.md) et
 [preuves/gas-report-vault.md](preuves/gas-report-vault.md), avec les commandes exécutées.
-Les chemins du tableau sont relatifs à chaque branche.
+Les chemins sont relatifs à la racine du dépôt.
 
-### Marché, branche `wladimir`, révision `e1dfa06`
+### Marché
 
 | Fichier | Contrat de test | Ce qui est testé | Nombre de tests |
 |---|---|---|---:|
@@ -27,40 +27,31 @@ Les chemins du tableau sont relatifs à chaque branche.
 | `test/erc8004/AgentReputationRegistry.t.sol` | `AgentReputationRegistryTest` | Retours, révocation, filtres et agrégats | 19 |
 | `test/erc8004/AgentValidationRegistry.t.sol` | `AgentValidationRegistryTest` | Demandes, réponses, droits et synthèses de validation | 19 |
 
-Total : **253 tests, aucun échec ni test ignoré**. Le contrat
+Total du marché : **253 tests, aucun échec ni test ignoré**. Le contrat
 `DrawnVerificationMarketTest_Twin` sert de doublure au tirage ; il ne porte
 aucun test autonome et n'apparaît pas dans le résumé.
 
-### Coffre, branche `feat/argent-vault`, révision `cf7d1f3`
-
-Cette branche contient aussi les suites du marché. Le nom du guichet y reste
-`ChkDesk` dans le code mesuré ; le projet de démonstration utilise VetoDesk.
+### Coffre ArgentVault, intégré à `wladimir`
 
 | Fichier | Contrat de test | Ce qui est testé | Nombre de tests |
 |---|---|---|---:|
 | `test/ArgentVault.t.sol` | `ArgentVaultScenariosTest` | Scénarios d'acceptation du coffre et variantes d'approbation, expiration et rejeu | 12 |
-| `test/ArgentVault.t.sol` | `ArgentVaultRolesTest` | Fonctions sensibles par rôle, fonctions ouvertes à tous et constructeur | 20 |
+| `test/ArgentVault.t.sol` | `ArgentVaultRolesTest` | Fonctions sensibles par rôle, fonctions sans rôle et constructeur | 20 |
 | `test/ArgentVault.t.sol` | `ArgentVaultRulesTest` | Signature, domaine, fenêtre, mandat, ordre des refus, registres, fonds et paramètres | 22 |
-| `test/ArgentVault.t.sol` | `ArgentVaultCase1AndPauseTest` | Blocage, approbation, refus, expiration, pauses et libération des fonds | 10 |
+| `test/ArgentVault.t.sol` | `ArgentVaultCase1AndPauseTest` | Blocage, approbation, refus, expiration, pauses, libération des fonds et revalidation du plaçable (M4) | 12 |
 | `test/ArgentVault.t.sol` | `ArgentVaultReentrancyTest` | Bénéficiaire, relais et approbateur malveillants ; annulation sur transfert en échec | 5 |
 | `test/ArgentVault.t.sol` | `ArgentVaultVectorsTest` | Vecteurs de signature, domaine, empreintes et décisions aux bornes | 7 |
 | `test/ArgentVault.t.sol` | `ArgentVaultInvariantTest` | Paiement unique, conservation des fonds, réserve, montants bloqués et dettes | 1 campagne groupée |
-| `test/VerificationMarket.t.sol` | `VerificationMarketTest` | Création, commit/reveal, agrégation, fenêtres, clôture et fuzz | 65 |
-| `test/VerifierRegistry.t.sol` | `VerifierRegistryTest` | Admission, caution, verrouillage, saisie et sortie | 37 |
-| `test/Slashing.t.sol` | `SlashingTest` | Absences, contestation sur prédicat, saisie et exclusion | 29 |
-| `test/Rewards.t.sol` | `RewardsTest` | Distribution, bonus natif et retrait | 15 |
-| `test/ChkDesk.t.sol` | `ChkDeskTest` | Opérateurs, frappe native et référence déjà créditée | 12 |
-| `test/Phase2.t.sol` | `Phase2Test` | Parcours cautionné et verrous cumulés | 3 |
-| `test/DrawnVerificationMarket.t.sol` | `DrawnVerificationMarketTest` | Tirage, éligibilité, absence de tirage et parcours complet | 21 |
-| `test/Phase3.t.sol` | `Phase3Test` | Intégration des registres et tolérance de leurs échecs | 12 |
-| `test/erc8004/AgentIdentityRegistry.t.sol` | `AgentIdentityRegistryTest` | Identité, métadonnées et non-transférabilité | 21 |
-| `test/erc8004/AgentReputationRegistry.t.sol` | `AgentReputationRegistryTest` | Retours, révocation et synthèses | 19 |
-| `test/erc8004/AgentValidationRegistry.t.sol` | `AgentValidationRegistryTest` | Demandes, réponses et synthèses | 19 |
 
-Le résumé compte **77 tests pour le coffre**, soit 76 tests individuels et une
-campagne groupant cinq fonctions `invariant_*`. Avec les 253 tests du marché
-présents dans cette branche, le résumé compte 330 tests, tous passants.
-Nous ne cumulons pas les deux branches pour annoncer une couverture distincte.
+Le résumé compte **79 tests pour le coffre**, soit 78 tests individuels et une
+campagne groupant cinq fonctions `invariant_*`. Les deux tests ajoutés par le
+correctif M4 (`cf9bab9`) sont `test_M4_placementNouvelleFacture_refuseSansPaiement`
+et `test_M4_placementHausseReserve_refuseSansPaiement` : rouges avant le
+correctif ([preuves/m4-tests-red.md](preuves/m4-tests-red.md)), verts après
+([preuves/m4-forge-test-final.md](preuves/m4-forge-test-final.md)).
+
+**Total de la branche intégrée : 332 tests Foundry (253 marché + 79 coffre),
+18 suites, aucun échec ni test ignoré**, mesuré par `forge test --summary`.
 
 ## Familles et propriétés éprouvées
 
@@ -71,8 +62,7 @@ coffre vérifie la séparation propriétaire, admission, relais, approbateur et
 gardien. Les suites de chaque contrat du marché contrôlent aussi leurs rôles.
 
 Les **huit scénarios d'ArgentVault** donnent douze tests avec leurs variantes
-(source : `specs/acceptance/scenarios.md` et `test/ArgentVault.t.sol:246`, branche
-du coffre) :
+(source : `specs/acceptance/scenarios.md` et `test/ArgentVault.t.sol:246`) :
 
 | Scénario | Propriété testée dans le coffre |
 |---|---|
@@ -100,7 +90,8 @@ soit **128 000 appels** au handler dans cette mesure. Les cinq invariants
 contrôlent le paiement unique par référence, la conservation des fonds, les
 placements sous réserve, la couverture des montants bloqués et l'exactitude
 des dettes admises. Le handler varie soumissions, approbations, refus,
-expirations, approvisionnements, pauses et temps. Sources :
+expirations, approvisionnements, pauses et temps ; depuis le correctif M4, il
+inscrit aussi de nouvelles factures et relève la réserve en cours de séquence. Sources :
 `test/ArgentVault.t.sol:1266`, `:1409`, `forge config --json` et sortie
 `ArgentVaultInvariantTest invariants` dans le journal du coffre.
 Le marché n'a pas de suite `invariant_*`.
@@ -127,7 +118,25 @@ une sortie 0 : [preuves/scene-aws.md](preuves/scene-aws.md).
 | d. Lecture finale | Cautions, strikes, réputation et codes des demandes relus sur la chaîne |
 
 Sources des taux : `src/Slashing.sol:30` ; déroulé : `script/attack-scene.sh`.
-Cette scène concerne le marché et les accès du L1 ; elle n'attaque pas ArgentVault.
+Cette scène concerne le marché et les accès du L1.
+
+## Répétition du coffre sur un L1 local identique
+
+ArgentVault est répété sur un L1 local identique au L1 de démo (chainId
+191919, TxAllowList, Native Minter) : **20 transactions**, décisions 0, 1 et 2,
+refus, expiration, rejeu, pause puis reprise, toutes relues par `cast`. Une
+adresse non admise est refusée par le nœud à l'appel de `fund()`. Le coffre
+n'est pas encore déployé sur le L1 de démo. Preuve :
+[preuves/vault-l1-local.md](preuves/vault-l1-local.md) ; déroulé :
+`script/DeployArgentVault.s.sol` et `script/RehearseArgentVault.s.sol`.
+
+## Battement de blocs
+
+`script/heartbeat.sh` envoie une transaction neutre à intervalle fixe pour que
+le L1 produise des blocs pendant les fenêtres de la démo. Il échoue clairement
+sans RPC ni admission, tourne pendant un bout en bout, s'arrête au Ctrl-C (code
+0) et reprend après une coupure passagère :
+[preuves/heartbeat-local.md](preuves/heartbeat-local.md).
 
 ## Hors chaîne
 
@@ -149,7 +158,7 @@ comprennent pas ArgentVault.
 
 ## Commandes de lancement
 
-Depuis la racine de la branche concernée, avec les dépendances installées :
+Depuis la racine du dépôt, avec les dépendances installées :
 
 | Suite | Une ligne |
 |---|---|
@@ -163,5 +172,3 @@ Les scripts L1 envoient des transactions ; la scène redéploie une pile.
 Le fichier de déploiement doit correspondre au réseau visé.
 Sources des commandes : `offchain/package.json`, `offchain/e2e.sh`,
 `script/attack-scene.sh` et [rejouer-la-demo.md](rejouer-la-demo.md).
-Dans le worktree de lecture du coffre, toute commande Forge ajoute
-`--out /tmp/docs-out --cache-path /tmp/docs-cache` pour isoler ses artefacts.

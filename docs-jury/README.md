@@ -14,13 +14,18 @@ signifie accepté. Le demandeur lit ce code et agit hors chaîne.
 
 Le marché fonctionne sur notre L1 Avalanche privé sur AWS, avec le jeton
 natif VETO et le guichet VetoDesk. ArgentVault porte séparément la décision
-déterministe et le paiement simulé : il est écrit, testé et joué sur anvil,
-pas encore déployé sur le L1. Au temps 1, il décide sans le vote du marché ;
+déterministe et le paiement simulé : il est écrit, testé, répété sur un L1 local identique (20 transactions, décisions 0/1/2, refus, expiration, rejeu, pause),
+et pas encore déployé sur le L1 de démo. Au temps 1, il décide sans le vote du marché ;
 leur jonction appartient au temps 2.
 
 Sources : `src/VerificationMarket.sol`, `src/VetoDesk.sol`,
-`infra/l1/README.md` ; branche `feat/argent-vault`, `src/ArgentVault.sol` ;
-[preuves/scene-aws.md](preuves/scene-aws.md) et [preuves/e2e-aws.md](preuves/e2e-aws.md).
+`infra/l1/README.md`, `src/ArgentVault.sol` ;
+[preuves/scene-aws.md](preuves/scene-aws.md), [preuves/e2e-aws.md](preuves/e2e-aws.md)
+et [preuves/vault-l1-local.md](preuves/vault-l1-local.md).
+
+Nos suites comptent **332 tests Foundry** (253 pour le marché, 79 pour le coffre)
+et **192 tests hors chaîne**, tous verts, mesurés par `forge test --summary` et
+`npm test` dans `offchain/`. Le détail est dans [tests.md](tests.md).
 
 ## Les fichiers de ce dossier
 
@@ -33,4 +38,5 @@ Sources : `src/VerificationMarket.sol`, `src/VetoDesk.sol`,
 | `rejouer-la-demo.md` | Les commandes pour redéployer et rejouer la scène d'attaque. |
 | [mesures-gaz.md](mesures-gaz.md) | Tailles des contrats, coûts mesurés et réglages du compilateur. |
 | [tests.md](tests.md) | Suites Foundry et hors chaîne, familles de tests et commandes. |
-| [rapport-securite.md](rapport-securite.md) | Rapport de sécurité préparé séparément, à réunir à ce dossier. |
+| [rapport-securite.md](rapport-securite.md) | Revue de sécurité interne : modèle de menace, garde-fous, constats et correctifs. |
+| [preuves/](preuves/README.md) | Extraits des sorties de nos runs : scène d'attaque, bout en bout, Slither, gaz, coffre, battement, correctif M4. |
