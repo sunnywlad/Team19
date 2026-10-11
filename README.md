@@ -22,9 +22,11 @@ paiement part.
   rapport d'incident. Aucune action automatique ne déplace de fonds.
 - Chaque étape est journalisée dans un journal chaîné, vérifiable par un script.
 
-Le contrat existe : `src/ArgentVault.sol`. Il décide et paie sur un réseau de
-test local seulement (anvil, chaîne 31337), avec `VAULT_MODE=chain`. Par défaut,
-`VAULT_MODE=fake` : le flux tourne contre un faux coffre, sans fonds ni chaîne.
+Le contrat existe : `src/ArgentVault.sol`. Il décide et paie sur réseau de
+test seulement : en local sur anvil (chaîne 31337), avec `VAULT_MODE=chain`, et
+sur notre L1 Avalanche de test (chaîne 191919, un seul validateur,
+[preuve](docs-jury/preuves/vault-l1-aws.md)). Par défaut, `VAULT_MODE=fake` : le flux tourne contre un faux
+coffre, sans fonds ni chaîne.
 
 ## Cadrage du paiement
 
@@ -41,8 +43,9 @@ n'existe pas : ni code, ni spec.
 **État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](specs/02-contrat.md) § 1
 et § 8) et de l'interface gelée. Le contrat est écrit (`src/ArgentVault.sol`) et
 `VAULT_MODE=chain make demo` le déploie sur un réseau de test local (anvil,
-chaîne 31337) : « démontré » vaut pour ce réseau local et pour lui seul. Aucun
-réseau de test public n'est testé. En mode fake, le mode par défaut, rien n'est
+chaîne 31337). Les mêmes scènes ont été rejouées sur notre L1 Avalanche de
+test ([preuve](docs-jury/preuves/vault-l1-aws.md)) : « démontré » vaut pour ces deux réseaux et pour eux
+seuls. Aucun réseau de test public n'est testé. En mode fake, le mode par défaut, rien n'est
 payé : un faux coffre rejoue les règles, sans fonds.
 
 ## Architecture
@@ -294,11 +297,11 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle. Balaie aussi la file pour expirer une demande, relais arrêté ou non |
 | File d'attente | `relay/src/queue.ts` | oui | oui | SQLite, idempotente |
 | Relais | `relay/src/relay.ts` | oui | au journal et aux pauses | Soumet au contrat sur anvil en `VAULT_MODE=chain`, à un faux coffre par défaut et dans ses tests. Écarte un agent en pause en lisant le service de réponse |
-| Contrat (coffre) | `src/ArgentVault.sol` | oui | en `VAULT_MODE=chain` | Implémente l'interface gelée `specs/contract/IArgentVault.sol`, tests dans `test/ArgentVault.t.sol`. Déployé par `make demo` sur un réseau de test local (anvil, 31337), nulle part ailleurs. En mode fake, `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
+| Contrat (coffre) | `src/ArgentVault.sol` | oui | en `VAULT_MODE=chain` | Implémente l'interface gelée `specs/contract/IArgentVault.sol`, tests dans `test/ArgentVault.t.sol`. Déployé par `make demo` sur un réseau de test local (anvil, 31337), et rejoué sur notre L1 de test (191919, [preuve](docs-jury/preuves/vault-l1-aws.md)). Nulle part ailleurs : Fuji n'est pas testé. En mode fake, `relay/src/fake-vault.ts` rejoue ses règles en mémoire, sans fonds |
 | Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui | Dans `make demo`, indexe les événements du contrat sur anvil en `VAULT_MODE=chain`, ceux du faux coffre par défaut |
 | Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; en mode fake le coffre est simulé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo`. En mode chain, le bandeau ne s'affiche pas |
 | Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; `VAULT_MODE=chain` déploie le contrat sur anvil. Aucun écart connu avec la spec : `demo/ecarts-connus.json` est vide |
-| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.md). Règles fixes de référence et délais : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
+| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.md). Délais mesurés sur un incident par chemin (`docs/mesures/delais.json`). Règles fixes de référence : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
 | Marché de vérification | `src/` | oui | oui, sur le L1 AWS | Prouvé sur le L1 de démo (`docs-jury/preuves/`) ; son verdict n'entre pas encore dans la décision du coffre |
 | L1 VETO | `infra/l1/` | oui | oui | L1 privé Avalanche, chainId 191919, VETO natif, TxAllowList et Native Minter |
 | Passerelle, cache et vérificateurs | `offchain/` | oui | oui, au marché | Services de vérification ; l'évaluateur est factice, le vérificateur LLM est en construction |
@@ -324,8 +327,9 @@ Du kit :
 
 Du dépôt :
 
-- Le contrat n'a tourné que sur un réseau de test local (anvil) : aucune règle
-  de paiement n'est prouvée sur un réseau public, de test ou non.
+- Le contrat n'a tourné que sur anvil et sur notre L1 de test, à un seul
+  validateur : aucune règle de paiement n'est prouvée sur un réseau public, de
+  test ou non.
 - La pause d'un agent est appliquée par la porte d'entrée et par le relais. Le
   contrat sait mettre un agent en pause, mais aucun composant ne la pose sur
   la chaîne.
