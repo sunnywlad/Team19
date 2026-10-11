@@ -43,6 +43,18 @@ Sous Windows ou macOS : `node start.mjs` à la place de `start.sh`.
 
 L'explorateur répond sur le port 5180, ouvert au réseau local : `http://<ip>:5180`.
 
+## Accès pour le jury
+
+- **Lire la chaîne : par l'explorateur, sans SSH ni compte.** Sur le même réseau
+  que le poste qui le fait tourner : `http://<ip du poste>:5180`. Sinon, sur l'écran
+  de l'équipe.
+- **Le RPC du L1 n'est pas public.** Il n'est joignable que par un tunnel SSH vers
+  le validateur. C'est voulu : la chaîne est privée, et les comptes de la démo
+  viennent du mnemonic de test public, donc un RPC ouvert laisserait n'importe qui
+  signer à leur place.
+- **Écrire sur la chaîne** demande en plus d'être admis par l'admin sur la
+  TxAllowList. L'explorateur ne signe rien : il est en lecture seule.
+
 ## Ports
 
 | Port | Service |
