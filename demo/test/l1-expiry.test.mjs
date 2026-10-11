@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { waitForL1Expiry } from "../scenes.mjs";
 
-const external = { mode: "chain", rpcUrl: "http://127.0.0.1:9670/rpc", get: () => "http://127.0.0.1:9670/rpc" };
+const external = { mode: "chain", rpcUrl: "<RPC du L1>", get: () => "<RPC du L1>" };
 
 test("expiration L1 : le temps mural ne suffit pas, attend un bloc strictement après l'échéance", async () => {
   const timestamps = [99, 100, 101];

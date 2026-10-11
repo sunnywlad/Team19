@@ -7,7 +7,7 @@ import { seed } from "../seed.mjs";
 const names = ["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY", "CLIENT_SIGNER"];
 const keys = Object.fromEntries(names.map((name) => [name, `0x${randomBytes(32).toString("hex")}`]));
 const address = `0x${"2".repeat(40)}`;
-const config = (chainId) => loadConfig({ env: { ...keys, VAULT_ADDRESS: address, CHAIN_ID: chainId, RPC_URL: "http://127.0.0.1:9670/rpc" }, envFile: "/nonexistent/team19-test.env" });
+const config = (chainId) => loadConfig({ env: { ...keys, VAULT_ADDRESS: address, CHAIN_ID: chainId, RPC_URL: "<RPC du L1>" }, envFile: "/nonexistent/team19-test.env" });
 
 function harness() {
   const seen = { clients: 0, testClients: 0, balances: [], contracts: [] };

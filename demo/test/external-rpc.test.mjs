@@ -29,7 +29,7 @@ function harness({ chainId = "0x2edaf", code = "0x6000" } = {}) {
 }
 
 test("RPC externe : vérifie la chaîne et le code, sans lancer ni arrêter anvil, sans redéployer", async () => {
-  const c = config({ RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919", VAULT_ADDRESS: address });
+  const c = config({ RPC_URL: "<RPC du L1>", CHAIN_ID: "191919", VAULT_ADDRESS: address });
   const { calls, deps } = harness();
   await bringUpChain(c, deps);
   assert.deepEqual(calls.started, []);
@@ -45,7 +45,7 @@ test("RPC externe : vérifie la chaîne et le code, sans lancer ni arrêter anvi
 
 test("RPC externe d'une autre chaîne : arrêt clair avant tout service, déploiement ou seed", async () => {
   const { calls, deps } = harness({ chainId: "0x7a69" });
-  await assert.rejects(bringUpChain(config({ RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919" }), deps), /chainId inattendu.*CHAIN_ID/);
+  await assert.rejects(bringUpChain(config({ RPC_URL: "<RPC du L1>", CHAIN_ID: "191919" }), deps), /chainId inattendu.*CHAIN_ID/);
   assert.deepEqual(calls.started, []);
   assert.deepEqual(calls.stopped, []);
   assert.deepEqual(calls.commands, []);
@@ -54,7 +54,7 @@ test("RPC externe d'une autre chaîne : arrêt clair avant tout service, déploi
 
 test("VAULT_ADDRESS sans code : arrêt clair avant seed et sans toucher anvil", async () => {
   const { calls, deps } = harness({ code: "0x" });
-  await assert.rejects(bringUpChain(config({ RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919", VAULT_ADDRESS: address }), deps), /VAULT_ADDRESS sans code/);
+  await assert.rejects(bringUpChain(config({ RPC_URL: "<RPC du L1>", CHAIN_ID: "191919", VAULT_ADDRESS: address }), deps), /VAULT_ADDRESS sans code/);
   assert.deepEqual(calls.started, []);
   assert.deepEqual(calls.stopped, []);
   assert.deepEqual(calls.commands, []);
@@ -77,7 +77,7 @@ test("sans RPC fourni : anvil local, déploiement et seed comme avant", async ()
 });
 
 test("RPC externe sans VAULT_ADDRESS : forge déploie sur ce RPC, puis seed", async () => {
-  const c = config({ RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919" });
+  const c = config({ RPC_URL: "<RPC du L1>", CHAIN_ID: "191919" });
   const { calls, deps } = harness();
   await bringUpChain(c, deps);
   assert.deepEqual(calls.started, []);
@@ -90,7 +90,7 @@ test("RPC externe sans VAULT_ADDRESS : forge déploie sur ce RPC, puis seed", as
 
 test("coffre neuf forcé : ignore VAULT_ADDRESS, déploie et note l'adresse consommée avant seed", async () => {
   const oldVault = `0x${"3".repeat(40)}`;
-  const c = config({ RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919", VAULT_ADDRESS: oldVault });
+  const c = config({ RPC_URL: "<RPC du L1>", CHAIN_ID: "191919", VAULT_ADDRESS: oldVault });
   const { calls, deps } = harness();
   await bringUpChain(c, { ...deps, fresh: true });
   assert.deepEqual(calls.started, []);
@@ -123,7 +123,7 @@ test("registre des coffres consommés : conserve les métadonnées et n'ajoute q
 for (const external of [false, true]) {
   test(`ports de up : ${external ? "RPC externe ne réserve pas anvil" : "mode local réserve toujours anvil"}`, async () => {
     const seen = [];
-    const c = config({ DEMO_DASHBOARD: "0", ...(external ? { RPC_URL: "http://127.0.0.1:9670/rpc", CHAIN_ID: "191919" } : {}) });
+    const c = config({ DEMO_DASHBOARD: "0", ...(external ? { RPC_URL: "<RPC du L1>", CHAIN_ID: "191919" } : {}) });
     await assert.rejects(up(c, {
       check: () => {},
       state: async () => [],
