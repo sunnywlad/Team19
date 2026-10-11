@@ -3,3 +3,5 @@ data/
 incidents.log
 test/mock/out/
 test/mock/cache/
+# La règle cache/ du .gitignore racine (Foundry) masquait le serveur de cache.
+!/cache/

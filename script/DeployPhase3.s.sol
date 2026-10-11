@@ -68,7 +68,9 @@ contract DeployPhase3 is Script {
         address existingSlashing = vm.envOr("SLASHING", address(0));
         address existingRewards = vm.envOr("REWARDS", address(0));
         if (existingRegistry != address(0) || existingSlashing != address(0) || existingRewards != address(0)) {
-            console.log("Reuse d'une pile existante impossible : setMarket est a usage unique sur Registry/Slashing/Rewards.");
+            console.log(
+                "Reuse d'une pile existante impossible : setMarket est a usage unique sur Registry/Slashing/Rewards."
+            );
             console.log("Deployez une pile neuve en ne fournissant ni REGISTRY, ni SLASHING, ni REWARDS.");
             revert ReuseNotSupported();
         }

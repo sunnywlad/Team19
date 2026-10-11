@@ -11,8 +11,11 @@ import { marketAbi } from '../abi/market.ts';
 import { pollLogs } from '../lib/events.ts';
 import { hashOf } from '../lib/hash.ts';
 
-// concurrency: 1 — les tests partagent un seul anvil ; ils doivent s'exécuter en série
-// pour éviter les courses entre getBlockNumber(), writeContract() et pollLogs().
+// concurrency: 1 — les tests partagent un seul anvil ; ils s'exécutent en série.
+// Note importante : viem met en cache getBlockNumber() avec un TTL de ~4 s.
+// Pour éviter que pollLogs() reçoive un numéro de bloc périmé (inférieur au bloc
+// de la tx), chaque test appelle getBlockNumber({ cacheTime: 0 }) juste avant
+// pollLogs() pour invalider le cache du client.
 describe('pollLogs — events du marché', { concurrency: 1 }, () => {
   let anvilProc: Awaited<ReturnType<typeof startAnvil>>['proc'];
   let rpcUrl: string;
@@ -36,7 +39,9 @@ describe('pollLogs — events du marché', { concurrency: 1 }, () => {
   });
 
   it('pollLogs sur un marché vide rend un tableau vide', async () => {
-    const genesis = await client.getBlockNumber();
+    // cacheTime: 0 : bloc courant frais, évite que la tranche de pollLogs démarre
+    // au-delà du bloc courant si le cache est périmé.
+    const genesis = await client.getBlockNumber({ cacheTime: 0 });
     const { logs } = await pollLogs(client, marketAddress, genesis);
     // Aucun événement produit avant la création de demande
     const onlyMarket = logs.filter(l => l.eventName !== 'Unknown');
@@ -57,9 +62,12 @@ describe('pollLogs — events du marché', { concurrency: 1 }, () => {
       args: [fakeH],
       value: fee as bigint,
     });
-    // Utiliser receipt.blockNumber comme borne basse : garantit que pollLogs
-    // couvre le bloc exact de la tx, sans race sur getBlockNumber() (cache viem ~4 s).
     const receipt = await client.waitForTransactionReceipt({ hash: txHash });
+
+    // Invalider le cache de getBlockNumber pour que pollLogs voie le bloc
+    // contenant cette tx (et non un bloc antérieur périmé).
+    await client.getBlockNumber({ cacheTime: 0 });
+
     const { logs } = await pollLogs(client, marketAddress, receipt.blockNumber);
     const names = logs.map(l => l.eventName);
 
@@ -79,22 +87,24 @@ describe('pollLogs — events du marché', { concurrency: 1 }, () => {
       args: [fakeH],
       value: fee as bigint,
     });
-    // Utiliser receipt.blockNumber comme borne basse garantit que pollLogs
-    // couvre le bloc exact de la tx, sans risque de course de synchronisation.
+    // receipt.blockNumber est la borne basse exacte pour isoler ce log.
     const receipt = await client.waitForTransactionReceipt({ hash: txHash });
     const fromBlock = receipt.blockNumber;
+
+    // Invalider le cache de getBlockNumber pour que pollLogs voie ce bloc.
+    await client.getBlockNumber({ cacheTime: 0 });
 
     const { logs, nextBlock } = await pollLogs(client, marketAddress, fromBlock);
     const created = logs.find(l => l.eventName === 'RequestCreated' && (l.args['h'] as string)?.toLowerCase() === fakeH.toLowerCase());
     assert.ok(created, 'Log RequestCreated avec le bon h introuvable');
 
     // nextBlock doit être au moins le bloc courant + 1
-    const latest = await client.getBlockNumber();
+    const latest = await client.getBlockNumber({ cacheTime: 0 });
     assert.ok(nextBlock > latest || nextBlock === latest + 1n);
   });
 
   it('pollLogs depuis un bloc futur rend un tableau vide', async () => {
-    const latest = await client.getBlockNumber();
+    const latest = await client.getBlockNumber({ cacheTime: 0 });
     const { logs } = await pollLogs(client, marketAddress, latest + 100n);
     assert.equal(logs.length, 0);
   });

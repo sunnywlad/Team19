@@ -393,6 +393,22 @@ describe('gateway server — intégration complète', () => {
       const hasCreated = body.logs.some(l => l.eventName === 'RequestCreated');
       assert.ok(hasCreated, 'RequestCreated doit être présent dans les journaux');
     });
+
+    it('400 sur fromBlock non numérique', async () => {
+      const res = await fetch(gwUrl('/events?fromBlock=abc'), {
+        headers: authHeaders(),
+      });
+      assert.equal(res.status, 400);
+      const body = await res.json() as { error: string };
+      assert.match(body.error, /fromBlock/i);
+    });
+
+    it('400 sur fromBlock négatif (chaîne avec tiret)', async () => {
+      const res = await fetch(gwUrl('/events?fromBlock=-1'), {
+        headers: authHeaders(),
+      });
+      assert.equal(res.status, 400);
+    });
   });
 
   // ─── 6. POST /rpc ──────────────────────────────────────────────────────

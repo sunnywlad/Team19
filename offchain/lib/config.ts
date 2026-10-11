@@ -30,6 +30,7 @@ export function getConfig() {
     rpcUrl: optional('RPC_URL', 'http://127.0.0.1:9654'),
     chainId: BigInt(optional('CHAIN_ID', '191919')),
     marketAddress: required('MARKET_ADDRESS') as `0x${string}`,
+    registryAddress: process.env['REGISTRY_ADDRESS'] as `0x${string}` | undefined,
     cacheUrl: optional('CACHE_URL', 'http://127.0.0.1:8701'),
     cachePort: parseInt(optional('CACHE_PORT', '8701'), 10),
     gatewayPort: parseInt(optional('GATEWAY_PORT', '8700'), 10),

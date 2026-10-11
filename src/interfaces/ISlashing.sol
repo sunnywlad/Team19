@@ -32,12 +32,9 @@ interface ISlashing {
     /// @notice Contestation pendant Contest. Le contrat vérifie hashOf(facts, contentHash) == h,
     /// puis évalue les prédicats contre le vote et les motifs révélés du vérificateur.
     /// Réservé aux adresses de la TxAllowList (de fait, toute adresse qui peut écrire).
-    function contest(
-        uint256 requestId,
-        address verifier,
-        IVerificationMarket.Facts calldata facts,
-        bytes32 contentHash
-    ) external returns (bool upheld);
+    function contest(uint256 requestId, address verifier, IVerificationMarket.Facts calldata facts, bytes32 contentHash)
+        external
+        returns (bool upheld);
 
     function strikesOf(address verifier) external view returns (uint8);
 }

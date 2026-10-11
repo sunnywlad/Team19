@@ -21,7 +21,7 @@ import type { Hex } from 'viem';
 
 import {
   ANVIL_KEYS, CHAIN_ID, freePort, startAnvil, deployMockMarket,
-  makePublicClient, makeWalletClient, advanceTime,
+  makePublicClient, makeWalletClient, advanceTime, makeBlockNow,
 } from './helpers/chain.ts';
 import { startCache } from '../cache/server.ts';
 import { validatePayload, deriveFacts } from '../lib/payload.ts';
@@ -121,10 +121,14 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const anvilPort = await freePort();
     ({ proc: anvilProc, rpcUrl } = await startAnvil(anvilPort));
 
-    // Fenêtres courtes : commit=6s, reveal=6s, contest=6s
+    // Fenêtres en temps EVM : commit=6s, reveal=60s, contest=6s.
+    // La fenêtre de reveal est large exprès : doTransitionToReveal avance l'horloge de 9 s
+    // depuis l'instant réel du commit. Avec 6 s de reveal, un commit confirmé plus de 3 s
+    // après la création poussait l'horloge EVM au-delà de revealDeadline, et le service,
+    // à raison, ne révélait plus : échec intermittent sans rapport avec ce que le test vérifie.
     marketAddress = await deployMockMarket(
       rpcUrl, deployerKey, [v0.address, v1.address, v2.address],
-      6, 6, 6,
+      6, 60, 6,
     );
 
     cacheDataDir = join(testRoot, 'cache-data');
@@ -222,18 +226,21 @@ describe('verifier service — intégration', { concurrency: false }, () => {
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
           dataDir: dataDir0, pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1a.log'),
         }),
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v1Key,
           dataDir: dataDir1, pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1a.log'),
         }),
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v2Key,
           dataDir: dataDir2, pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1a.log'),
         }),
@@ -297,18 +304,21 @@ describe('verifier service — intégration', { concurrency: false }, () => {
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
           dataDir: join(testRoot, 'v0-test1b'), pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1b.log'),
         }),
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v1Key,
           dataDir: join(testRoot, 'v1-test1b'), pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1b.log'),
         }),
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v2Key,
           dataDir: join(testRoot, 'v2-test1b'), pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1b.log'),
         }),
@@ -366,18 +376,21 @@ describe('verifier service — intégration', { concurrency: false }, () => {
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
           dataDir: join(testRoot, 'v0-test1c'), pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1c.log'),
         }),
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v1Key,
           dataDir: join(testRoot, 'v1-test1c'), pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1c.log'),
         }),
         startVerifier({
           rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v2Key,
           dataDir: join(testRoot, 'v2-test1c'), pollMs: 200,
+          now: makeBlockNow(rpcUrl),
           evaluatorCmd: 'node evaluator-stub/index.ts',
           incidentsLog: join(testRoot, 'incidents-1c.log'),
         }),
@@ -467,6 +480,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir: join(testRoot, 'v0-test2'), pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       evaluatorCmd: 'node evaluator-stub/index.ts',
       incidentsLog,
     });
@@ -516,6 +530,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir: join(testRoot, 'v0-test3'), pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       // STUB_EXIT=1 force un code de sortie non nul
       evaluatorCmd: 'STUB_EXIT=1 node evaluator-stub/index.ts',
       incidentsLog: join(testRoot, 'incidents-3.log'),
@@ -559,6 +574,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir: join(testRoot, 'v0-test4'), pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       evaluatorCmd: 'STUB_SLEEP_MS=2000 node evaluator-stub/index.ts',
       evaluatorTimeoutMs: 300,
       incidentsLog: join(testRoot, 'incidents-4.log'),
@@ -604,6 +620,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir: join(testRoot, 'v0-test5'), pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       evaluatorCmd: badEvaluatorCmd,
       incidentsLog: join(testRoot, 'incidents-5.log'),
     });
@@ -647,6 +664,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle1 = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir, pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       evaluatorCmd: 'node evaluator-stub/index.ts',
       incidentsLog: join(testRoot, 'incidents-6.log'),
     });
@@ -668,6 +686,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle2 = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir, pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       evaluatorCmd: 'node evaluator-stub/index.ts',
       incidentsLog: join(testRoot, 'incidents-6.log'),
     });
@@ -685,6 +704,77 @@ describe('verifier service — intégration', { concurrency: false }, () => {
       assert.equal(reveal.vote, 2, 'vote devrait être 2 après reprise');
     } finally {
       handle2.stop();
+    }
+  }, { timeout: 60_000 });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Test 8 : non-régression — revealVerdict est tenté dès que nowFn > commitDeadline + 3,
+  // sans attendre un statut Reveal rendu par eth_call.
+  // Scénario : nowFn retourne l'heure murale (déjà passée), EVM en retard.
+  // Le vérificateur tente reveal → WrongPhase (bloc en retard) → réessaie.
+  // Puis on avance l'EVM et on appelle transitionToReveal → le reveal passe.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  it('8. Révèle dès que nowFn > commitDeadline + 3 sans attendre statut Reveal on-chain', async () => {
+    const salt = randomBytes(32).toString('hex');
+    const payloadBytes = makePayload('50000', salt);
+    const { requestId, commitDeadline: cd } = await depositAndCreate(payloadBytes);
+
+    const client = makePublicClient(rpcUrl, CHAIN_ID);
+
+    // nowFn commutable : EVM time pendant la fenêtre de commit (pour que le commit passe),
+    // puis horloge murale avancée (commitDeadline + 4) une fois le commit fait.
+    // Cela simule le cas réel où l'horloge murale dépasse block.timestamp d'un L1 inactif.
+    let useWallClock = false;
+    const blockNow = makeBlockNow(rpcUrl);
+    const nowFn = async () => {
+      if (useWallClock) return cd + 4; // wall clock avancée : > commitDeadline + 3, < revealDeadline (= cd+60)
+      return blockNow();               // EVM time pendant le commit
+    };
+
+    const dataDir = join(testRoot, 'v0-test8');
+    const handle = startVerifier({
+      rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
+      dataDir, pollMs: 200,
+      now: nowFn,
+      evaluatorCmd: 'node evaluator-stub/index.ts',
+      incidentsLog: join(testRoot, 'incidents-8.log'),
+    });
+
+    try {
+      // Attendre le commit (avec EVM time, la fenêtre de commit est respectée)
+      await waitFor(async () => {
+        const logs = await client.getContractEvents({
+          address: marketAddress, abi: marketAbi, eventName: 'VerdictCommitted', fromBlock: 0n,
+        });
+        return logs.some(l => (l.args as { requestId?: bigint }).requestId === requestId);
+      }, 20_000);
+
+      // Basculer sur l'horloge murale avancée : le vérificateur voit now > commitDeadline + 3
+      // mais le bloc EVM est encore en retard → revealVerdict revert WrongPhase.
+      useWallClock = true;
+
+      // Attendre un peu que le service tente reveal et reçoive WrongPhase (log attendu)
+      await new Promise(r => setTimeout(r, 1_000));
+      assert.equal(
+        handle.state.get(requestId)?.step, 'committed',
+        'un reveal annulé sur la chaîne ne doit pas faire passer l\'étape à revealed',
+      );
+
+      // Avancer l'EVM et appeler transitionToReveal → le reveal peut maintenant passer
+      await doTransitionToReveal(requestId);
+
+      // Le reveal doit réussir maintenant
+      await waitFor(async () => (await countReveals(rpcUrl, marketAddress, requestId)) >= 1, 20_000);
+
+      const reveal = await client.readContract({
+        address: marketAddress, abi: marketAbi, functionName: 'getReveal',
+        args: [requestId, v0.address],
+      });
+      assert.ok(reveal.revealed, 'Le reveal doit être effectif');
+      assert.equal(reveal.vote, 2, 'vote 2 attendu (accept, amountMinor=50000)');
+    } finally {
+      handle.stop();
     }
   }, { timeout: 60_000 });
 
@@ -726,6 +816,7 @@ describe('verifier service — intégration', { concurrency: false }, () => {
     const handle = startVerifier({
       rpcUrl, chainId: CHAIN_ID, marketAddress, cacheUrl, verifierKey: v0Key,
       dataDir: join(testRoot, 'v0-test7'), pollMs: 200,
+      now: makeBlockNow(rpcUrl),
       evaluatorCmd: dumpCmd,
       incidentsLog: join(testRoot, 'incidents-7.log'),
     });
