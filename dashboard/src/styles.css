@@ -167,58 +167,125 @@ button {
   cursor: pointer;
 }
 
-/* --- En-tête sombre et onglets --- */
+/* --- En-tête : une seule barre ardoise, comme la maquette. Marque, écrans, outils. --- */
 .entete {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: var(--entete-fond);
   color: var(--entete-texte);
   border-bottom: 1px solid var(--entete-trait);
+  box-shadow: 0 6px 18px -14px rgb(0 0 0 / 60%);
 }
 
-.entete-haut {
+.entete-barre {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 28px;
-  padding-top: 16px;
-  padding-bottom: 12px;
+  align-items: stretch;
+  gap: 0 28px;
+  min-height: 54px;
 }
 
 .marque {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .marque svg {
   flex: none;
 }
 
+/* Sur l'ardoise de l'en-tête : table lavande, V et sièges clairs. Dans le pied : violet de la marque, sièges sombres. */
 .marque-fond {
   fill: var(--entete-accent);
 }
 
 .marque-trait {
   fill: none;
-  stroke: #6fd8bd;
-  stroke-width: 2.6;
-  stroke-linecap: round;
+  stroke: var(--entete-fond);
+  stroke-width: 2.2;
+}
+
+.marque-siege {
+  fill: var(--entete-discret);
 }
 
 .marque h1 {
-  font-size: 1.05rem;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.onglets {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.onglets button {
+  position: relative;
+  min-height: 54px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  font-weight: 550;
+  color: var(--entete-discret);
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.onglets button:hover {
+  color: var(--entete-texte);
+  background: rgb(255 255 255 / 6%);
+}
+
+.onglets button[aria-current="page"] {
+  color: var(--entete-texte);
+}
+
+/* Trait de l'onglet courant : un seul élément dans la page, que la transition de vue fait glisser. */
+.onglet-trait {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--entete-accent);
+  animation: trait-pousse 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes trait-pousse {
+  from {
+    transform: scaleX(0.2);
+    opacity: 0;
+  }
+}
+
+.entete-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-left: auto;
+  padding: 8px 0;
 }
 
 .lecture-seule {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin: 2px 0 0;
-  color: var(--entete-discret);
-  font-size: 0.82rem;
+  gap: 7px;
+  margin: 0;
+  padding-right: 14px;
+  border-right: 1px solid var(--entete-trait);
+  color: var(--entete-texte);
+  font-size: 0.86rem;
+  font-weight: 550;
+  white-space: nowrap;
 }
 
 .lecture-seule svg {
@@ -227,108 +294,133 @@ button {
   stroke-width: 1.6;
 }
 
-.fraicheur {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 18px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.82rem;
-  color: var(--entete-discret);
-}
-
-.fraicheur-nom {
-  font-weight: 600;
-  color: var(--entete-texte);
-}
-
-.entete .source-reel {
-  color: #8fe3b0;
-  background: transparent;
-}
-
-.entete .source-simulation {
-  color: #9ee6f1;
-  background: transparent;
-}
-
-.fraicheur .perime {
-  color: #ffb3bb;
-  font-weight: 600;
-}
-
 .theme,
 .presenter {
-  padding: 6px 14px;
+  padding: 5px 12px;
   background: transparent;
   color: var(--entete-texte);
   border: 1px solid var(--entete-trait);
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease, transform 0.12s ease;
+}
+
+.theme {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.theme svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.theme:hover svg {
+  transform: rotate(40deg);
 }
 
 .theme:hover,
 .presenter:hover {
   border-color: var(--entete-accent);
   color: var(--entete-accent);
-}
-
-.entete-bas {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.onglets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.onglets button {
-  position: relative;
-  padding: 10px 16px 13px;
-  background: none;
-  border: 0;
-  border-radius: 10px 10px 0 0;
-  font-weight: 550;
-  color: var(--entete-discret);
-  transition: color 0.18s ease, background-color 0.18s ease;
-}
-
-.onglets button:hover {
-  color: var(--entete-texte);
   background: rgb(255 255 255 / 5%);
 }
 
-/* Onglet courant : un trait violet qui se déploie depuis le centre. */
-.onglets button::after {
-  content: "";
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--entete-accent);
-  transform: scaleX(0);
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.onglets button[aria-current="page"] {
-  color: var(--entete-texte);
-}
-
-.onglets button[aria-current="page"]::after {
-  transform: scaleX(1);
+.theme:active,
+.presenter:active,
+.bouton-sortie:active {
+  transform: scale(0.97);
 }
 
 /* Le focus reste visible sur fond sombre. */
 .entete :focus-visible {
   outline-color: var(--entete-accent);
+}
+
+/* --- Bande d'état : provenance et fraîcheur de chaque source, date du jour à droite. --- */
+.etat {
+  background: var(--surface);
+  border-bottom: 1px solid var(--trait);
+}
+
+.etat-barre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 24px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.etat-date {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fraicheur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--discret);
+  font-variant-numeric: tabular-nums;
+}
+
+.fraicheur li {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Voyant : vert et qui bat tant que la source est lue, rouge et fixe quand elle est périmée. Le texte le dit aussi. */
+.fraicheur li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accepte);
+  animation: voyant 2s ease-out infinite;
+}
+
+.fraicheur-nom {
+  font-weight: 650;
+  color: var(--texte);
+}
+
+.fraicheur .perime {
+  color: var(--refuse);
+  font-weight: 600;
+}
+
+.fraicheur .perime::before {
+  background: var(--refuse);
+  animation: none;
+}
+
+@keyframes voyant {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accepte) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
 }
 
 .contenu {
@@ -402,6 +494,12 @@ button {
   padding: 18px 22px 20px;
   margin-bottom: 20px;
   min-width: 0;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.panneau:hover {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--trait));
+  box-shadow: var(--ombre), 0 14px 34px -22px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .panneau-entete {
@@ -433,19 +531,40 @@ button {
   color: var(--discret);
 }
 
-/* Un écran qui s'ouvre monte d'un cran en fondu. */
-.vue {
-  animation: entre 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* Un écran qui s'ouvre : son titre monte d'un cran, puis ses cartes, l'une après l'autre. */
+.vue-entete {
+  animation: entre 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.vue > .panneau,
+.vue > .grille-haut > .panneau,
+.vue > .grille-bas > .panneau {
+  animation: entre 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: 0.06s;
+}
+
+.vue > :nth-child(3),
+.vue > :nth-child(3) > .panneau {
+  animation-delay: 0.12s;
+}
+
+.vue > :nth-child(3) > .panneau + .panneau {
+  animation-delay: 0.18s;
+}
+
+.vue > :nth-child(n + 4),
+.vue > :nth-child(n + 4) > .panneau {
+  animation-delay: 0.22s;
+}
+
+.vue > :nth-child(n + 4) > .panneau + .panneau {
+  animation-delay: 0.28s;
 }
 
 @keyframes entre {
   from {
     opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(10px);
   }
 }
 
@@ -784,9 +903,8 @@ tbody th {
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-weight: 650;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--texte);
 }
 
@@ -795,7 +913,11 @@ tbody th {
 }
 
 .pied-marque .marque-trait {
-  stroke: var(--accepte);
+  stroke: var(--surface);
+}
+
+.pied-marque .marque-siege {
+  fill: var(--texte);
 }
 
 .pied-texte {
@@ -1389,9 +1511,6 @@ tbody th {
   font: 600 0.75rem var(--mono);
 }
 
-.entete-bas .presenter {
-  margin-bottom: 8px;
-}
 
 .mode-presentation .entete {
   display: none;
@@ -1670,6 +1789,351 @@ main:focus {
     content: attr(data-label) " : ";
     color: var(--discret);
     font-size: 0.8rem;
+  }
+}
+
+/* --- Chargement : silhouette du contenu, balayée par un reflet --- */
+.squelette {
+  display: grid;
+  gap: 10px;
+  padding: 2px 0 6px;
+}
+
+.squelette span {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(100deg, var(--surface-2) 30%, var(--accent-fond) 50%, var(--surface-2) 70%);
+  background-size: 300% 100%;
+  animation: reflet 1.4s ease-in-out infinite;
+}
+
+.squelette span:nth-child(1) {
+  width: 46%;
+  height: 28px;
+}
+
+.squelette span:nth-child(2) {
+  width: 88%;
+}
+
+.squelette span:nth-child(3) {
+  width: 64%;
+}
+
+@keyframes reflet {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* --- Transition de vue : l'écran sortant s'efface, l'entrant monte ; le trait de l'onglet glisse --- */
+@media (prefers-reduced-motion: no-preference) {
+  .vue {
+    view-transition-name: vue;
+  }
+
+  .onglet-trait {
+    view-transition-name: onglet-trait;
+  }
+
+  .pied {
+    view-transition-name: pied;
+  }
+}
+
+::view-transition-old(vue) {
+  animation: vue-sort 0.14s ease-in both;
+}
+
+::view-transition-new(vue) {
+  animation: vue-entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
+}
+
+::view-transition-group(onglet-trait) {
+  animation-duration: 0.34s;
+  animation-timing-function: cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+
+::view-transition-group(pied) {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes vue-sort {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes vue-entre {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* --- Compteurs : la tuile se soulève au survol --- */
+.compteurs > div {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compteurs > div:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--trait));
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* --- Flux : des tirets clairs circulent sur le chemin pris, dans le sens de la demande --- */
+.arete-flot {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.9;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 3 17;
+  pointer-events: none;
+  animation: flot 0.9s linear infinite;
+}
+
+@keyframes flot {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Issue neuve : les tirets n'apparaissent qu'une fois l'arête tracée. */
+.flux-nouveau .arete-flot {
+  opacity: 0;
+  animation: flot 0.9s linear infinite, apparait 0.3s ease-out forwards;
+}
+
+.flux-nouveau .arete-flot.rang-0 { animation-delay: 0s, 0.42s; }
+.flux-nouveau .arete-flot.rang-1 { animation-delay: 0s, 0.72s; }
+.flux-nouveau .arete-flot.rang-2 { animation-delay: 0s, 1.02s; }
+.flux-nouveau .arete-flot.rang-3 { animation-delay: 0s, 1.32s; }
+.flux-nouveau .arete-flot.rang-4 { animation-delay: 0s, 1.62s; }
+.flux-nouveau .arete-flot.rang-5 { animation-delay: 0s, 1.92s; }
+.flux-nouveau .arete-flot.rang-6 { animation-delay: 0s, 2.22s; }
+.flux-nouveau .arete-flot.rang-7 { animation-delay: 0s, 2.52s; }
+
+@keyframes apparait {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pilule au survol : elle se détache légèrement. */
+.noeud {
+  transition: filter 0.2s ease;
+}
+
+.noeud:hover {
+  filter: drop-shadow(0 4px 8px color-mix(in srgb, var(--accent) 28%, transparent));
+}
+
+/* --- Frise : les étapes s'allument l'une après l'autre à l'ouverture --- */
+.etape-icone {
+  animation: eclot 0.4s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.etape:nth-child(2) .etape-icone { animation-delay: 0.07s; }
+.etape:nth-child(3) .etape-icone { animation-delay: 0.14s; }
+.etape:nth-child(4) .etape-icone { animation-delay: 0.21s; }
+.etape:nth-child(5) .etape-icone { animation-delay: 0.28s; }
+.etape:nth-child(6) .etape-icone { animation-delay: 0.35s; }
+.etape:nth-child(7) .etape-icone { animation-delay: 0.42s; }
+.etape:nth-child(n + 8) .etape-icone { animation-delay: 0.49s; }
+
+@keyframes eclot {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+/* --- Rapport d'incident : carte de détail, comme la maquette --- */
+.rapport {
+  min-width: 0;
+  padding: 18px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 14px;
+  animation: entre 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.rapport-entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.rapport-titre {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.rapport-entete .statut {
+  padding: 2px 12px;
+  font-size: 0.86rem;
+}
+
+.rapport-date {
+  margin: 0 0 0 auto;
+  color: var(--discret);
+  font-size: 0.86rem;
+}
+
+.rapport h3 {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--trait);
+}
+
+.tuiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.tuile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  animation: entre 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+}
+
+.tuile:nth-child(2) {
+  animation-delay: 0.06s;
+}
+
+.tuile:nth-child(3) {
+  animation-delay: 0.12s;
+}
+
+.tuile:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--trait));
+}
+
+.tuile-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  color: var(--accent);
+}
+
+.tuile-icone svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tuile-corps {
+  display: grid;
+  min-width: 0;
+}
+
+.tuile-titre {
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+.tuile-valeur {
+  font-size: 1.25rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.tuile-vide .tuile-valeur {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--discret);
+}
+
+.tuile-vide .tuile-icone {
+  color: var(--discret);
+}
+
+.tuile-mesure {
+  color: var(--discret);
+  font-size: 0.76rem;
+}
+
+/* Trois compteurs tiennent sur une rangée ; la liste d'incidents respire sous eux. */
+.compteurs {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.incidents-grille {
+  margin-top: 18px;
+}
+
+/* --- Pied : marque à gauche, mention à droite --- */
+.pied {
+  margin-top: 28px;
+}
+
+/* Écran étroit : la barre passe sur plusieurs rangées, les écrans défilent de côté. */
+@media (max-width: 900px) {
+  .entete {
+    position: static;
+  }
+
+  .entete-barre {
+    padding-top: 6px;
+  }
+
+  .marque {
+    min-height: 42px;
+  }
+
+  .onglets {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .onglets button {
+    min-height: 44px;
+    white-space: nowrap;
+  }
+
+  .lecture-seule {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .rapport-date {
+    margin-left: 0;
   }
 }
 

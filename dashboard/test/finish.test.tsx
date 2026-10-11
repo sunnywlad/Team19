@@ -74,9 +74,12 @@ describe("clavier", () => {
 
     await user.tab();
     expect(document.activeElement?.textContent).toBe("Aller au contenu");
+    // La barre d'écrans vient avant les outils d'affichage : une seule étape de tabulation pour elle.
+    await user.tab();
+    expect(document.activeElement?.textContent).toBe("Décisions");
     await user.tab();
     expect(document.activeElement?.textContent).toMatch(/^Thème/);
-    await user.tab();
+    await user.tab({ shift: true });
     expect(document.activeElement?.textContent).toBe("Décisions");
 
     await user.keyboard("{ArrowRight}");

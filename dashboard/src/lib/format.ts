@@ -39,6 +39,13 @@ const DATE_TIME = new Intl.DateTimeFormat("fr-FR", {
   second: "2-digit",
 });
 
+const LONG_DATE = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+/** Date du jour en toutes lettres, sur l'horloge de ce navigateur. */
+export function formatLongDate(ms: number): string {
+  return LONG_DATE.format(new Date(ms));
+}
+
 export function formatTime(ms: number): string {
   return TIME.format(new Date(ms));
 }

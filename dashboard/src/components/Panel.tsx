@@ -37,9 +37,17 @@ export function Panel<T>({ title, id, source, snapshot, now, children, className
         </p>
       )}
       {data === null && error === null && (
-        <p className="chargement" role="status">
-          Chargement…
-        </p>
+        <>
+          <p className="chargement" role="status">
+            Chargement…
+          </p>
+          {/* Silhouette du contenu à venir : décorative, sans valeur. */}
+          <div className="squelette" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        </>
       )}
       {data !== null && (
         <div className={stale ? "valeurs perime" : "valeurs"} data-perime={stale ? "true" : "false"}>

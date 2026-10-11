@@ -141,6 +141,10 @@ export function FlowDiagram({ outcome, origin, pulse = null }: Props) {
             />
           );
         })}
+        {/* Tirets clairs qui circulent sur le chemin pris, dans le sens de la demande : décoratifs, le tracé plein porte l'information. */}
+        {(outcome?.edges ?? []).map((edge, rank) => (
+          <path key={`flot-${edge}`} className={`arete-flot rang-${rank}`} data-flot={edge} d={EDGES[edge]} aria-hidden="true" />
+        ))}
         {(Object.keys(boxes) as FlowNode[]).map(node)}
       </svg>
       {pulse !== null && outcome !== null && (

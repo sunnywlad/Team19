@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import type { ApiClient } from "./api/client.ts";
 import { Banners, Freshness } from "./components/Banners.tsx";
 import { FlowPanel } from "./components/FlowPanel.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
-import { THEME_LABELS, useTheme } from "./hooks/useTheme.ts";
-import { UNIT_LEGEND } from "./lib/format.ts";
+import { THEME_LABELS, useTheme, type Theme } from "./hooks/useTheme.ts";
+import { UNIT_LEGEND, formatLongDate } from "./lib/format.ts";
 import { DecisionsView } from "./views/DecisionsView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
 import { JournalView } from "./views/JournalView.tsx";
@@ -38,12 +39,26 @@ const HEADINGS: Record<ViewKey, { title: string; lead: string }> = {
   journal: { title: "Journal d'audit", lead: "Journal chaîné du service de réponse, sa tête et sa dernière vérification." },
 };
 
-/** Marque : un A géométrique, dessiné ici, sans ressource externe. */
+/** Icône du thème choisi : demi-disque pour « système », soleil, lune. Le nom du bouton le dit en mots. */
+const THEME_ICONS: Record<Theme, ReactNode> = {
+  systeme: <path d="M10 3a7 7 0 1 0 0 14a7 7 0 1 0 0-14M10 3v14M10 6.5h5.9M10 10h7M10 13.5h5.9" />,
+  clair: <path d="M10 6.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.5 1.5M14.2 14.2l1.5 1.5M4.3 15.7l1.5-1.5M14.2 5.8l1.5-1.5" />,
+  sombre: <path d="M16.5 11.5A6.5 6.5 0 0 1 8.5 3.5a6.5 6.5 0 1 0 8 8z" />,
+};
+
+/** Marque Veto : une table ovale frappée d'un V, cinq sièges autour. Dessinée ici, sans ressource externe. */
 function BrandMark() {
   return (
-    <svg className="marque-svg" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false">
-      <path className="marque-fond" d="M16 3 29 29h-7.2L16 16.6 10.2 29H3z" />
-      <path className="marque-trait" d="M11.5 23.5h9" />
+    <svg className="marque-svg" viewBox="0 0 48 32" width="42" height="28" aria-hidden="true" focusable="false">
+      <g className="marque-siege">
+        <rect x="21" y="2" width="6" height="6.5" rx="1.2" />
+        <rect x="11" y="4" width="6" height="6.5" rx="1.2" transform="rotate(-24 14 7.25)" />
+        <rect x="31" y="4" width="6" height="6.5" rx="1.2" transform="rotate(24 34 7.25)" />
+        <rect x="1.5" y="16.5" width="5.5" height="7" rx="1.2" />
+        <rect x="41" y="16.5" width="5.5" height="7" rx="1.2" />
+      </g>
+      <ellipse className="marque-fond" cx="24" cy="20" rx="15" ry="8.6" />
+      <path className="marque-trait" d="M19.6 16.2 24 24.2l4.4-8" />
     </svg>
   );
 }
@@ -65,8 +80,15 @@ export function App({ client }: { client: ApiClient }) {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
   const show = (key: ViewKey): void => {
-    setCurrent(key);
-    window.history.replaceState(null, "", `#${key}`);
+    const swap = (): void => {
+      setCurrent(key);
+      window.history.replaceState(null, "", `#${key}`);
+    };
+    // Transition de vue du navigateur, s'il en a une : l'écran sortant se fond dans
+    // l'entrant et le trait de l'onglet glisse. Sinon, ou en mouvement réduit : changement sec.
+    const still = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (key === current || still || typeof document.startViewTransition !== "function") swap();
+    else document.startViewTransition(() => flushSync(swap));
   };
 
   const [theme, nextTheme] = useTheme();
@@ -131,25 +153,11 @@ export function App({ client }: { client: ApiClient }) {
         Aller au contenu
       </button>
       <header className="entete">
-        <div className="cadre entete-haut">
+        <div className="cadre entete-barre">
           <div className="marque">
             <BrandMark />
-            <div>
-              <h1>Argent Intelligent</h1>
-              <p className="lecture-seule">
-                <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true" focusable="false">
-                  <path d="M1.5 10S5 4 10 4s8.5 6 8.5 6-3.5 6-8.5 6-8.5-6-8.5-6zM10 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5" />
-                </svg>
-                Tableau de bord en lecture seule
-              </p>
-            </div>
+            <h1>Veto</h1>
           </div>
-          <Freshness view={view} />
-          <button type="button" className="theme" data-ui="affichage" onClick={nextTheme}>
-            Thème : {THEME_LABELS[theme]}
-          </button>
-        </div>
-        <div className="cadre entete-bas">
           <nav className="onglets" aria-label="Écrans" ref={tabs} onKeyDown={onTabKey}>
             {VIEWS.map((v) => (
               <button
@@ -162,14 +170,39 @@ export function App({ client }: { client: ApiClient }) {
                 onClick={() => show(v.key)}
               >
                 {v.label}
+                {/* Un seul trait, sous l'onglet courant : il glisse d'un onglet à l'autre. */}
+                {current === v.key && <span className="onglet-trait" aria-hidden="true" />}
               </button>
             ))}
           </nav>
-          <button type="button" className="presenter" data-ui="affichage" aria-keyshortcuts="P" onClick={() => togglePresenting(true)}>
-            Mode présentation <kbd>P</kbd>
-          </button>
+          <div className="entete-outils">
+            <p className="lecture-seule">
+              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">
+                <path d="M1.5 10S5 4 10 4s8.5 6 8.5 6-3.5 6-8.5 6-8.5-6-8.5-6zM10 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5" />
+              </svg>
+              Lecture seule
+            </p>
+            <button type="button" className="theme" data-ui="affichage" data-theme-choisi={theme} title={`Thème : ${THEME_LABELS[theme]}`} onClick={nextTheme}>
+              <span className="visuellement-cache">Thème : {THEME_LABELS[theme]}</span>
+              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">
+                {THEME_ICONS[theme]}
+              </svg>
+            </button>
+            <button type="button" className="presenter" data-ui="affichage" aria-keyshortcuts="P" onClick={() => togglePresenting(true)}>
+              Mode présentation <kbd>P</kbd>
+            </button>
+          </div>
         </div>
       </header>
+      {/* Bande d'état : d'où vient chaque famille de données et quand elle a été lue pour la dernière fois. */}
+      <div className="etat">
+        <div className="cadre etat-barre">
+          <Freshness view={view} />
+          <p className="etat-date" data-testid="date-du-jour">
+            {formatLongDate(now)}
+          </p>
+        </div>
+      </div>
       <div className="cadre contenu">
         <Banners view={view} />
         {presenting ? (
@@ -202,7 +235,7 @@ export function App({ client }: { client: ApiClient }) {
       <footer className="pied">
         <div className="cadre pied-haut">
           <p className="pied-marque">
-            <BrandMark /> Argent Intelligent
+            <BrandMark /> Veto
           </p>
           <p className="pied-mention" data-testid="pied-mention">
             Données fictives · réseau de test

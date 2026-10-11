@@ -7,7 +7,7 @@ import { Counter } from "../components/Rolling.tsx";
 import { chainPausedAgents, latestIncidents } from "../domain/activity.ts";
 import { useArrival } from "../hooks/useArrival.ts";
 import { PauseBadge } from "../components/PauseBadge.tsx";
-import { chainPauseTimestamp } from "../domain/delays.ts";
+import { chainPauseTimestamp, computeDelays, type Delay } from "../domain/delays.ts";
 import {
   ACTION_TAKEN_LABELS,
   HUMAN_DECISION_LABELS,
@@ -17,32 +17,83 @@ import {
   detectorCodeLabel,
 } from "../domain/labels.ts";
 import { readDecision } from "../domain/reasons.ts";
-import { formatDateTime, formatTime } from "../lib/format.ts";
+import { formatDateTime, formatDurationMs, formatDurationS, formatTime } from "../lib/format.ts";
 import { EXCERPT_MAX } from "../lib/safeText.ts";
 import { sameWorld, vaultFed, type ViewProps } from "./shared.ts";
+
+/** Les trois temps de la réponse, en tuiles. Chaque tuile nomme la mesure qu'elle montre et son horloge. */
+const TILES = [
+  { key: "detection", title: "Détection", main: "arrivee-detection", other: "arrivee-observation", icon: <path d="M9 3.5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11M13 13l4 4" /> },
+  { key: "pause", title: "Mise en pause", main: "detection-pause", other: "observation-pause", icon: <path d="M10 3a7 7 0 1 0 0 14a7 7 0 1 0 0-14M8 7.5v5M12 7.5v5" /> },
+  { key: "alerte", title: "Alerte", main: "detection-alerte", other: "observation-alerte", icon: <path d="M5 13.5V9a5 5 0 0 1 10 0v4.5l1.5 1.5h-13zM8.5 17.5h3" /> },
+] as const;
+
+function DelayTiles({ delays }: { delays: Delay[] }) {
+  const find = (key: string): Delay | undefined => delays.find((d) => d.key === key);
+  return (
+    <ul className="tuiles" aria-label="Temps de la réponse" data-testid="tuiles-delais">
+      {TILES.map((tile) => {
+        // La mesure de la spec si elle tient sur une seule horloge ; sinon celle de la même attaque qui y tient.
+        const main = find(tile.main);
+        const other = find(tile.other);
+        const shown = main && main.value !== null ? main : other && other.value !== null ? other : main;
+        const measured = shown !== undefined && shown.value !== null && shown.clock !== null;
+        return (
+          <li key={tile.key} className={measured ? "tuile" : "tuile tuile-vide"} data-tuile={tile.key}>
+            <span className="tuile-icone">
+              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+                {tile.icon}
+              </svg>
+            </span>
+            <span className="tuile-corps">
+              <span className="tuile-titre">{tile.title}</span>
+              <span className="tuile-valeur">
+                {shown && shown.value !== null && shown.clock !== null
+                  ? shown.clock === "bloc"
+                    ? formatDurationS(shown.value)
+                    : formatDurationMs(shown.value)
+                  : "non mesuré"}
+              </span>
+              <span className="tuile-mesure">
+                {shown ? shown.label : "mesure absente"}
+                {shown && shown.clock !== null && (
+                  <>
+                    {" "}
+                    <ClockTag clock={shown.clock} />
+                  </>
+                )}
+              </span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function Report({ item, chainPause, fakeVault }: { item: IncidentItem; chainPause: number | null; fakeVault: boolean }) {
   const { report } = item;
   const contract = report.contract ? readDecision({ ...report.contract, effective_decision: report.contract.decision }) : null;
   return (
     <div className="rapport" data-testid="rapport">
+      <header className="rapport-entete">
+        <p className="rapport-titre">
+          <OpaqueId value={report.incident_id} /> <span aria-hidden="true">—</span> {TRIGGER_LABELS[report.trigger]}
+        </p>
+        <span className={report.human_decision === null ? "statut statut-ouvert" : "statut statut-qualifie"}>
+          <strong data-testid="etat-incident">{report.human_decision === null ? "ouvert" : "qualifié par un humain"}</strong>
+        </span>
+        <p className="rapport-date">
+          Rapport généré le {formatDateTime(report.generated_at_ms)} <ClockTag clock="journal" />
+        </p>
+      </header>
+
+      <DelayTiles delays={computeDelays(report, chainPause)} />
+
       <dl className="fiche">
-        <div>
-          <dt>Incident</dt>
-          <dd>
-            <OpaqueId value={report.incident_id} /> ·{" "}
-            <strong data-testid="etat-incident">{report.human_decision === null ? "ouvert" : "qualifié par un humain"}</strong>
-          </dd>
-        </div>
         <div>
           <dt>Déclencheur</dt>
           <dd>{TRIGGER_LABELS[report.trigger]}</dd>
-        </div>
-        <div>
-          <dt>Rapport généré</dt>
-          <dd>
-            {formatDateTime(report.generated_at_ms)} <ClockTag clock="journal" />
-          </dd>
         </div>
         <div>
           <dt>Demandes</dt>
@@ -279,7 +330,8 @@ export function IncidentView({ view }: { view: ViewProps }) {
                       })}
                     </ul>
                   </div>
-                  {current && <Report fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
+                  {/* Nouvelle clé à chaque incident choisi : le rapport entre en fondu. */}
+                  {current && <Report key={current.report.incident_id} fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
                 </div>
               )}
             </>
