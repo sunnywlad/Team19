@@ -17,11 +17,13 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { bringUpChain } from "./chain.mjs";
-import { DemoError, ROOT, VAR, down, getJson, loadConfig, reset, run, runAsync, status, up } from "./lib.mjs";
+import { DemoError, ROOT, VAR, down, getJson, loadConfig, portFree, reset, run, runAsync, status, up } from "./lib.mjs";
 
 const SCENES = ["1", "2", "3", "4", "8"];
 process.env.VAULT_MODE = "fake";
 process.env.DEMO_MODE = "1";
+// Comme un .env personnel posé pour offchain/ : ne doit pas déplacer la porte.
+process.env.GATEWAY_PORT = "8700";
 const config = loadConfig();
 const steps = [];
 
@@ -56,6 +58,8 @@ async function main() {
   try {
     await up(config, { chain: bringUpChain });
     step("make demo (VAULT_MODE=fake)", true, (await status(config)).map((r) => `${r.service} ${r.state}`).join(", "));
+    const listening = await Promise.all(["response", "gateway", "client-ia", "relay"].map((name) => getJson(`${config.url(name)}/health`).then(() => true, () => false)));
+    step("ports fixes malgré GATEWAY_PORT=8700 dans l'environnement", listening.every(Boolean) && config.ports.gateway === 8780 && (await portFree(8700)), "8790, 8780, 8770, 8787 répondent ; rien sur 8700");
   } catch (error) {
     step("make demo (VAULT_MODE=fake)", false, error instanceof Error ? error.message.split("\n")[0] : "erreur");
     return;

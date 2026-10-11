@@ -18,6 +18,7 @@ async function main(command) {
   const config = loadConfig();
   if (command === "up") {
     console.log(`démo : VAULT_MODE=${config.mode}`);
+    if (config.ignoredPorts.length > 0) console.log(`ports de la démo fixes : ${config.ignoredPorts.join(", ")} de .env ou de l'environnement non pris en compte`);
     await up(config, { chain: bringUpChain });
     console.log(`\n${table(await status(config))}\n`);
     if (config.mode === "fake") console.log("COFFRE SIMULÉ : aucun fonds, aucune chaîne. Décisions rejouées par un faux coffre.");

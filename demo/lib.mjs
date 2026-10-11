@@ -30,8 +30,7 @@ export class DemoError extends Error {}
 // --- Configuration -----------------------------------------------------------
 
 // Lit .env s'il existe : NOM=valeur, une par ligne. Aucune valeur n'est affichée.
-function dotEnv() {
-  const path = join(ROOT, ".env");
+function dotEnv(path) {
   const values = {};
   if (!existsSync(path)) return values;
   for (const line of readFileSync(path, "utf8").split("\n")) {
@@ -43,40 +42,47 @@ function dotEnv() {
   return values;
 }
 
-function port(name, raw, fallback) {
-  if (raw === undefined) return fallback;
-  const value = Number(raw);
-  if (!Number.isInteger(value) || value < 1 || value > 65535) throw new DemoError(`variable d'environnement mal formée : ${name}`);
-  return value;
-}
+// Ports de la démo : FIXES. Ni .env ni l'environnement de l'appelant ne les
+// déplacent, parce que les mêmes noms servent ailleurs : offchain/ lit aussi
+// GATEWAY_PORT (8700), et un .env personnel posé pour lui déplacerait la porte.
+// Chaque service reçoit son port explicitement (services, plus bas).
+export const PORTS = Object.freeze({
+  response: 8790,
+  gateway: 8780,
+  "client-ia": 8770,
+  relay: 8787,
+  control: 8788,
+  // Fixé aussi par dashboard/vite.config.ts (strictPort).
+  dashboard: 5173,
+  anvil: 8545,
+});
+const PORT_NAMES = ["JOURNAL_PORT", "GATEWAY_PORT", "CLIENT_IA_PORT", "API_PORT", "DEMO_CONTROL_PORT"];
 
-/** Variables : l'environnement de l'appelant, puis .env, puis les valeurs de démo ci-dessous. */
-export function loadConfig() {
-  const file = dotEnv();
+/**
+ * Variables : l'environnement de l'appelant, puis .env, puis les valeurs de
+ * démo. Les ports font exception : toujours ceux de PORTS.
+ */
+export function loadConfig({ env = process.env, envFile = join(ROOT, ".env") } = {}) {
+  const file = dotEnv(envFile);
   const get = (name) => {
-    const value = process.env[name];
+    const value = env[name];
     return value !== undefined && value.trim() !== "" ? value.trim() : file[name];
   };
   const mode = get("VAULT_MODE") ?? "fake";
   if (mode !== "fake" && mode !== "chain") throw new DemoError("VAULT_MODE inconnu : attendu fake ou chain");
-  const ports = {
-    response: port("JOURNAL_PORT", get("JOURNAL_PORT"), 8790),
-    gateway: port("GATEWAY_PORT", get("GATEWAY_PORT"), 8780),
-    "client-ia": port("CLIENT_IA_PORT", get("CLIENT_IA_PORT"), 8770),
-    relay: port("API_PORT", get("API_PORT"), 8787),
-    control: port("DEMO_CONTROL_PORT", get("DEMO_CONTROL_PORT"), 8788),
-    // Fixé par dashboard/vite.config.ts (strictPort).
-    dashboard: 5173,
-    anvil: 8545,
-  };
+  const ports = PORTS;
+  // Noms de variables de port posées ailleurs et laissées de côté : affichés par « make demo ».
+  const ignoredPorts = PORT_NAMES.filter((name) => get(name) !== undefined);
   const url = (name) => `http://${HOST}:${ports[name]}`;
   return {
     mode,
     get,
     ports,
+    ignoredPorts,
     url,
     chainId: get("CHAIN_ID") ?? "31337",
-    rpcUrl: get("RPC_URL") ?? url("anvil"),
+    // Mode chain : toujours l'anvil local de la démo, jamais un RPC posé ailleurs.
+    rpcUrl: url("anvil"),
     gatewayDataDir: get("GATEWAY_DATA_DIR") ?? join(ROOT, "gateway", "var"),
     journalFile: get("JOURNAL_FILE") ?? join(ROOT, "response", "var", "journal.jsonl"),
     dashboard: (get("DEMO_DASHBOARD") ?? "1") !== "0",
@@ -239,7 +245,7 @@ function isOurs(entry) {
   return now !== "" && now === entry.started;
 }
 
-function portFree(number) {
+export function portFree(number) {
   return new Promise((resolve) => {
     const probe = createServer();
     probe.once("error", () => resolve(false));
