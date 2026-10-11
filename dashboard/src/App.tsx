@@ -183,20 +183,20 @@ export function App({ client }: { client: ApiClient }) {
             <FlowPanel view={view} large />
           </main>
         ) : (
-        <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
-          {/* Nouvelle clé à chaque écran : il entre en fondu, une fois. */}
-          <div key={current} className="vue">
-            <div className="vue-entete">
-              <h2 className="vue-titre">{HEADINGS[current].title}</h2>
-              <p className="vue-chapeau">{HEADINGS[current].lead}</p>
+          <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
+            {/* Nouvelle clé à chaque écran : il entre en fondu, une fois. */}
+            <div key={current} className="vue">
+              <div className="vue-entete">
+                <h2 className="vue-titre">{HEADINGS[current].title}</h2>
+                <p className="vue-chapeau">{HEADINGS[current].lead}</p>
+              </div>
+              {current === "supervision" && <SupervisionView view={view} />}
+              {current === "decisions" && <DecisionsView view={view} />}
+              {current === "incident" && <IncidentView view={view} />}
+              {current === "journal" && <JournalView view={view} />}
+              {current === "attente" && <PendingView view={view} />}
             </div>
-            {current === "supervision" && <SupervisionView view={view} />}
-            {current === "decisions" && <DecisionsView view={view} />}
-            {current === "incident" && <IncidentView view={view} />}
-            {current === "journal" && <JournalView view={view} />}
-            {current === "attente" && <PendingView view={view} />}
-          </div>
-        </main>
+          </main>
         )}
       </div>
       <footer className="pied">
