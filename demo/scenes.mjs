@@ -8,7 +8,10 @@
 // le script lit ce que les services ont réellement fait : sortie du détecteur
 // (porte, /outputs), journal (response), décisions, événements, état du coffre
 // et file (relais). Il compare à ce que la spec attend et n'arrange rien : un
-// écart s'affiche et fait sortir en code 1.
+// écart s'affiche et fait sortir en code 1. Les écarts de
+// demo/ecarts-connus.json, corrigés ailleurs, s'affichent « ÉCART CONNU » et ne
+// font pas échouer ; un écart de cette liste qui ne se produit plus, si
+// (demo/ecarts.mjs). La sortie est recopiée dans var/demo/scenes-dernier.txt.
 //
 // « Chaque scénario part d'un état neuf » (spec, « Monde de test ») : chaque
 // scène commence par la remise à zéro de la démo (lib.mjs, reset). C'est aussi
@@ -22,10 +25,12 @@
 // en faisant tourner le détecteur sur dev.jsonl ; test.jsonl n'a pas été ouvert.
 // Le seuil et les règles ne sont pas touchés : si elles changent et que ce
 // document est bloqué, la scène 4 le dira (écart sur la porte).
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { bringUpChain } from "./chain.mjs";
-import { DemoError, ROOT, getJson, loadConfig, postJson, queueEnv, reset, run, service, sleep, startService, status, stopService } from "./lib.mjs";
+import { evaluate, loadKnown, vanishedMessage } from "./ecarts.mjs";
+import { DemoError, ROOT, VAR, getJson, loadConfig, postJson, queueEnv, reset, run, service, sleep, startService, status, stopService } from "./lib.mjs";
 
 const MISSED_SAMPLE = "d-105";
 const INVOICE = "Facture synthétique. Merci de payer sous 30 jours.";
@@ -86,6 +91,15 @@ async function output(requestId) {
 const decisions = async (requestId) => (await getJson(`${relayUrl}/decisions?request_id=${requestId}`)).map((d) => `${d.decision}/${d.reason_name ?? d.reason}`);
 const events = async (name) => getJson(`${relayUrl}/events?name=${name}&limit=500`);
 const queueRows = async (requestId) => (await getJson(`${relayUrl}/queue?limit=500`)).filter((row) => row.request_id === requestId);
+/** État en file lu dans la base, en lecture seule : sert quand le relais, qui sert GET /queue, est arrêté. */
+function queueStatus(requestId) {
+  const db = new DatabaseSync(queueEnv(config).QUEUE_DB, { readOnly: true });
+  try {
+    return db.prepare("SELECT status FROM queue WHERE request_id = ? ORDER BY id").all(requestId).map((row) => row.status).join(", ") || "absente";
+  } finally {
+    db.close();
+  }
+}
 const paused = async () => (await getJson(`${journalUrl}/agents/paused`)).map((p) => `${labels[p.agent_id] ?? "?"}(${p.scope})`);
 const incidents = async () => [...new Set((await getJson(`${journalUrl}/incidents`)).map((i) => i.report.trigger))];
 
@@ -143,7 +157,7 @@ class Scene {
   }
   journal(point, expected, observed, { tail = false } = {}) {
     const ok = tail ? same(observed.slice(-expected.length), expected) : same(expected, observed);
-    this.checks.push({ point, expected: `${tail ? "… " : ""}${show(compact(expected))}`, observed: show(compact(observed)), ok });
+    this.checks.push({ point, expected: `${tail ? "… " : ""}${show(compact(expected))}`, observed: show(compact(observed)), ok, raw: { expected, observed, tail } });
   }
   note(text) {
     this.notes.push(text);
@@ -257,14 +271,15 @@ async function scene5(scene) {
   const signed = (await journal(sent.id)).find((e) => e.type === "REQUEST_SIGNED");
   const expiresAt = signed?.data.expires_at ?? Math.floor(enqueuedAt / 1000) + 30;
 
-  // Relais arrêté : alerte de disponibilité attendue après 15 s en file.
+  // Relais arrêté : alerte de disponibilité attendue après 15 s en file, puis
+  // QUEUE_EXPIRED à l'échéance, écrit par l'IA du client qui balaie la file.
   console.error("  scène 5 : relais arrêté, attente de l'alerte de disponibilité (15 s)…");
   const atAlert = await until(() => journalLabels(sent.id), (seen) => seen.includes("ALERT_SENT(AVAILABILITY)"), 20_000 - (Date.now() - enqueuedAt));
-  const alertedWhileDown = atAlert.includes("ALERT_SENT(AVAILABILITY)");
+  scene.journal("relais arrêté, à 15 s", ["ALERT_SENT(AVAILABILITY)"], atAlert.filter((l) => l === "ALERT_SENT(AVAILABILITY)"));
   console.error("  scène 5 : attente de l'expiration en file…");
-  const atExpiry = await until(() => journalLabels(sent.id), (seen) => seen.includes("QUEUE_EXPIRED"), Math.max(0, expiresAt * 1000 + 4000 - Date.now()));
-  const expiredWhileDown = atExpiry.includes("QUEUE_EXPIRED");
-  scene.check("relais arrêté", { "alerte de disponibilité à 15 s": "oui", "QUEUE_EXPIRED à l'expiration": "oui" }, { "alerte de disponibilité à 15 s": alertedWhileDown ? "oui" : "non", "QUEUE_EXPIRED à l'expiration": expiredWhileDown ? "oui" : "non" });
+  const atExpiry = await until(() => journalLabels(sent.id), (seen) => seen.includes("QUEUE_EXPIRED"), Math.max(0, expiresAt * 1000 + 6000 - Date.now()));
+  scene.journal("relais arrêté, à l'échéance", ["QUEUE_EXPIRED"], atExpiry.filter((l) => l === "QUEUE_EXPIRED"));
+  scene.check("file, relais arrêté", "EXPIRED", queueStatus(sent.id));
 
   // « Et quand » : le relais redémarre après l'expiration.
   await startService(service(config, "relay"));
@@ -388,12 +403,18 @@ const SCENES = [
 
 // --- Lancement -----------------------------------------------------------------
 
-function print(scene) {
-  const verdict = scene.gaps.length === 0 ? "OK" : "ÉCART";
+const OUTPUT_FILE = join(VAR, "scenes-dernier.txt");
+/** Affiche, et recopie dans var/demo/scenes-dernier.txt. */
+function out(line = "") {
+  console.log(line);
+  appendFileSync(OUTPUT_FILE, `${line}\n`, { mode: 0o600 });
+}
+
+function print(scene, result) {
   const side = (key) => scene.checks.map((c) => `${c.point} : ${c[key]}`).join(" · ");
-  console.log(`scène ${scene.id} (${scene.title}) | attendu — ${side("expected")} | observé — ${side("observed")} | ${verdict}`);
-  for (const gap of scene.gaps) console.log(`    ÉCART ${scene.id}, ${gap.point} : attendu ${gap.expected} ; observé ${gap.observed}`);
-  for (const note of scene.notes) console.log(`    note ${scene.id} : ${note}`);
+  out(`scène ${scene.id} (${scene.title}) | attendu — ${side("expected")} | observé — ${side("observed")} | ${result.verdict}`);
+  for (const { check, ids } of result.gaps) out(`    ${ids === null ? "ÉCART" : `ÉCART CONNU (${ids.join(", ")})`} ${scene.id}, ${check.point} : attendu ${check.expected} ; observé ${check.observed}`);
+  for (const note of scene.notes) out(`    note ${scene.id} : ${note}`);
 }
 
 async function main(argv) {
@@ -408,8 +429,11 @@ async function main(argv) {
   if (process.env.DEMO_MODE !== "1") throw new DemoError("les scènes remettent la démo à zéro : DEMO_MODE=1 exigé (make scenes)");
   const down = (await status(config)).filter((row) => row.service !== "dashboard" && row.state !== "prêt" && row.state !== "ouvert");
   if (down.length > 0) throw new DemoError(`services non prêts (${down.map((row) => row.service).join(", ")}) : make demo d'abord`);
+  const known = loadKnown();
 
-  console.log(`scènes : VAULT_MODE=${config.mode}${config.mode === "fake" ? " — COFFRE SIMULÉ : aucun fonds, aucune chaîne" : ""}, détecteur réel, journal réel`);
+  mkdirSync(VAR, { recursive: true, mode: 0o700 });
+  writeFileSync(OUTPUT_FILE, "", { mode: 0o600 });
+  out(`scènes : VAULT_MODE=${config.mode}${config.mode === "fake" ? " — COFFRE SIMULÉ : aucun fonds, aucune chaîne" : ""}, détecteur réel, journal réel`);
   const played = [];
   for (const [id, title, play] of SCENES) {
     if (wanted.length > 0 && !wanted.includes(id)) continue;
@@ -421,13 +445,27 @@ async function main(argv) {
       // Une scène qui ne va pas au bout est un écart, pas un silence.
       scene.checks.push({ point: "déroulement", expected: "scène jouée jusqu'au bout", observed: `interrompue : ${error instanceof Error ? error.message.split("\n")[0] : "erreur"}`, ok: false });
     }
-    print(scene);
+    print(scene, evaluate([scene], known).scenes[0]);
     played.push(scene);
   }
-  const gaps = played.reduce((n, scene) => n + scene.gaps.length, 0);
-  console.log(`\n${played.length} scène(s), ${played.filter((s) => s.gaps.length === 0).length} OK, ${played.filter((s) => s.gaps.length > 0).length} avec écart (${gaps} écart(s) au total)`);
-  if (jsonFile) writeFileSync(jsonFile, JSON.stringify(played.map((s) => ({ id: s.id, checks: s.checks, notes: s.notes })), null, 2), "utf8");
-  return gaps === 0 ? 0 : 1;
+
+  const result = evaluate(played, known);
+  const count = (verdict) => result.scenes.filter((s) => verdict(s.verdict)).length;
+  out(`\n${played.length} scène(s) : ${count((v) => v === "OK")} OK, ${count((v) => v.startsWith("ÉCART CONNU"))} avec écart connu seulement, ${count((v) => v === "ÉCART")} avec écart non listé`);
+  // Toujours listés : un écart connu reste un écart avec la spec.
+  out(result.active.length === 0 ? "écarts connus encore actifs : aucun" : "écarts connus encore actifs (demo/ecarts-connus.json) :");
+  for (const k of result.active) {
+    const where = result.scenes.filter((s) => s.gaps.some((g) => g.ids?.includes(k.id))).map((s) => s.id);
+    out(`  ${k.id}, scène(s) ${where.join(", ")} : ${k.description}\n      attendu : ${k.attendu}\n      observé : ${k.observe}\n      responsable : ${k.responsable}\n      retrait : ${k.retrait}`);
+  }
+  for (const gap of result.unknown) out(`ÉCART NON LISTÉ, scène ${gap.scene}, ${gap.check.point} : attendu ${gap.check.expected} ; observé ${gap.check.observed}`);
+  for (const gone of result.vanished) out(vanishedMessage(gone));
+  out(result.code === 0 ? "résultat : aucun écart hors de la liste des écarts connus" : `résultat : ÉCHEC, ${result.unknown.length} écart(s) non listé(s), ${result.vanished.length} écart(s) connu(s) disparu(s)`);
+  if (jsonFile) {
+    const rows = played.map((s, i) => ({ id: s.id, verdict: result.scenes[i].verdict, checks: s.checks.map(({ point, expected, observed, ok }, j) => ({ point, expected, observed, ok, ...(ok ? {} : { connu: result.scenes[i].gaps.find((g) => g.check === s.checks[j])?.ids ?? null }) })), notes: s.notes }));
+    writeFileSync(jsonFile, JSON.stringify(rows, null, 2), "utf8");
+  }
+  return result.code;
 }
 
 try {

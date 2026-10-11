@@ -1,6 +1,6 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
 .PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final \
-	demo demo-stop demo-status demo-reset scenes scene demo-smoke demo-chain-check
+	demo demo-stop demo-status demo-reset scenes scene demo-smoke demo-chain-check demo-test
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -8,7 +8,7 @@ setup:
 	scripts/setup-dev.sh
 
 # Bloquants d'abord, informatifs ensuite (préfixe « - » : n'arrête pas make).
-check: secrets contrat dependances specs relay gateway response dashboard docs lint-ci offchain semgrep
+check: secrets contrat dependances specs relay gateway response dashboard demo-test docs lint-ci offchain semgrep
 
 secrets:
 	$(PRE_COMMIT) run --all-files
@@ -91,13 +91,19 @@ demo-reset:
 	DEMO_MODE=1 node demo/run.mjs reset
 
 # Scénarios de specs/acceptance/scenarios.md, joués par la vraie porte d'entrée.
-# Chaque scène repart d'un état neuf. Code de sortie non nul au moindre écart.
+# Chaque scène repart d'un état neuf. Les écarts de demo/ecarts-connus.json
+# s'affichent « ÉCART CONNU » ; code de sortie non nul pour un écart non listé,
+# ou pour un écart listé qui ne se produit plus.
 scenes:
-	DEMO_MODE=1 node demo/scenes.mjs
+	DEMO_MODE=1 node --disable-warning=ExperimentalWarning demo/scenes.mjs
 
 # Une seule scène : make scene S=4   (1, 2, 3, 4, 5, 6a, 6b, 7a, 7b, 8)
 scene:
-	DEMO_MODE=1 node demo/scenes.mjs $(S)
+	DEMO_MODE=1 node --disable-warning=ExperimentalWarning demo/scenes.mjs $(S)
+
+# Tests de demo/ sans aucun service : écarts connus, ports, hygiène.
+demo-test:
+	node --disable-warning=ExperimentalWarning --test "demo/test/*.test.mjs"
 
 # Démo en mode fake, scènes 1, 2, 3, 4 et 8, deux fois, puis vérification du
 # journal et arrêt.

@@ -32,7 +32,7 @@ function step(name, ok, detail = "") {
 
 async function playScenes(tag) {
   const file = join(VAR, `smoke-${tag}.json`);
-  const code = await runAsync(process.execPath, [join(ROOT, "demo", "scenes.mjs"), ...SCENES, "--json", file], { cwd: ROOT, stdio: ["ignore", "inherit", "inherit"], timeout: 300_000 });
+  const code = await runAsync(process.execPath, ["--disable-warning=ExperimentalWarning", join(ROOT, "demo", "scenes.mjs"), ...SCENES, "--json", file], { cwd: ROOT, stdio: ["ignore", "inherit", "inherit"], timeout: 300_000 });
   let results = null;
   try {
     results = JSON.parse(readFileSync(file, "utf8"));
