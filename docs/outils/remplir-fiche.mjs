@@ -17,6 +17,8 @@ const MESURES = join(RACINE, "docs", "mesures");
 const MANIFESTE = join(RACINE, "data", "jeu-factures", "MANIFEST.json");
 
 export const A_MESURER = "à mesurer";
+// Les deux cases de demo.json viennent de scènes scriptées, pas du jeu de test.
+const RESERVE_SCENES = "Scènes scriptées, réseau de test local (anvil), ne vaut pas pour le jeu de test";
 export const MARQUEURS = {
   metriques: ["<!-- metriques:debut -->", "<!-- metriques:fin -->"],
   casManques: ["<!-- cas-manques:debut -->", "<!-- cas-manques:fin -->"],
@@ -110,7 +112,7 @@ export function charger(dossier = MESURES, manifeste = MANIFESTE) {
   if (demo !== null) {
     exigerOrigine(demo, "demo.json");
     if (![demo.attaques_jouees, demo.passees_porte_bloquees_contrat, demo.sorties_de_fonds].every(entier)) throw new MesureInvalide("demo.json : compteurs entiers attendus");
-    if (typeof demo.coffre !== "string" || !/^[\p{L}\d .'()-]{3,60}$/u.test(demo.coffre)) throw new MesureInvalide("demo.json : « coffre » attendu (faux coffre, doublure ou contrat déployé)");
+    if (typeof demo.coffre !== "string" || !/^[\p{L}\d ,.'()-]{3,60}$/u.test(demo.coffre)) throw new MesureInvalide("demo.json : « coffre » attendu (faux coffre, doublure ou contrat déployé)");
   }
 
   return { jeu, banc, origineBanc, reference, origineReference, delais, demo };
@@ -133,8 +135,8 @@ export function rendreMetriques({ jeu, banc, origineBanc, reference, origineRefe
     `| Faux positifs | ${t ? `${t.false_positives} sur ${t.legit} (${pourcent(t.false_positive_rate)})` : A_MESURER} | Nombre et taux, sur le jeu de test |`,
     `| Mêmes mesures pour les règles fixes | ${r ? `rappel ${pourcent(r.recall)}, faux positifs ${r.false_positives} sur ${r.legit}` : A_MESURER} | Référence de comparaison |`,
     `| Temps de calcul du détecteur | ${t ? `moyenne ${decimal(t.detection_ms.mean)} ms, maximum ${decimal(t.detection_ms.max)} ms` : A_MESURER} | Règles seules, hors porte d'entrée |`,
-    `| Attaques passées la porte d'entrée puis bloquées par le contrat | ${demo ? `${demo.passees_porte_bloquees_contrat} sur ${demo.attaques_jouees} jouées` : A_MESURER} | ${demo ? `Coffre utilisé : ${demo.coffre}` : "Demande un contrat déployé"} |`,
-    `| Attaques ayant abouti à une sortie de fonds | ${demo ? `${demo.sorties_de_fonds} sur ${demo.attaques_jouees} jouées` : A_MESURER} | ${demo ? `Coffre utilisé : ${demo.coffre}` : "Demande un contrat déployé"} |`,
+    `| Attaques passées la porte d'entrée puis bloquées par le contrat | ${demo ? `${demo.passees_porte_bloquees_contrat} sur ${demo.attaques_jouees} jouées` : A_MESURER} | ${demo ? `Coffre utilisé : ${demo.coffre}. ${RESERVE_SCENES}` : "Demande un contrat déployé"} |`,
+    `| Attaques ayant abouti à une sortie de fonds | ${demo ? `${demo.sorties_de_fonds} sur ${demo.attaques_jouees} jouées` : A_MESURER} | ${demo ? `Coffre utilisé : ${demo.coffre}. ${RESERVE_SCENES}` : "Demande un contrat déployé"} |`,
     `| Délai de détection, arrivée → détection | ${delai(delais?.porte?.arrivee_detection)} | Détection par la porte d'entrée |`,
     `| Délai de réponse, détection → pause | ${delai(delais?.porte?.detection_pause)} | Détection par la porte d'entrée ; pause hors chaîne |`,
     `| Délai de réponse, détection → alerte | ${delai(delais?.porte?.detection_alerte)} | Détection par la porte d'entrée |`,
