@@ -59,7 +59,10 @@ export function createDemoControl(vault: FakeVault): Server {
       }
       if (typeof requestId !== "string" || !BYTES32.test(requestId)) return send(res, 400, { error: "invalid_body" });
       try {
-        vault[action](requestId as Hex);
+        const id = requestId as Hex;
+        if (action === "approve") vault.approve(id);
+        else if (action === "refuse") vault.refuse(id);
+        else vault.expire(id);
       } catch (error) {
         const name = error instanceof Error ? error.message : "";
         return VAULT_REFUSALS.has(name) ? send(res, 409, { error: name }) : send(res, 500, { error: "internal" });
