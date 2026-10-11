@@ -1,0 +1,35 @@
+# Relectures obligatoires. La dernière règle qui correspond l'emporte : les
+# règles sur les secrets restent donc en fin de fichier.
+#
+# TODO : @HANDLE_LORIS et @HANDLE_NICOLAS sont des emplacements à remplacer par
+# les handles GitHub réels. Tant que ce n'est pas fait, GitHub signale ces
+# lignes en erreur et ne les applique pas.
+
+# Contrats : Wladimir, relus par Loris avec un œil d'attaquant.
+/contracts/                 @sunnywlad @HANDLE_LORIS
+
+# Porte d'entrée, réponse et journal : Loris.
+/gateway/                   @HANDLE_LORIS
+/response/                  @HANDLE_LORIS
+
+# Relais, dashboard : Joseph.
+/relay/                     @waytogold17
+/dashboard/                 @waytogold17
+
+# Jeu de données et livrables : Nicolas.
+/data/                      @HANDLE_NICOLAS
+/docs/                      @HANDLE_NICOLAS
+
+# Clés, secrets, CI et socle de sécurité : Joseph.
+/.github/                   @waytogold17
+/scripts/                   @waytogold17
+/Makefile                   @waytogold17
+/.gitignore                 @waytogold17
+/.gitleaks.toml             @waytogold17
+/.audit-waivers.txt         @waytogold17
+/.pre-commit-config.yaml    @waytogold17
+.env*                       @waytogold17
+*.pem                       @waytogold17
+*.key                       @waytogold17
+*keystore*                  @waytogold17
+*secret*                    @waytogold17

@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "seq": 0,
+  "ts_ms": 1791663120000,
+  "type": "HUMAN_DECISION",
+  "component": "HUMAN",
+  "request_id": "0xea1d6b7c791a1e6b0b1c104aa848a7f8ef9ee0b23e093e2e2a9b8325bdb1b86a",
+  "agent_id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+  "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+  "data": {
+    "incident_id": "0x37a0f65f2c1d1cd57e8e4c3d0c8734bc63bc41cb91d61a636924342fc316b5ce",
+    "decision": "ATTACK_CONFIRMED",
+    "author_role": "ANALYST",
+    "author_id": "0xdd8c2bc6d65aa1cde9616ff31fbabc6e17f7229396de9ff9098cc4063a225304"
+  },
+  "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "hash": "f6ea6eef8c793c639bb7905ece40fb881d740d728b9cc39f4f38b464ce6e3d0d"
+}

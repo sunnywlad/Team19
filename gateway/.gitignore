@@ -1,0 +1,4 @@
+# Dépendances et données locales de gateway/ : jamais versionnées.
+# var/ contient les jetons émis, les documents en quarantaine et les sorties.
+node_modules/
+var/

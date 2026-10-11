@@ -1,0 +1,117 @@
+{
+  "comment": "Monde de test partagé par les exemples et par specs/acceptance/scenarios.md. Identifiants = 0x + SHA-256('argent-intelligent/fixture/v1/<famille>/<libellé>'), pour être reproductibles ; en dehors des fixtures un identifiant est tiré au hasard. Montants fictifs : 1 unité = 10^15 wei.",
+  "unit_wei": "1000000000000000",
+  "ids": {
+    "C-DEMO": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+    "A-DEM-1": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+    "A-DEM-2": "0x4c7f7a6c35ddcd70f1d7cc6e557315ff29c3a553a253d29016fed3f8234f232c",
+    "A-DEM-3": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+    "A-TRESO": "0x3b012bc1ee917e20bc9fd4e7e96949b845385fe2337c9b7e57ddb78612a22c78",
+    "A-LECT": "0xdff87a23384c280d386171770eb1f5418b4c990511213675d849f1f3136489a0",
+    "B-001": "0x33ffa397770ec2817195fde557898e4c16950c03357f8460e0b908a8679c1f2c",
+    "B-002": "0x6fc1b8d6a42511d0f8d5c0e9112f8b6e20a4d31c078762052849957a86850db1",
+    "B-PLACEMENT": "0x70f9c3b43c463e91c42f948809c5587261b4b4bed1efbe91a5edf64cd1c183f6",
+    "F-001": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+    "F-002": "0x6caf3d2be4cf3cd29da1a2c49da20583230f10e51e083d953fb70778efa0ce3e",
+    "F-999": "0xe569d7ebe669fb8b243db35d51ef92bafb8aeea675088b9de8e86954e1bd919d",
+    "P-020": "0x4253f8c51272c785bd58704a4d22f7205299f6bf601dc39e6e0b8a72c58ca0da",
+    "P-030": "0x19dcbdf4775921fae6fd89ec78a15c1dcdd7863d64f1b97e66e467216474b005"
+  },
+  "vault": {
+    "cash_wei": "100000000000000000",
+    "safety_reserve_wei": "40000000000000000",
+    "threshold_wei": "25000000000000000",
+    "approval_delay_s": 30
+  },
+  "agents": [
+    {
+      "label": "A-DEM-1",
+      "agent_id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+      "mandate": [
+        "PAY_INVOICE"
+      ],
+      "used_in": "scénarios 1, 2, 5, 6, 8"
+    },
+    {
+      "label": "A-DEM-2",
+      "agent_id": "0x4c7f7a6c35ddcd70f1d7cc6e557315ff29c3a553a253d29016fed3f8234f232c",
+      "mandate": [
+        "PAY_INVOICE"
+      ],
+      "used_in": "scénario 3"
+    },
+    {
+      "label": "A-DEM-3",
+      "agent_id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+      "mandate": [
+        "PAY_INVOICE"
+      ],
+      "used_in": "scénario 4"
+    },
+    {
+      "label": "A-TRESO",
+      "agent_id": "0x3b012bc1ee917e20bc9fd4e7e96949b845385fe2337c9b7e57ddb78612a22c78",
+      "mandate": [
+        "PLACE"
+      ],
+      "used_in": "scénario 7"
+    },
+    {
+      "label": "A-LECT",
+      "agent_id": "0xdff87a23384c280d386171770eb1f5418b4c990511213675d849f1f3136489a0",
+      "mandate": [],
+      "used_in": "violation d'autorité"
+    }
+  ],
+  "beneficiaries": [
+    {
+      "label": "B-001",
+      "beneficiary_id": "0x33ffa397770ec2817195fde557898e4c16950c03357f8460e0b908a8679c1f2c"
+    },
+    {
+      "label": "B-002",
+      "beneficiary_id": "0x6fc1b8d6a42511d0f8d5c0e9112f8b6e20a4d31c078762052849957a86850db1"
+    },
+    {
+      "label": "B-PLACEMENT",
+      "beneficiary_id": "0x70f9c3b43c463e91c42f948809c5587261b4b4bed1efbe91a5edf64cd1c183f6"
+    }
+  ],
+  "invoices": [
+    {
+      "label": "F-001",
+      "invoice_id": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+      "beneficiary": "B-001",
+      "amount_wei": "10000000000000000",
+      "registered": true
+    },
+    {
+      "label": "F-002",
+      "invoice_id": "0x6caf3d2be4cf3cd29da1a2c49da20583230f10e51e083d953fb70778efa0ce3e",
+      "beneficiary": "B-002",
+      "amount_wei": "30000000000000000",
+      "registered": true
+    },
+    {
+      "label": "F-999",
+      "invoice_id": "0xe569d7ebe669fb8b243db35d51ef92bafb8aeea675088b9de8e86954e1bd919d",
+      "beneficiary": null,
+      "amount_wei": null,
+      "registered": false
+    }
+  ],
+  "placements": [
+    {
+      "label": "P-020",
+      "placement_id": "0x4253f8c51272c785bd58704a4d22f7205299f6bf601dc39e6e0b8a72c58ca0da",
+      "beneficiary": "B-PLACEMENT",
+      "amount_wei": "20000000000000000"
+    },
+    {
+      "label": "P-030",
+      "placement_id": "0x19dcbdf4775921fae6fd89ec78a15c1dcdd7863d64f1b97e66e467216474b005",
+      "beneficiary": "B-PLACEMENT",
+      "amount_wei": "30000000000000000"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "request_id": "0x0f9f1aa766995cb9ffaf28a5118ea931ce433c676d2be21e30efa5b3eaea48ff",
+  "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+  "agent_id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+  "action": "PAY_INVOICE",
+  "ref_id": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+  "issued_at": 1791662400,
+  "expires_at": 1791662520,
+  "signature": "0x4c82228d8a7efb9c7b7e289732532bbdc5b8460e8c5d8b4d2638daa846bd421d7ee55b451925d8dd766b8351c4f866daa1def50869809c94f0a991288a9b845b1c",
+  "amount": "90"
+}

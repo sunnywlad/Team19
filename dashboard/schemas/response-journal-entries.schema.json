@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:response-journal-entries:1",
+  "title": "PROPOSÉ (API-NEEDS.md) : GET /journal/entries, entrées de specs/04 dans l'ordre de seq",
+  "type": "array",
+  "maxItems": 500,
+  "items": { "$ref": "urn:argent-intelligent:schema:journal-entry:1" }
+}
