@@ -5,6 +5,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEPLOY_SCRIPT, DemoError, HOST, ROOT, postJson, run, setChainVault, startService, stopService } from "./lib.mjs";
+import { accounts, viem } from "./viem.mjs";
 
 const ROLE_KEYS = ["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY", "CLIENT_SIGNER"];
 
@@ -42,6 +43,13 @@ export function anvilService(config) {
   };
 }
 
+/** Donne du gaz au propriétaire sur l'anvil local avant le déploiement. */
+export async function fundOwner(rpcUrl, ownerKey, rpc = postJson) {
+  const address = accounts.privateKeyToAccount(ownerKey).address;
+  const reply = await rpc(rpcUrl, { jsonrpc: "2.0", id: 1, method: "anvil_setBalance", params: [address, `0x${viem.parseEther("1").toString(16)}`] });
+  if (reply.status !== 200 || reply.body?.error || reply.body?.result !== true) throw new DemoError("financement du propriétaire sur anvil en échec");
+}
+
 /** Coffres des scènes externes : adresses seules, toutes consommées. */
 export function recordConsumedVault(address, file = join(ROOT, "deployments", "argent-vault-aws.json")) {
   const state = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
@@ -67,6 +75,7 @@ export async function bringUpChain(config, { fresh = false, record = recordConsu
   } else {
     await stop("anvil");
     await start(anvilService(config));
+    await fundOwner(config.rpcUrl, keys.OWNER_PRIVATE_KEY, rpc);
   }
 
   let address = external && !fresh ? config.get("VAULT_ADDRESS") : undefined;

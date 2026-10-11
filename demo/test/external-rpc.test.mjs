@@ -6,20 +6,22 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { bringUpChain, recordConsumedVault } from "../chain.mjs";
 import { loadConfig, up } from "../lib.mjs";
+import { accounts } from "../viem.mjs";
 
 const address = `0x${"2".repeat(40)}`;
 const keys = Object.fromEntries(["OWNER_PRIVATE_KEY", "ADMISSION_PRIVATE_KEY", "RELAYER", "APPROVER_PRIVATE_KEY", "GUARDIAN_PRIVATE_KEY", "CLIENT_SIGNER"].map((name) => [name, `0x${randomBytes(32).toString("hex")}`]));
 const config = (env = {}) => loadConfig({ env: { VAULT_MODE: "chain", ...keys, ...env }, envFile: "/nonexistent/team19-test.env" });
 
 function harness({ chainId = "0x2edaf", code = "0x6000" } = {}) {
-  const calls = { started: [], stopped: [], commands: [], rpc: [], saved: [], consumed: [] };
+  const calls = { started: [], stopped: [], commands: [], rpc: [], saved: [], consumed: [], order: [] };
   const deps = {
-    start: async (service) => { calls.started.push(service); },
+    start: async (service) => { calls.started.push(service); calls.order.push("start"); },
     stop: async (name) => { calls.stopped.push(name); },
-    execute: (command, args, options) => { calls.commands.push({ command, args, options }); return { status: 0 }; },
+    execute: (command, args, options) => { calls.commands.push({ command, args, options }); calls.order.push(command); return { status: 0 }; },
     rpc: async (url, body) => {
       calls.rpc.push({ url, body });
-      return { status: 200, body: { result: body.method === "eth_chainId" ? chainId : code } };
+      calls.order.push(body.method);
+      return { status: 200, body: { result: body.method === "eth_chainId" ? chainId : body.method === "anvil_setBalance" ? true : code } };
     },
     save: (vault) => { calls.saved.push(vault); },
     record: (vault) => { calls.consumed.push(vault); },
@@ -68,7 +70,9 @@ test("sans RPC fourni : anvil local, déploiement et seed comme avant", async ()
   assert.equal(c.chainId, "31337");
   assert.deepEqual(calls.stopped, ["anvil"]);
   assert.equal(calls.started[0].name, "anvil");
-  assert.deepEqual(calls.rpc, []);
+  assert.deepEqual(calls.rpc.map(({ body }) => body.method), ["anvil_setBalance"]);
+  assert.equal(calls.rpc[0].body.params[0].toLowerCase(), accounts.privateKeyToAccount(keys.OWNER_PRIVATE_KEY).address.toLowerCase());
+  assert.deepEqual(calls.order.slice(0, 3), ["start", "anvil_setBalance", "forge"]);
   assert.equal(calls.commands.length, 2);
   assert.equal(calls.commands[0].command, "forge");
   assert.ok(calls.commands[0].args.includes(c.rpcUrl));
