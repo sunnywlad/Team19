@@ -1,0 +1,12 @@
+diff --git a/src/services/TransactionService.ts b/src/services/TransactionService.ts
+index 4c44371..6abd05f 100644
+--- a/src/services/TransactionService.ts
++++ b/src/services/TransactionService.ts
+@@ -12,6 +12,7 @@ export class TransactionService {
+ 	) {}
+ 
+ 	async getTransaction(hash: string) {
++		if (typeof hash !== 'string') hash = (hash as any).hash
+ 		let tx = Object.assign({}, await TransactionModel.findOne({ hash }).lean());
+ 		if(!tx?.hash) {
+ 			tx = await this.fetchTransaction(hash)
