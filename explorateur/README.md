@@ -21,6 +21,7 @@ Nos correctifs :
 
 - backend : `getTransaction` accepte un objet transaction, pas seulement un hash ;
 - frontend : habillage VETO (titre, en-tête, pied de page, symbole du jeton, logo),
+  noms lisibles des adresses connues (`src/lib/utils/labels.ts`),
   retrait de Google Analytics et des liens de l'éditeur d'origine.
 
 ## Lancer

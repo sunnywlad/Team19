@@ -27,10 +27,34 @@ index fb52720..479cecb 100644
  	<body data-sveltekit-preload-data="hover">
  		<div style="display: contents">%sveltekit.body%</div>
 diff --git a/src/lib/components/data/DataListItem_Transaction.svelte b/src/lib/components/data/DataListItem_Transaction.svelte
-index 4a944f1..19d09fd 100644
+index 4a944f1..b6b6a73 100644
 --- a/src/lib/components/data/DataListItem_Transaction.svelte
 +++ b/src/lib/components/data/DataListItem_Transaction.svelte
-@@ -61,7 +61,7 @@
+@@ -1,7 +1,7 @@
+ <script lang="ts">
+ 	import moment from 'moment';
+ 	import {page} from "$app/state";
+-	import { formatAddress, formatNumber, getTransactionMethod } from '$lib/utils';
++	import { formatAddress, formatNumber, getTransactionMethod, labelOf } from '$lib/utils';
+ 	import ClipboardCopyBtn from '$lib/components/utilities/ClipboardCopyBtn.svelte';
+ 
+ 	import RightArrowIcon from 'virtual:icons/hugeicons/arrow-right-02';
+@@ -48,20 +48,20 @@
+ 	<div class="mr-auto ml-8 flex items-center gap-8">
+ 		{#if tx.from?.length}
+ 			<ClipboardCopyBtn value={tx.from}>
+-				<span class:text-red-400={highlightAddress === tx.from}>{formatAddress(tx.from, 8)}</span>
++				<span class:text-red-400={highlightAddress === tx.from}>{labelOf(tx.from) ?? formatAddress(tx.from, 8)}</span>
+ 			</ClipboardCopyBtn>
+ 		{/if}
+ 		{#if tx.to?.length}
+ 			<RightArrowIcon />
+ 			<ClipboardCopyBtn value={tx.to}>
+-				<span class:text-red-400={highlightAddress === tx.to}>{formatAddress(tx.to, 8)}</span>
++				<span class:text-red-400={highlightAddress === tx.to}>{labelOf(tx.to) ?? formatAddress(tx.to, 8)}</span>
+ 			</ClipboardCopyBtn>
+ 		{/if}
+ 	</div>
  	{#if typeof tx.value !== 'undefined'}
  		<div class="badge">
  			<span>{formatNumber(tx.value / 10 ** 18)}</span>
@@ -74,6 +98,28 @@ index eb3e9ae..340e1bd 100644
  						<th>Validator</th>
  					</tr>
  				</thead>
+diff --git a/src/lib/components/entity/common/Address.svelte b/src/lib/components/entity/common/Address.svelte
+index 484c3a3..a2b4d90 100644
+--- a/src/lib/components/entity/common/Address.svelte
++++ b/src/lib/components/entity/common/Address.svelte
+@@ -1,6 +1,7 @@
+ <script lang="ts">
+ 	import { onMount } from 'svelte';
+ 	import ClipboardCopyBtn from '$lib/components/utilities/ClipboardCopyBtn.svelte';
++	import { labelOf } from '$lib/utils/labels';
+ 
+ 	import ContractIcon from 'virtual:icons/hugeicons/file-01';
+ 	import WalletIcon from 'virtual:icons/hugeicons/wallet-01';
+@@ -38,7 +39,7 @@
+ 		{:else}
+ 			<WalletIcon />
+ 		{/if}
+-		<span class="ml-2">{entity?.name?.length ? entity.name : address}</span>
++		<span class="ml-2">{entity?.name?.length ? entity.name : labelOf(address) ? `${labelOf(address)} · ${address}` : address}</span>
+ 	</a>
+-	<ClipboardCopyBtn value={entity?.name?.length ? entity.name : address} />
++	<ClipboardCopyBtn value={address} />
+ </div>
 diff --git a/src/lib/components/layout/Footer.svelte b/src/lib/components/layout/Footer.svelte
 index 930ccea..33dc3b1 100644
 --- a/src/lib/components/layout/Footer.svelte
@@ -133,6 +179,77 @@ index 88177e8..64dd8f0 100644
  		</a>
  		<div class="header-actions ml-auto">
  			<Searchbar class="min-w-1/3 flex-1" />
+diff --git a/src/lib/utils/index.ts b/src/lib/utils/index.ts
+index 4fea0c4..85cdc65 100644
+--- a/src/lib/utils/index.ts
++++ b/src/lib/utils/index.ts
+@@ -3,6 +3,7 @@ import {PUBLIC_RPC_URL} from "$env/static/public";
+ export * from '$lib/utils/format';
+ export * from '$lib/utils/transaction';
+ export * from '$lib/utils/contract';
++export * from '$lib/utils/labels';
+ 
+ export const isFullyIndexed = () => {
+ 	return PUBLIC_RPC_URL !== 'https://rpc1.codenekt-ecosystem.io/'
+diff --git a/src/lib/utils/labels.ts b/src/lib/utils/labels.ts
+new file mode 100644
+index 0000000..e6f1c4d
+--- /dev/null
++++ b/src/lib/utils/labels.ts
+@@ -0,0 +1,30 @@
++// Noms lisibles des adresses connues du L1 VETO (pile de démo, deployments/latest-aws.json).
++const LABELS: Record<string, string> = {
++	// Précompilés subnet-evm
++	'0x0200000000000000000000000000000000000001': 'Native Minter',
++	'0x0200000000000000000000000000000000000002': 'TxAllowList',
++	// Comptes
++	'0xb38451f8731010c6734b0b4fbb3430c7d65a102a': 'Admin L1',
++	'0x70997970c51812dc3a010c7d01b50e0d17dc79c8': 'Vérificateur 1',
++	'0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc': 'Vérificateur 2',
++	'0x90f79bf6eb2c4f870365e785982e1f101e93b906': 'Vérificateur 3',
++	'0x15d34aaf54267db7d7c367839aaf71a00a2c6a65': 'Demandeur (passerelle)',
++	// Phase 3 : pile de la démo
++	'0x5a76ae5b18c17f69c169ed6fc8dd32cd0746843b': 'DrawnVerificationMarket',
++	'0xdcc8dcdb1d46b88a3385a0b1c97d8ab6c1af5fdc': 'VerifierRegistry',
++	'0x10782a8b4bf76fffac917df2cc3d7c95d9c08a9a': 'Slashing',
++	'0x41d5db1f9b63fec06653ba840875a0010aefda00': 'Rewards',
++	'0xf944db03e1ca79cd3cf1e8e555131bdcde3e033c': 'AgentIdentityRegistry',
++	'0xef14c42c63fb365acab259b146d72b8c089b7aa8': 'AgentReputationRegistry',
++	'0x87d722d428a1f31af010cc2e990be48b1e250694': 'AgentValidationRegistry',
++	// Phases 1 et 2
++	'0xdc349103a8724c195cf81e12ea6caa12d1332f0d': 'VerificationMarket (phase 1)',
++	'0x937b9f82e92db64014e447df110940e00f5eff09': 'VerifierRegistry (phase 2)',
++	'0xd8904dadcb2d325935d4baf1a4731f84bbc6fbd8': 'Slashing (phase 2)',
++	'0xe2ff08a3d741bc76d1c827467f18adf7bdef4adb': 'Rewards (phase 2)',
++	'0xedc6ea5ebb0fdf49fc6ea279ee6709ca83b2e5e7': 'StakedVerificationMarket (phase 2)',
++	'0x35f7985e0fdf80cd56cb0e7007e341206b53d72b': 'VetoDesk'
++};
++
++export const labelOf = (address?: string | null): string | undefined =>
++	address ? LABELS[String(address).toLowerCase()] : undefined;
+diff --git a/src/routes/(entity)/[type=address]/[address]/+page.svelte b/src/routes/(entity)/[type=address]/[address]/+page.svelte
+index f8e0323..dc7e724 100644
+--- a/src/routes/(entity)/[type=address]/[address]/+page.svelte
++++ b/src/routes/(entity)/[type=address]/[address]/+page.svelte
+@@ -1,6 +1,6 @@
+ <script lang="ts">
+ 	import { page } from '$app/state';
+-	import { formatAddress, formatCdkAmount, firstLetterUpperCase } from '$lib/utils';
++	import { formatAddress, formatCdkAmount, firstLetterUpperCase, labelOf } from '$lib/utils';
+ 	import EntityPage from '$lib/components/entity/EntityPage.svelte';
+ 	import EntityTabs from '$lib/components/entity/EntityTabs.svelte';
+ 	import WalletIcon from 'virtual:icons/hugeicons/wallet-01';
+@@ -27,8 +27,8 @@
+ <EntityPage
+ 	isLoading={false}
+ 	entityName={data?.entity?.name?.length ? '' : firstLetterUpperCase(page?.params?.type ?? 'address')}
+-	entityId={data?.entity?.name ?? data?.entity?.address ?? page?.params?.address ?? ''}
+-	entityIdMin={data?.entity?.name ?? formatAddress(String(data?.entity?.address ?? page?.params?.address ?? ''), 8)}
++	entityId={data?.entity?.name || data?.entity?.address || page?.params?.address || ''}
++	entityIdMin={data?.entity?.name || labelOf(data?.entity?.address ?? page?.params?.address) || formatAddress(String(data?.entity?.address ?? page?.params?.address ?? ''), 8)}
+ 	entityIcon={{
+ 		address: WalletIcon,
+ 		contract: ContractIcon
 diff --git a/src/routes/(entity)/block/[number]/+page.server.ts b/src/routes/(entity)/block/[number]/+page.server.ts
 index c9a98b0..f562641 100644
 --- a/src/routes/(entity)/block/[number]/+page.server.ts
