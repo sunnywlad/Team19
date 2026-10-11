@@ -352,7 +352,6 @@ Détail : [fiche de défense](docs-jury/rendus/fiche-defense.md), « Limites con
 | [docs-jury/rendus/playbook.md](docs-jury/rendus/playbook.md) | Playbook de réponse, état de chaque étape |
 | [docs-jury/rendus/conformite.md](docs-jury/rendus/conformite.md) | Contenu de la slide conformité, preuves et références |
 | [docs/pitch/questions-reponses.md](docs/pitch/questions-reponses.md) | Réponses aux questions du jury, et ce que nous ne disons pas |
-| [docs/demo/script-video.md](docs/demo/script-video.md) | Script de la vidéo de démo |
 | [docs/deck/plan.md](docs/deck/plan.md) | Plan du deck en huit slides |
 | [docs/mesures/](docs/mesures/README.md) | Fichiers de mesure et leur format |
 | [docs-jury/README.md](docs-jury/README.md) | Partie blockchain : sommaire, état du marché et du coffre, décomptes de tests mesurés |
