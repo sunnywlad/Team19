@@ -48,11 +48,11 @@ vont au trésor. Trois fautes excluent du tirage pour dix demandes
 (`src/Slashing.sol`, `docs-jury/fautes.md`). Un simple désaccord avec la
 majorité ne coûte rien.
 
-## Les paramètres de la démo
+## Les paramètres par défaut
 
 | Paramètre | Valeur | Source |
 |---|---|---|
-| Frais d'une demande | 1 VETO | `script/deploy-all.sh`, `FEE` |
+| Frais d'une demande | 3 VETO | `script/deploy-all.sh`, `FEE` |
 | Taille du comité | 3 vérificateurs, tirés au sort | `src/DrawnVerificationMarket.sol` |
 | Bonus frappé par révélation valide | 1 VETO | `script/deploy-all.sh`, `BONUS` |
 | Caution minimale | 100 VETO | `script/deploy-all.sh`, `MIN_STAKE` |
@@ -66,18 +66,21 @@ majorité ne coûte rien.
 frais ≥ bonus × taille du comité
 ```
 
-Les paramètres de la démo ne la respectent pas : 1 VETO de frais pour 3 VETO
-émis. Deux réglages la respectent, à comité de trois.
+Le réglage par défaut du script de déploiement la respecte : 3 VETO de frais
+pour 3 VETO émis, à comité de trois. Un second réglage la respecte aussi, en
+réduisant le bonus.
 
 | Réglage | Frais | Bonus par révélation | Payé par le client | Émis | Reçu par les vérificateurs |
 |---|---:|---:|---:|---:|---:|
-| Démo actuelle | 1 | 1 | 1 | 3 | 4 |
-| Frais relevés | 3 | 1 | 3 | 3 | 6 |
-| Bonus réduit | 1 | 1/3 | 1 | 1 | 2 |
+| Défaut du script : frais relevés | 3 | 1 | 3 | 3 | 6 |
+| Variante : bonus réduit | 1 | 1/3 | 1 | 1 | 2 |
+| Pile du L1 de test, déployée avant ce réglage | 1 | 1 | 1 | 3 | 4 |
 
 Le contrat n'applique pas cette règle. Les frais sont fixés au déploiement du
 marché, le bonus au déploiement des récompenses, sans contrôle de l'un par
-l'autre. La pile déployée sur le L1 de test porte encore les valeurs de la démo.
+l'autre. La pile du L1 de test, déployée avant ce réglage, porte 1 VETO de
+frais : ses preuves ont été relevées avec cette valeur
+(`docs-jury/preuves/scene-aws.md`).
 
 Ce que la règle garantit : l'émission ne dépasse jamais le volume des frais.
 Ce qu'elle ne garantit pas : une masse de VETO stable. Les frais ne sont pas

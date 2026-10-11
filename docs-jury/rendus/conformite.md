@@ -26,16 +26,43 @@ Ce que nous ne disons pas : « conforme DORA », « conforme » à quoi que ce s
 
 | Affirmation | Preuve | Réserve |
 |---|---|---|
-| Journal chaîné | `specs/04-journal.md`, `response/src/journal.ts`, script `verify-journal` | Sans empreinte de tête gardée ailleurs, une troncature en fin de journal ou une réécriture complète passent inaperçues |
+| Journal chaîné | `specs/04-journal.md`, `response/src/journal.ts`, script `verify-journal`, six chaînes d'essai dans `specs/examples/journal/` | Sans empreinte de tête gardée ailleurs, une troncature en fin de journal ou une réécriture complète passent inaperçues |
 | Rapport prérempli et horodaté | `response/src/report.ts`, `specs/schemas/incident-report.schema.json` | Le montant exposé reste vide : le service ne lit pas les registres du contrat |
 | Délais d'alerte | Deux rapports d'incident des scènes 3 et 4, jouées sur le L1 de test | Un incident par chemin. Ce sont des relevés, pas des moyennes |
 | Contrôle humain au-dessus du seuil | `src/ArgentVault.sol`, fonctions `approve`, `refuse`, `expire` ; `docs-jury/tests.md` | Règle du contrat. L'identité de l'approbateur est une clé, pas une personne vérifiée |
 | Pause levée par un humain | Test « seule une décision humaine lève une pause », `response/test/engine.test.ts` | L'auteur de la décision est déclaré, pas authentifié |
-| L1 de test | `infra/l1/README.md`, `docs-jury/preuves/vault-l1-aws.md` | Un seul validateur. Jeton sans valeur |
+| L1 de test | `infra/l1/README.md`, `docs-jury/preuves/vault-l1-aws.md`. `.env.example` : clés de test seulement | Un seul validateur. Jeton sans valeur. Aucun réseau de test public n'est testé |
 | Chaîne d'autorité | Champ `authority_chain` du rapport d'incident ; signature EIP-712 vérifiée par le contrat | Le contrat vérifie le mandat déclaré de l'agent, pas son identité réelle |
 | Montant et bénéficiaire inscrits à l'avance | Rôle d'admission du coffre, distinct du relais et de l'approbateur | Une fausse dette inscrite par l'admission serait payée |
+| Identifiants et empreintes seulement | `specs/schemas/journal-entry.schema.json` : aucun champ libre dans le journal. Données synthétiques dans tout le dépôt | Le document gelé en quarantaine est conservé en clair sur le disque du service |
+
+**Données personnelles (RGPD), hors diapositive.** Le journal et l'interface du
+contrat ne portent que des identifiants opaques et des empreintes, et toutes les
+données du dépôt sont synthétiques. Nous ne revendiquons aucune anonymisation.
+
+## Cadrage du paiement
+
+**Démontré, sur réseau de test.** Le coffre détient des fonds de test et paie
+dans la transaction de décision : événement `Paid`, suivi d'un transfert natif.
+Joué sur anvil et sur notre L1 de test, en `VAULT_MODE=chain`. Par défaut
+(`VAULT_MODE=fake`), rien n'est payé : un faux coffre rejoue les règles, sans
+fonds.
+
+**Envisagé, non construit.** En production, `Paid` serait l'autorisation qu'un
+connecteur bancaire consomme. Dans ce mode, le contrat ne détient plus les
+fonds : la garantie « seuls les fonds détenus par le contrat sont protégés » ne
+s'applique plus, et le connecteur devient un composant de confiance à concevoir
+(finalité, rejeu, montant et bénéficiaire lus dans l'événement). Ce connecteur
+n'existe pas : ni code, ni spec.
+
+Conséquence pour la diapositive : les lignes MiCA et LCB-FT du tableau valent
+pour le premier mode. Avec un connecteur bancaire, la question réglementaire
+change de nature et n'a pas été étudiée.
 
 ## Comment un auditeur vérifie une décision
+
+Les routes sont celles des services lancés en local (`relay/README.md`,
+`response/README.md`). `<id>` est l'identifiant de la demande.
 
 1. **Il prend l'identifiant de la demande.** La porte d'entrée l'attribue à
    l'arrivée. Il figure dans chaque entrée de journal et dans chaque rapport.
@@ -57,6 +84,9 @@ Ce que nous ne disons pas : « conforme DORA », « conforme » à quoi que ce s
    curl -s "http://127.0.0.1:8790/journal/entries?request_id=<id>&limit=100"
    ```
 
+   Il y lit `REQUEST_RECEIVED` (empreinte du document), `DETECTION` (score,
+   seuil, codes, version du détecteur), `REQUEST_SIGNED` (signataire, empreinte
+   de la demande), `SUBMITTED` (transaction) et `DECISION_OBSERVED`.
 4. **Il relance le script de vérification**, depuis `response/`, avec
    l'empreinte de tête portée par le rapport d'incident.
 
@@ -66,14 +96,22 @@ Ce que nous ne disons pas : « conforme DORA », « conforme » à quoi que ce s
 
    Code 0 : chaîne intègre et tête attendue. Code 1 : une entrée a été modifiée,
    retirée ou déplacée. Code 3 : la chaîne est cohérente, mais sa tête n'est pas
-   celle du rapport.
-5. **Il recalcule la règle à la main.**
+   celle du rapport. Sans `--expect-head`, le script ne voit ni une troncature
+   en fin de journal ni une réécriture complète.
+5. **Il recalcule la règle à la main** : caisse, dettes admises, réserve.
+
+   ```bash
+   curl -s http://127.0.0.1:8787/vault
+   ```
 
    ```
    plaçable = max(0, caisse − dettes admises − réserve de sécurité − placements bloqués)
    ```
 
-   Les événements du contrat suffisent à refaire ce calcul.
+   Une facture bloquée dans l'attente d'une approbation est déjà une dette
+   admise depuis son inscription : elle n'est pas déduite une seconde fois, et
+   le plaçable ne bouge pas quand elle entre en attente (`specs/02-contrat.md`,
+   § 4). Les événements du contrat suffisent à refaire ce calcul.
 
 **Exemple joué sur le L1 de test, le 11 octobre 2026.** Facture piégée passée
 sous le seuil du détecteur, score 45 sur 70. Bloc 448 : décision 0, motif
@@ -85,9 +123,15 @@ Réserves à dire à l'auditeur :
   L'auditeur reçoit un accès en lecture ; il ne synchronise pas son propre nœud.
   Sur une chaîne à plusieurs validateurs, un auditeur pourrait en opérer un :
   c'est une piste, pas un fait.
+- Les étapes 2 et 5 lisent le contrat en `VAULT_MODE=chain` seulement. En mode
+  fake, elles lisent un faux coffre : transaction et bloc y sont simulés.
 - Le journal prouve l'intégrité de ce qui a été écrit, pas sa vérité.
+- `agent_id` est affirmé par le client dans la demande signée. Le contrat en
+  vérifie le mandat déclaré, pas l'identité réelle.
 - Aucune authentification entre nos services : ils n'écoutent que sur la machine locale.
-- Le journal est « au moins une fois » : une entrée peut y figurer deux fois, jamais zéro.
+- Le journal est « au moins une fois » : une entrée peut y figurer deux fois,
+  par exemple `ENQUEUED` ou `REQUEST_SIGNED` après une reprise. Jamais zéro
+  (`relay/README.md`, « Journal : boîte d'envoi »).
 
 ## Références relues à la source
 
@@ -128,6 +172,17 @@ pour le montant inscrit. Chaque décision est tracée avec son motif. La perte e
 bornée, pas nulle : une fausse dette inscrite par l'admission peut être réglée.
 Les exceptions passent par un humain. Le partage juridique de la responsabilité
 n'est pas tranché par l'outil.
+
+Deux précisions sur l'état du dépôt :
+
+- Aucun modèle ne siège dans le chemin de paiement de la démo. Le détecteur est
+  un jeu de règles déterministes (`gateway/src/detector.ts`), et l'« IA du
+  client » est un bouchon qui signe tout ce qui passe le schéma
+  (`relay/src/client-ia.ts`). Le comité de trois vérificateurs LLM existe, hors
+  de ce chemin : son verdict n'entre pas dans la décision du coffre
+  (`docs-jury/verificateurs-llm.md`).
+- « La règle décide » est un contrat (`src/ArgentVault.sol`), joué sur anvil et
+  sur notre L1 de test. Par défaut, la démo locale tourne sur un faux coffre.
 
 ## Questions ouvertes
 

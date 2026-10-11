@@ -1,6 +1,6 @@
 # Fichiers de mesure
 
-Ce dossier reçoit les mesures qui alimentent la [fiche de défense](../fiche-defense.md).
+Ce dossier reçoit les mesures qui alimentent la [fiche de défense](../../docs-jury/rendus/fiche-defense-mesures.md).
 Il est vide tant que rien n'est mesuré : la fiche affiche alors « à mesurer ».
 
 Après chaque dépôt de fichier :

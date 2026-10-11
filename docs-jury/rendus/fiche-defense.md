@@ -1,6 +1,6 @@
 # Fiche de défense : Argent Intelligent
 
-Secure Horizons, track 1 « Fintech Security: Guardians of Value ». État du dépôt au 11 octobre 2026. Chaque chiffre renvoie au fichier qui le porte ; ce qui n'existe pas est écrit comme tel.
+Secure Horizons, track 1 « Fintech Security: Guardians of Value ». État du dépôt au 11 octobre 2026. Chaque chiffre renvoie au fichier qui le porte ; ce qui n'existe pas est écrit comme tel. Mesures complètes et cas manqués : [fiche-defense-mesures.md](fiche-defense-mesures.md).
 
 ## Scénario de menace
 
@@ -43,11 +43,12 @@ Un agent IA à faible privilège lit une facture piégée. Une instruction gliss
 
 ## Limites connues
 
-- Données synthétiques, écrites par un modèle, une attaque pour une légitime. En production les attaques sont rares : avec 4 % de faux positifs, la majorité des blocages toucheraient des demandes légitimes.
+- Données synthétiques, écrites par un modèle, étiquettes non relues, une attaque pour une légitime. En production les attaques sont rares : avec 4 % de faux positifs, la majorité des blocages toucheraient des demandes légitimes.
 - La porte manque une attaque sur deux du jeu de test. Combien le contrat en arrête sur ce jeu n'est pas mesuré : quatre scènes seulement.
 - Le contrat ne vérifie pas la vérité d'une facture : une fausse dette inscrite par le rôle d'admission serait payée. Un propriétaire ou un administrateur du L1 compromis sort du modèle.
+- Seuls les fonds détenus par le contrat sont protégés. Par défaut (`VAULT_MODE=fake`), la démo locale tourne sur un faux coffre.
 - La pause d'un agent est appliquée hors chaîne, par la porte et par le relais. Le contrat sait la poser (`pauseAgent`), aucun service ne l'appelle.
 - L'alerte est affichée et journalisée, elle n'est envoyée à personne. La décision humaine est déclarée, pas authentifiée.
 - Le verdict du marché de vérification n'entre pas dans la décision du coffre : jonction conçue, non construite.
-- L1 de test à un seul validateur, fonds de test sans valeur, revue de sécurité interne sans audit indépendant.
+- L1 de test à un seul validateur, Fuji non testé, fonds de test sans valeur, revue de sécurité interne sans audit indépendant.
 - Délais mesurés sur un seul incident par chemin. La référence « règles fixes » n'est pas mesurée.

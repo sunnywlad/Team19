@@ -25,7 +25,7 @@ transmet, avant toute signature, et la réponse isole l'agent qui l'a transmis :
 quarantaine, pause, alerte, rapport.
 
 **Limite.** La comparaison avec des règles fixes seules n'est pas mesurée : la
-ligne est « à mesurer » dans la [fiche de défense](../fiche-defense.md). Notre
+ligne est « à mesurer » dans la [fiche de défense](../../docs-jury/rendus/fiche-defense-mesures.md). Notre
 détecteur est lui-même fait de règles : une attaque formulée autrement passe.
 
 ## « Pourquoi une blockchain ? »
@@ -74,7 +74,7 @@ d'incident prérempli, des horodatages de détection, de pause et d'alerte.
 
 **Limite.** La classification d'un incident et sa notification restent
 humaines et hors de l'outil. Nous ne citons aucun délai réglementaire : nous
-ne les avons pas relus à la source. Détail : [conformite.md](../conformite.md).
+ne les avons pas relus à la source. Détail : [conformite.md](../../docs-jury/rendus/conformite.md).
 
 ## « Que se passe-t-il si l'agent est compromis ? »
 

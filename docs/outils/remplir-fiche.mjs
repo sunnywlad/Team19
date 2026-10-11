@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Remplit le tableau de métriques, la section « cas manqués » et la limite du
-// jeu à un pour un de docs/fiche-defense.md à partir des fichiers de docs/mesures/.
+// jeu à un pour un de docs-jury/rendus/fiche-defense-mesures.md, l'annexe de la
+// fiche de défense, à partir des fichiers de docs/mesures/.
 //
 //   node docs/outils/remplir-fiche.mjs           réécrit la fiche
 //   node docs/outils/remplir-fiche.mjs --check   échoue si la fiche diffère
@@ -12,7 +13,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const FICHE = join(RACINE, "docs", "fiche-defense.md");
+const FICHE = join(RACINE, "docs-jury", "rendus", "fiche-defense-mesures.md");
 const MESURES = join(RACINE, "docs", "mesures");
 const MANIFESTE = join(RACINE, "data", "jeu-factures", "MANIFEST.json");
 

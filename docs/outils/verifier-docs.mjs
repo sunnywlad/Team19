@@ -157,7 +157,7 @@ function controler(fichier) {
 
   // 4. Pourcentages : seulement dans les blocs générés de la fiche.
   let sansGenere = prose;
-  if (nom === join("docs", "fiche-defense.md")) {
+  if (nom === join("docs-jury", "rendus", "fiche-defense-mesures.md")) {
     for (const [debut, fin] of Object.values(MARQUEURS)) {
       const i = sansGenere.indexOf(debut);
       const j = sansGenere.indexOf(fin);
@@ -173,7 +173,7 @@ function controler(fichier) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const fichiers = [join(RACINE, "README.md"), ...fichiersMarkdown(join(RACINE, "docs")).sort(), ...fichiersMarkdown(join(RACINE, "docs-jury")).sort()];
   const erreurs = fichiers.flatMap(controler);
-  for (const ecart of verifierFiche()) erreurs.push(`docs/fiche-defense.md : ${ecart}`);
+  for (const ecart of verifierFiche()) erreurs.push(`docs-jury/rendus/fiche-defense-mesures.md : ${ecart}`);
 
   for (const erreur of erreurs) console.error(erreur);
   if (erreurs.length > 0) {
