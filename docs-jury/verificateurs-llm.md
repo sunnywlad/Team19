@@ -185,3 +185,8 @@ Extrait : `docs-jury/preuves/llm-e2e-aws.md`.
    que la liste est désactivée, ce qui est le cas sur les deux piles.
 7. Délai : p95 du banc à 4,3 s (Sonnet) pour un seuil de 10 s. Les passages sur chaîne ne
    mesurent pas la latence.
+
+## Pile permanente et client
+
+- Mode permanent : `E2E_SERVE=1 bash offchain/e2e.sh` laisse cache, passerelle (127.0.0.1:8700) et les trois vérificateurs allumés ; arrêt par Ctrl-C ou `offchain/tools/arreter-pile.sh`. Le jeton et le comité sont lus dans `~/.config/team19/`, jamais dans le dépôt.
+- Client : `GATEWAY_URL=… GATEWAY_TOKEN=… node offchain/tools/demander.mjs "<prompt>"` (ou `demander.sh`) envoie la demande, attend le statut Contest, puis affiche l'identifiant, les trois votes et le code final.
