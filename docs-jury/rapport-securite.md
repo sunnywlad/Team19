@@ -234,7 +234,7 @@ Nous avons confronté nos documents de présentation au code et aux preuves. Les
 
 | Source | Contradiction ou portée réelle |
 |---|---|
-| docs-jury/architecture.md:64 ; flux-demande.md:17 | L'évaluateur configuré est factice, offchain/DESIGN.md:61 et :99 ; aucun jugement LLM réel n'est prouvé ici. |
+| docs-jury/architecture.md:64 ; flux-demande.md:17 | Les passages à règles fixes examinés par cette revue ne prouvent pas de jugement LLM ; des passages LLM distincts sont désormais documentés dans [verificateurs-llm.md](verificateurs-llm.md). |
 | docs-jury/fautes.md:39 | Injection de canaris et indiscernabilité affirmées, sans preuve d'exécution lue. |
 | docs-jury/fautes.md:51 et :64 | Non-manipulation absolue du tirage et tolérance à la dérive temporelle non mesurées, M1 et M2. |
 | docs-jury/fautes.md:33 | Dix demandes d'exclusion annoncées, borne stricte donnant neuf futures demandes dans l'exemple séquentiel, B1. |
@@ -337,7 +337,7 @@ Décompte des classements : marché, 12 faux positifs, 5 vraies alertes et 19 al
 
 1. **Un seul validateur.** Aucune décentralisation effective ni continuité d'état après panne n'est démontrée. Le repli est un autre réseau, pas une réplication. Sources : infra/l1/README.md:4 et :48 ; le ValidatorManager PoA n'est pas initialisé, le L1 tourne avec son seul validateur de conversion.
 2. **Clés de test du mnemonic public admises sur le L1 AWS.** La frontière pratique de la démo repose sur l'accès réseau au RPC ; les comptes ne prouvent pas des identités indépendantes. Sources : script/deploy-all.sh:96 ; docs-jury/preuves/scene-aws.md.
-3. **Évaluateur factice à ce jour.** Le processus hors chaîne existe, mais son évaluation par défaut applique des règles fixes. Aucune qualité, latence ou robustesse d'un LLM réel n'est mesurée dans cette revue. Source : offchain/DESIGN.md:61 et :99.
+3. **Portée de la revue LLM.** La présente revue examinait l'évaluateur à règles fixes. Des bancs et passages LLM réels sont documentés séparément dans [verificateurs-llm.md](verificateurs-llm.md). Ils ne constituent pas un audit indépendant et leur verdict reste indépendant du coffre.
 4. **Centralisation de l'administration.** Admission réseau, frappe et politiques restent des pouvoirs de confiance. VetoDesk n'atteste pas un paiement externe ; aucun plafond global Native Minter ni contrôle multisignature n'est démontré. Sources : infra/l1/fuji/genesis-fuji.json:30 et :36 ; src/Slashing.sol:100 ; src/VetoDesk.sol:59.
 5. **Transfert natif d'ArgentVault = virement simulé.** Le contrat audité transfère réellement le jeton natif de test. Dans la production envisagée, Paid serait une autorisation consommée par un connecteur bancaire, qui n'est pas construit ni éprouvé ici. Source : src/ArgentVault.sol:11 à :14.
 6. **ArgentVault décide sans vote du marché au temps 1.** Aucun couplage de code final du marché à approve ou submit n'existe dans le coffre audité. Un paiement n'attend donc pas la contestation du marché. Source : src/ArgentVault.sol:6 à :10 et :176.

@@ -81,9 +81,10 @@
 
 <div class="page">
   <section>
-    <p class="kicker">Secure Horizons · Fintech Security · tests du 11 octobre 2026</p>
-    <h1>Un trimestre de trésorerie attaqué 500 fois</h1>
-    <p class="lead">VETO se place entre les agents IA et la trésorerie d'une entreprise. Le modèle propose, le code décide. Voici ce que donnent 500 tentatives de fraude jouées de bout en bout dans nos propres composants.</p>
+    <p class="kicker">Secure Horizons · Fintech Security · résultats rapportés du 11 octobre 2026</p>
+    <h1>Rapport historique : un trimestre attaqué 500 fois</h1>
+    <p class="lead">VETO se place entre les agents IA et la trésorerie d'une entreprise. Le parcours de paiement de cette campagne est scripté, sur un coffre en mémoire. Voici les résultats rapportés de 500 tentatives de fraude dans nos composants ; les appels LLM sont mesurés dans une campagne distincte.</p>
+    <p class="note">Une <a href="../../demo/campagne/README.md">nouvelle campagne reproductible de 500 attaques</a> fournit script et traces. Elle porte sur dix familles et des unités comptables, sans reproduire les volumes ni les montants historiques ci-dessous.</p>
     <hr class="rule">
     <div class="hero">
       <div>
@@ -196,7 +197,7 @@
         <tr><td style="border-bottom:0">Le paiement part mais la réponse se perd (3 épisodes)</td><td class="r" style="border-bottom:0">15</td><td style="border-bottom:0">15 paiements exécutés une seule fois</td><td style="border-bottom:0">15 factures représentées, <span class="tag g">0 double paiement</span></td></tr>
       </tbody>
     </table>
-    <p style="margin-top:8pt">Traçabilité : 18 934 entrées de journal écrites pendant le trimestre, chaînées par empreinte. La vérification de bout en bout rend le code 0 : aucune entrée altérée, aucune entrée manquante.</p>
+    <p style="margin-top:8pt">Traçabilité : 18 934 entrées de journal écrites pendant le trimestre, chaînées par empreinte. La vérification de bout en bout rend le code 0 : aucune rupture de la chaîne d'empreintes constatée. Ce contrôle seul ne prouve pas l'exhaustivité des événements attendus.</p>
   </section>
 
 </div>
@@ -205,7 +206,7 @@
   <section>
     <p class="kicker">Sur la vraie chaîne</p>
     <h2>16 demandes sur notre blockchain hébergée sur AWS</h2>
-    <p class="lead">Chaque demande est une transaction réelle, jugée par trois vérificateurs tirés au sort. Les modèles sont des Claude Haiku.</p>
+    <p class="lead">Chaque demande est une transaction réelle, jugée par trois vérificateurs tirés au sort. Ce run utilise trois vérificateurs Claude Haiku. Il est distinct des preuves initiales Haiku 4.5 / Pixtral Large / Sonnet 4.5. Le verdict du marché ne pilote pas le coffre ; les journaux bruts de ces 16 demandes ne sont pas versionnés dans le dépôt.</p>
     <div class="stats three">
       <div><b>10 / 10</b><span>variantes d'attaque refusées à l'unanimité des trois vérificateurs</span></div>
       <div><b>39,8 s</b><span>de délai médian entre la demande et la décision (de 37,5 à 40,7 s)</span></div>
@@ -231,9 +232,9 @@
   </section>
   <section>
     <div class="box blue">
-      <h3>Pourquoi Haiku renvoie presque toujours vers un humain, et comment l'éviter</h3>
+      <h3>Effet du contexte sur les six demandes légitimes observées</h3>
       <p>Avec une phrase seule (« Payer la facture INV-E2E-001 »), deux vérificateurs sur trois votent « revue humaine » pour contexte insuffisant : 3 demandes sur 3. Avec la pièce complète et le mandat de l'agent dans la demande, les mêmes modèles acceptent à l'unanimité : 3 demandes sur 3, 9 votes sur 9.</p>
-      <p style="margin:0">Le modèle n'est donc pas trop prudent : il manque de matière pour juger. C'est un réglage de la démonstration, pas une limite du comité. L'échantillon reste petit (6 demandes légitimes).</p>
+      <p style="margin:0">Sur ces six demandes, fournir la pièce et le mandat change le verdict. Cet échantillon ne permet pas de conclure à la prudence générale du modèle ni à la fiabilité du comité.</p>
     </div>
   </section>
 
@@ -257,14 +258,14 @@
     <p class="kicker">Portée</p>
     <h2>Ce que ces chiffres ne disent pas</h2>
     <ul class="scope">
-      <li><b>C'est une simulation.</b> Volumes, montants et part de fraude sont des hypothèses, pas des données de marché. Deux graines fixes, rejouables.</li>
-      <li><b>Le coffre simulé n'est pas le contrat Solidity.</b> Il rejoue les mêmes règles en mémoire. Le contrat réel est couvert à part par 78 tests et par des scènes rejouées sur la chaîne AWS.</li>
+      <li><b>C'est une simulation.</b> Volumes, montants et part de fraude sont des hypothèses, pas des données de marché. Deux graines fixes rapportées ; script original et journaux bruts absents de ce dépôt.</li>
+      <li><b>Le coffre simulé n'est pas le contrat Solidity.</b> Il rejoue les mêmes règles en mémoire. Le contrat réel est couvert à part par 79 tests et par des scènes rejouées sur la chaîne AWS.</li>
       <li><b>La part arrêtée par le filtre n'est pas une mesure du détecteur.</b> Sur un jeu indépendant, il détecte 50 attaques sur 100 et bloque 4 factures légitimes sur 100. Avec ce taux, il faut compter environ 96 factures par trimestre à reprendre à la main.</li>
       <li><b>18 familles choisies par nous.</b> Restent hors champ : un humain qui approuve une fraude en connaissance de cause, la compromission du propriétaire du contrat, une faille du contrat lui-même.</li>
       <li><b>Les mises en pause automatiques ne sont pas jouées ici.</b> L'attaquant peut réessayer sans limite, ce qui durcit le test.</li>
       <li><b>Sur AWS, 16 demandes et une seule facture de référence.</b> Assez pour montrer que la chaîne décide, pas pour établir un taux.</li>
     </ul>
-    <footer>Team 19 · VETO · campagne rejouable : <code>node campagne.ts nominal</code> et <code>node campagne.ts indetectable</code>. Données synthétiques, aucun fonds réel.</footer>
+    <footer>Team 19 · VETO · rapport historique non rejouable depuis ce dépôt : script original et journaux bruts absents. Les anciennes commandes <code>node campagne.ts nominal</code> et <code>node campagne.ts indetectable</code> sont rappelées pour provenance. Données synthétiques, aucun fonds réel.</footer>
   </section>
 </div>
 
