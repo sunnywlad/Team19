@@ -1,0 +1,9 @@
+# Code tiers cloné par setup.sh et données locales : jamais versionnés.
+/erol-explorer-backend/
+/codenekt-explorer-frontend/
+/mongo/node_modules/
+/mongo/data/
+/mongo/package.json
+/mongo/package-lock.json
+/.pids/
+*.log

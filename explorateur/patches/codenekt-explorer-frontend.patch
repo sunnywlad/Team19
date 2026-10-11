@@ -1,0 +1,268 @@
+diff --git a/src/app.html b/src/app.html
+index fb52720..479cecb 100644
+--- a/src/app.html
++++ b/src/app.html
+@@ -4,20 +4,11 @@
+ 		<meta charset="utf-8" />
+ 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+ 		<meta name="theme-color" content="#0f0f23" />
+-		<meta name="description" content="CodeNekt L1 Blockchain Explorer - Explore blocks, transactions, and addresses on the CodeNekt L1 network. Chain ID: 235235 | Currency: CDK" />
+-		<meta property="og:title" content="CodeNekt L1 Explorer" />
+-		<meta property="og:description" content="Explore blocks, transactions, and addresses on the CodeNekt L1 blockchain." />
++		<meta name="description" content="VETO Explorer - Explore blocks, transactions, and addresses on the VETO private Avalanche L1. Chain ID: 191919 | Currency: VETO" />
++		<meta property="og:title" content="VETO Explorer" />
++		<meta property="og:description" content="Explore blocks, transactions, and addresses on the VETO private Avalanche L1." />
+ 		<meta property="og:type" content="website" />
+ 		%sveltekit.head%
+-	
+-		<!-- Google Analytics GA4 -->
+-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-WJ9B8WZ3R2"></script>
+-		<script>
+-			window.dataLayer = window.dataLayer || [];
+-			function gtag(){dataLayer.push(arguments);}
+-			gtag('js', new Date());
+-			gtag('config', 'G-WJ9B8WZ3R2', { anonymize_ip: true });
+-		</script>
+ 	</head>
+ 	<body data-sveltekit-preload-data="hover">
+ 		<div style="display: contents">%sveltekit.body%</div>
+diff --git a/src/lib/components/data/DataListItem_Transaction.svelte b/src/lib/components/data/DataListItem_Transaction.svelte
+index 4a944f1..19d09fd 100644
+--- a/src/lib/components/data/DataListItem_Transaction.svelte
++++ b/src/lib/components/data/DataListItem_Transaction.svelte
+@@ -61,7 +61,7 @@
+ 	{#if typeof tx.value !== 'undefined'}
+ 		<div class="badge">
+ 			<span>{formatNumber(tx.value / 10 ** 18)}</span>
+-			<span>{page.data.nativeSymbol ?? 'CDK'}</span>
++			<span>{page.data.nativeSymbol ?? 'VETO'}</span>
+ 		</div>
+ 	{/if}
+ 	<div class="icon !p-1">
+diff --git a/src/lib/components/entity/TransactionsList.svelte b/src/lib/components/entity/TransactionsList.svelte
+index fd3d565..5f84f1a 100644
+--- a/src/lib/components/entity/TransactionsList.svelte
++++ b/src/lib/components/entity/TransactionsList.svelte
+@@ -6,7 +6,7 @@
+ 
+ 	export let isLoading = false;
+ 	export let transactions: any[] = [];
+-	export let nativeSymbol: string = 'CDK';
++	export let nativeSymbol: string = 'VETO';
+ 	export let highlightAddress: string = '';
+ 	export let totalPages: number = 1;
+ 	export let showPagination: boolean = true;
+diff --git a/src/lib/components/entity/ValidatorRewardsList.svelte b/src/lib/components/entity/ValidatorRewardsList.svelte
+index eb3e9ae..340e1bd 100644
+--- a/src/lib/components/entity/ValidatorRewardsList.svelte
++++ b/src/lib/components/entity/ValidatorRewardsList.svelte
+@@ -16,7 +16,7 @@
+ 			<div class="stat-value">{summary?.blocksProduced ?? 0}</div>
+ 		</div>
+ 		<div class="stat-card">
+-			<div class="stat-label">Total Rewards (CDK)</div>
++			<div class="stat-label">Total Rewards (VETO)</div>
+ 			<div class="stat-value">{formatCdkAmount(summary?.totalRewardCDK ?? 0, { maxDecimals: 0 })}</div>
+ 		</div>
+ 	</div>
+@@ -30,7 +30,7 @@
+ 						<th>Time</th>
+ 						<th>Tx Count</th>
+ 						<th>Gas Used</th>
+-						<th>Reward (CDK)</th>
++						<th>Reward (VETO)</th>
+ 						<th>Validator</th>
+ 					</tr>
+ 				</thead>
+diff --git a/src/lib/components/layout/Footer.svelte b/src/lib/components/layout/Footer.svelte
+index 930ccea..33dc3b1 100644
+--- a/src/lib/components/layout/Footer.svelte
++++ b/src/lib/components/layout/Footer.svelte
+@@ -1,34 +1,16 @@
+-<script lang="ts">
+-	import ExternalLink from 'virtual:icons/hugeicons/link-square-02'
+-</script>
+-
+ <footer class="footer-wrapper">
+ 	<div class="gradient-line"></div>
+ 	<div class="footer-content">
+ 		<div class="flex items-center gap-2 mb-4">
+-			<img src="/logo.png" alt="CodeNekt Logo" height="28" width="28" />
+-			<span class="text-base font-semibold">CodeNekt <span class="gradient-text">Ecosystem</span></span>
+-		</div>
+-		<p class="footer-desc">The first Layer 1 blockchain dedicated to decentralized vehicle history and data.</p>
+-		<div class="social-links">
+-			<a href="https://x.com/CodeNekt_Eco" target="_blank" class="social-icon" title="X (Twitter)">
+-				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+-			</a>
+-			<a href="https://discord.com/invite/5FZwpWJVvD" target="_blank" class="social-icon" title="Discord">
+-				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286z"/></svg>
+-			</a>
+-			<a href="https://t.me/CodeNektEcoPortal" target="_blank" class="social-icon" title="Telegram">
+-				<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+-			</a>
+-			<a href="https://codenekt-ecosystem.io/" target="_blank" class="social-icon" title="Website">
+-				<ExternalLink />
+-			</a>
++			<img src="/veto.svg" alt="VETO" height="28" width="28" />
++			<span class="text-base font-semibold">VETO <span class="gradient-text">Network</span></span>
+ 		</div>
++		<p class="footer-desc">A private, validator-only Avalanche L1 where a staked network of LLM verifiers reviews sensitive requests. Chain ID 191919, native token VETO.</p>
+ 		<div class="footer-bottom">
+-			<span class="copyright">&copy; {new Date().getFullYear()} CodeNekt Ecosystem. All rights reserved.</span>
++			<span class="copyright">&copy; {new Date().getFullYear()} VETO, Team19, Secure Horizons</span>
+ 			<span class="separator">|</span>
+ 			<a class="powered-by" href="https://www.amichain.org/" target="_blank">
+-				Powered by AMIChain
++				Explorer by AMIChain
+ 			</a>
+ 		</div>
+ 	</div>
+diff --git a/src/lib/components/layout/Header.svelte b/src/lib/components/layout/Header.svelte
+index 88177e8..64dd8f0 100644
+--- a/src/lib/components/layout/Header.svelte
++++ b/src/lib/components/layout/Header.svelte
+@@ -18,8 +18,8 @@
+ <div class="header-nav">
+ 	<div class="container mx-auto flex items-center gap-2">
+ 		<a href="/" class="logo-link">
+-			<img src="/logo.png" alt="CodeNekt Logo" height="38" width="38" />
+-			<span class="logo-text">CodeNekt <span class="gradient-text">Explorer</span></span>
++			<img src="/veto.svg" alt="VETO" height="38" width="38" />
++			<span class="logo-text">VETO <span class="gradient-text">Explorer</span></span>
+ 		</a>
+ 		<div class="header-actions ml-auto">
+ 			<Searchbar class="min-w-1/3 flex-1" />
+diff --git a/src/routes/(entity)/block/[number]/+page.server.ts b/src/routes/(entity)/block/[number]/+page.server.ts
+index c9a98b0..f562641 100644
+--- a/src/routes/(entity)/block/[number]/+page.server.ts
++++ b/src/routes/(entity)/block/[number]/+page.server.ts
+@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ params }) => {
+ 			block: data,
+ 			transactions: data.transactions,
+ 			kind,
+-			nativeSymbol: process.env.NATIVE_SYMBOL || 'CDK'
++			nativeSymbol: process.env.NATIVE_SYMBOL || 'VETO'
+ 		};
+ 	} catch (e: any) {
+ 		if (e.status >= 300 && e.status <= 399) {
+@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ params }) => {
+ 			block: null,
+ 			kind: null,
+ 			transactions: [],
+-			nativeSymbol: process.env.NATIVE_SYMBOL || 'CDK'
++			nativeSymbol: process.env.NATIVE_SYMBOL || 'VETO'
+ 		};
+ 	}
+ };
+diff --git a/src/routes/(list)/txs/+page.server.ts b/src/routes/(list)/txs/+page.server.ts
+index 0302b46..450c534 100644
+--- a/src/routes/(list)/txs/+page.server.ts
++++ b/src/routes/(list)/txs/+page.server.ts
+@@ -14,13 +14,13 @@ export const load: PageServerLoad = async ({ url }) => {
+ 			txs: transactions,
+ 			total,
+ 			totalPages: calculateTotalPages(total, limit),
+-			nativeSymbol: process.env.NATIVE_SYMBOL || 'CDK'
++			nativeSymbol: process.env.NATIVE_SYMBOL || 'VETO'
+ 		};
+ 	} catch {
+ 		return {
+ 			txs: [],
+ 			totalPages: 0,
+-			nativeSymbol: process.env.NATIVE_SYMBOL || 'CDK'
++			nativeSymbol: process.env.NATIVE_SYMBOL || 'VETO'
+ 		};
+ 	}
+ };
+diff --git a/src/routes/(list)/validators-rewards/+page.svelte b/src/routes/(list)/validators-rewards/+page.svelte
+index 2e3094b..ce95fe0 100644
+--- a/src/routes/(list)/validators-rewards/+page.svelte
++++ b/src/routes/(list)/validators-rewards/+page.svelte
+@@ -25,7 +25,7 @@
+ 				</div>
+ 				<div class="col">
+ 					<div class="label">Total Rewards</div>
+-					<div class="value">{formatCdkAmount(row.totalRewardCDK ?? 0, { maxDecimals: 0 })} CDK</div>
++					<div class="value">{formatCdkAmount(row.totalRewardCDK ?? 0, { maxDecimals: 0 })} VETO</div>
+ 				</div>
+ 				<div class="col">
+ 					<div class="label">Latest Block</div>
+diff --git a/src/routes/+page.svelte b/src/routes/+page.svelte
+index f998e91..d8d4205 100644
+--- a/src/routes/+page.svelte
++++ b/src/routes/+page.svelte
+@@ -13,8 +13,8 @@
+ </script>
+ 
+ <svelte:head>
+-	<title>CodeNekt L1 Explorer</title>
+-	<meta name="description" content="CodeNekt L1 Blockchain Explorer - Explore blocks, transactions, and addresses on the CodeNekt L1 network." />
++	<title>VETO Explorer</title>
++	<meta name="description" content="VETO Explorer - Explore blocks, transactions, and addresses on the VETO private Avalanche L1." />
+ </svelte:head>
+ 
+ {#if isFullyIndexed()}
+diff --git a/static/favicon.svg b/static/favicon.svg
+index 6ed0351..7da3d85 100644
+--- a/static/favicon.svg
++++ b/static/favicon.svg
+@@ -1,25 +1 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<svg id="Artboard_6" data-name="Artboard 6" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1500 1500">
+-  <defs>
+-    <style>
+-      .cls-1 {
+-        fill: url(#linear-gradient);
+-      }
+-
+-      .cls-1, .cls-2 {
+-        stroke-width: 0px;
+-      }
+-
+-      .cls-2 {
+-        fill: #fff;
+-      }
+-    </style>
+-    <linearGradient id="linear-gradient" x1="3.39" y1="750.08" x2="1230.26" y2="750.08" gradientUnits="userSpaceOnUse">
+-      <stop offset="0" stop-color="red"/>
+-      <stop offset="1" stop-color="#ff7000"/>
+-    </linearGradient>
+-  </defs>
+-  <path class="cls-1" d="m1044.14,66.2c-37.39,97.05-74.82,194.21-113.04,293.41-112-30.85-217.07-16.84-312.39,48.73-95.62,65.78-145.88,159.13-155.96,274.99-6.1.29-10.55.63-15.01.7-77.32,1.23-136.92,33.93-172.1,103.36-36.17,71.39-28.14,141.11,21.1,203.81,38.09,48.51,90.55,70.48,152.14,70.53,171.52.14,343.05.28,514.57.42,6.36,0,12.73,0,21.58,0,81.1,84.59,163.16,170.2,245.24,255.81-190.29,179.13-576.12,265.92-894.74,52.54C2.61,1147.57-101.45,699,121.93,349.79,340.2,8.59,754.8-66.92,1044.14,66.2Z"/>
+-  <path class="cls-2" d="m925.6,664.74c47.09-.37,85.4,37.04,85.97,83.98.57,47.04-36.82,85.7-83.53,86.37-47.99.69-86.63-37.06-86.8-84.81-.17-47.12,37.35-85.16,84.36-85.53Z"/>
+-  <path class="cls-2" d="m665.6,835.12c-46.99,0-85.01-37.81-85.19-84.75-.18-47.81,38.17-85.98,86.05-85.63,46.89.34,84.48,38.51,84.3,85.6-.18,46.95-38.16,84.76-85.16,84.77Z"/>
+-</svg>
+\ No newline at end of file
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1d4f91"/><path d="M9 16.5l5 5 9-11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+diff --git a/static/robots.txt b/static/robots.txt
+index 2e277bd..1f53798 100644
+--- a/static/robots.txt
++++ b/static/robots.txt
+@@ -1,4 +1,2 @@
+ User-agent: *
+-Allow: /
+-
+-Sitemap: https://explorer.codenekt-ecosystem.io/sitemap.xml
++Disallow: /
+diff --git a/static/sitemap.xml b/static/sitemap.xml
+deleted file mode 100644
+index d5994c5..0000000
+--- a/static/sitemap.xml
++++ /dev/null
+@@ -1,8 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+-  <url>
+-    <loc>https://explorer.codenekt-ecosystem.io/</loc>
+-    <changefreq>weekly</changefreq>
+-    <priority>1.0</priority>
+-  </url>
+-</urlset>
+diff --git a/static/veto.svg b/static/veto.svg
+new file mode 100644
+index 0000000..7da3d85
+--- /dev/null
++++ b/static/veto.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1d4f91"/><path d="M9 16.5l5 5 9-11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
