@@ -66,8 +66,7 @@ coffre qui rejoue ses règles en mémoire : dire lequel des deux est à l'écran
 **Texte.** Trois factures : une piégée et détectée, une piégée et manquée, une
 légitime qui passe.
 
-**Notes orales.** La vidéo ou la scène en direct, selon
-[script-video.md](../demo/script-video.md). Insister sur la deuxième : c'est
+**Notes orales.** La vidéo ou la scène en direct. Insister sur la deuxième : c'est
 le cas que notre détecteur rate, et nous le montrons exprès. Finir sur la
 facture légitime. Délais d'attente en secondes. Repli : la vidéo.
 
