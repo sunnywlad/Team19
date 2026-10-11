@@ -52,6 +52,25 @@ Elle prouve quatre choses, en live et sur la chaîne.
 Les fenêtres courtes de la scène se règlent par `COMMIT_WINDOW`, `REVEAL_WINDOW`
 et `CONTEST_WINDOW` (défauts 30 s, 20 s, 60 s).
 
+## Battement de blocs
+
+Le L1 ne produit un bloc qu'à chaque transaction. Sans trafic, `block.timestamp`
+reste figé, et une demande peut rester bloquée en Commit, en Reveal ou en Contest.
+Le battement envoie une transaction neutre, 0 VETO vers sa propre adresse, toutes
+les N secondes (5 par défaut), et affiche le numéro de bloc.
+
+```
+ADMIN_PRIVATE_KEY=… ./script/heartbeat.sh --prepare <RPC>   # une fois par chaîne
+./script/heartbeat.sh <RPC> [intervalle en s]
+```
+
+- `--prepare` admet l'adresse du battement sur la TxAllowList et la crédite en
+  VETO. Ensuite, le battement n'a besoin d'aucune clé admin.
+- Il signe avec une adresse dédiée (index 9 du mnemonic de test public), distincte
+  de celles des services : pas de collision de nonce.
+- Le lancer juste avant la démo. L'arrêter par Ctrl-C dès la dernière demande
+  close : la chaîne cesse alors de produire des blocs.
+
 ## Lancer les tests
 
 ```
