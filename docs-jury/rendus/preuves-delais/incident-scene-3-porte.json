@@ -1,0 +1,65 @@
+{
+  "report_version": 1,
+  "incident_id": "0xc0091ad65235a5232858b626c062c5f31c56988e9ffa640f19e755c0afd7c5e1",
+  "generated_at_ms": 1791697765018,
+  "trigger": "DETECTOR_SCORE",
+  "request_ids": [
+    "0x9a89fc407e26f38d8f07f1d49ee17b6536d74b8c5d1f4867a12bd38470cf7cad"
+  ],
+  "authority_chain": {
+    "agent_id": "0x4c7f7a6c35ddcd70f1d7cc6e557315ff29c3a553a253d29016fed3f8234f232c",
+    "agent_mandate": [
+      "PAY_INVOICE"
+    ],
+    "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+    "client_signer": null,
+    "request_digest": null,
+    "relay_tx_hash": null
+  },
+  "timestamps": {
+    "received_at_ms": 1791697764752,
+    "detected_at_ms": 1791697764978,
+    "observed_at_ms": null,
+    "paused_at_ms": 1791697765002,
+    "alerted_at_ms": 1791697765010
+  },
+  "detector": {
+    "score": 100,
+    "threshold": 70,
+    "reason_codes": [
+      "INSTRUCTION_IN_DATA"
+    ]
+  },
+  "contract": null,
+  "amounts": {
+    "exposed_wei": null,
+    "out_wei": "0"
+  },
+  "automatic_actions": [
+    {
+      "action": "QUARANTINE",
+      "at_ms": 1791697764995,
+      "journal_seq": 2
+    },
+    {
+      "action": "AGENT_PAUSE_OFFCHAIN",
+      "at_ms": 1791697765002,
+      "journal_seq": 3
+    },
+    {
+      "action": "ALERT",
+      "at_ms": 1791697765010,
+      "journal_seq": 4
+    },
+    {
+      "action": "REPORT",
+      "at_ms": 1791697765018,
+      "journal_seq": 5
+    }
+  ],
+  "human_decision": null,
+  "journal_head": {
+    "seq": 4,
+    "hash": "3f034af11093d66bb869088812c4ec3b8bba00f2d168f2daab3a5652929a887e"
+  }
+}

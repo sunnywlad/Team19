@@ -1,0 +1,71 @@
+{
+  "report_version": 1,
+  "incident_id": "0x5e86ce905d24d2703b133d1fd32d0b819982ce12047eff28eb5a7d05ed1dc817",
+  "generated_at_ms": 1791697858490,
+  "trigger": "CONTRACT_REFUSAL",
+  "request_ids": [
+    "0x83ee4666632823ab34988f6330855a74593d687b44591441006a48b403c0a2da"
+  ],
+  "authority_chain": {
+    "agent_id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+    "agent_mandate": [
+      "PAY_INVOICE"
+    ],
+    "client_id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+    "client_signer": "0x7c9881f3b71b008804cf675ba1e82836c0a1ba09",
+    "request_digest": "0xe74696e0a1cb62e22437436e8d7303caf0d5f72c791af0e508b8ab1726665259",
+    "relay_tx_hash": "0x860db25c19bac5f866cca46559cf0b1bea409ba82065c717282d1e1d5bc5344c"
+  },
+  "timestamps": {
+    "received_at_ms": 1791697850088,
+    "detected_at_ms": 1791697852000,
+    "observed_at_ms": 1791697858446,
+    "paused_at_ms": 1791697858474,
+    "alerted_at_ms": 1791697858482
+  },
+  "detector": {
+    "score": 45,
+    "threshold": 70,
+    "reason_codes": [
+      "INSTRUCTION_IN_DATA"
+    ]
+  },
+  "contract": {
+    "decision": 0,
+    "reason": 1,
+    "tx_hash": "0x860db25c19bac5f866cca46559cf0b1bea409ba82065c717282d1e1d5bc5344c",
+    "block_number": 448,
+    "block_timestamp": 1791697852
+  },
+  "amounts": {
+    "exposed_wei": null,
+    "out_wei": "0"
+  },
+  "automatic_actions": [
+    {
+      "action": "QUARANTINE",
+      "at_ms": 1791697858468,
+      "journal_seq": 8
+    },
+    {
+      "action": "AGENT_PAUSE_OFFCHAIN",
+      "at_ms": 1791697858474,
+      "journal_seq": 9
+    },
+    {
+      "action": "ALERT",
+      "at_ms": 1791697858482,
+      "journal_seq": 10
+    },
+    {
+      "action": "REPORT",
+      "at_ms": 1791697858490,
+      "journal_seq": 11
+    }
+  ],
+  "human_decision": null,
+  "journal_head": {
+    "seq": 10,
+    "hash": "33650bc157a2e8df02f188aad398df4f775efc72629318b82d2f7d802eb42504"
+  }
+}

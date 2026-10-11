@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Conformité, Argent Intelligent</title>
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: #111; }
+  body { width: 13.333in; height: 7.5in; padding: 0.42in 0.5in 0.3in; font-family: "Inter", "Helvetica Neue", Arial, sans-serif; font-size: 11.6pt; line-height: 1.29; display: flex; flex-direction: column; }
+  h1 { font-size: 25pt; margin: 0 0 3pt; font-weight: 700; letter-spacing: -0.2pt; }
+  .sub { font-size: 13pt; margin: 0 0 12pt; color: #333; }
+  .cols { overflow: hidden; display: grid; grid-template-columns: 1.62fr 1fr; gap: 0.32in; flex: 1; min-height: 0; }
+  h2 { font-size: 13.4pt; margin: 0 0 5pt; padding-bottom: 2pt; border-bottom: 1.2pt solid #111; font-weight: 700; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border-bottom: 0.5pt solid #999; padding: 5.5pt 7pt 5.5pt 0; text-align: left; vertical-align: top; }
+  th { font-size: 11pt; font-weight: 700; border-bottom: 0.9pt solid #111; }
+  td.t { width: 15.5%; font-weight: 700; }
+  td.t span { display: block; font-weight: 400; font-size: 9.6pt; color: #444; margin-top: 1.5pt; }
+  td.n { width: 30%; color: #333; }
+  ol { margin: 0; padding-left: 16pt; }
+  ol li { margin: 0 0 5.5pt; padding-left: 2pt; }
+  code { font-family: "DejaVu Sans Mono", "Liberation Mono", monospace; font-size: 10.6pt; }
+  .ex { border: 0.8pt solid #111; padding: 6pt 8pt; margin-top: 8pt; font-size: 11.5pt; }
+  .ex b { display: block; margin-bottom: 2pt; }
+  .res { margin-top: 8pt; font-size: 11pt; color: #333; }
+  footer { margin-top: 8pt; padding-top: 5pt; border-top: 1.2pt solid #111; font-size: 11.2pt; display: flex; justify-content: space-between; gap: 0.3in; }
+  footer b { font-weight: 700; }
+</style>
+</head>
+<body>
+  <h1>Conformité : ce que l'outil apporte, ce qu'un auditeur vérifie</h1>
+  <p class="sub">Nous ne revendiquons aucune conformité. Nous fournissons les preuves dont une entité régulée a besoin, vérifiables sans nous croire sur parole.</p>
+
+  <div class="cols">
+    <section>
+      <h2>Place dans le cadre réglementaire</h2>
+      <table>
+        <tr><th>Texte</th><th>Ce que l'outil apporte</th><th>Ce que nous ne revendiquons pas</th></tr>
+        <tr>
+          <td class="t">DORA<span>Règl. (UE) 2022/2554, art. 17 à 19</span></td>
+          <td>Journal chaîné par empreintes : toute altération se détecte. Rapport d'incident prérempli, avec les horodatages d'arrivée, de détection, de pause et d'alerte. Alerte relevée 258 ms après l'arrivée à la porte d'entrée, 8,4 s par le contrat.</td>
+          <td class="n">La classification de l'incident et sa notification, qui restent à l'entité : 4 h, 72 h, un mois (règl. délégué (UE) 2025/301).</td>
+        </tr>
+        <tr>
+          <td class="t">AI Act<span>Règl. (UE) 2024/1689, art. 12 et 14</span></td>
+          <td>Journalisation automatique de chaque étape. Contrôle humain appliqué par le contrat : approbation au-dessus du seuil, refus à l'échéance. Une pause ne se lève que par un humain.</td>
+          <td class="n">La qualification du système. Un agent de paiement d'entreprise ne figure pas à l'annexe III.</td>
+        </tr>
+        <tr>
+          <td class="t">MiCA<span>Règl. (UE) 2023/1114</span></td>
+          <td>Démonstration sur notre L1 Avalanche de test, avec un jeton natif de test sans valeur. Aucun service sur crypto-actifs n'est rendu à un client.</td>
+          <td class="n">Le statut de prestataire de services sur crypto-actifs. La vente d'un jeton poserait la question : non étudiée.</td>
+        </tr>
+        <tr>
+          <td class="t">LCB-FT<span>Règl. (UE) 2024/1624 et 2023/1113</span></td>
+          <td>Chaîne d'autorité de chaque demande : agent, mandat, client, signataire, transaction. Bénéficiaire et montant inscrits à l'avance par un rôle séparé.</td>
+          <td class="n">La vérification d'identité, le filtrage des sanctions, les informations accompagnant un transfert.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Un auditeur vérifie une décision en cinq étapes</h2>
+      <ol>
+        <li>Il prend l'<b>identifiant de la demande</b>, dans le rapport d'incident.</li>
+        <li>Il relit l'événement <code>Decision</code> <b>sur la chaîne</b> : décision, motif, bloc, horodatage.</li>
+        <li>Il retrouve <b>l'origine</b> dans le journal : agent, score, codes raison, signataire.</li>
+        <li>Il relance le <b>script de vérification</b> avec l'empreinte de tête du rapport : une entrée modifiée, retirée ou déplacée se voit.</li>
+        <li>Il <b>recalcule la règle</b> à la main : plaçable = max(0, caisse, moins dettes admises, moins réserve, moins placements bloqués).</li>
+      </ol>
+      <div class="ex">
+        <b>Exemple joué sur le L1 de test, 11 octobre 2026</b>
+        Facture piégée passée sous le seuil du détecteur (score 45 sur 70). Bloc 448 : décision 0, motif <code>INVOICE_UNKNOWN</code>. Aucun événement <code>Paid</code>. Montant sorti : 0.
+      </div>
+      <p class="res">Réserve : le RPC du L1 est privé. L'auditeur reçoit un accès en lecture ; il ne synchronise pas son propre nœud.</p>
+    </section>
+  </div>
+
+  <footer>
+    <span><b>Le détecteur propose, la règle décide, l'humain tranche les exceptions.</b> Aucune action automatique ne déplace de fonds.</span>
+    <span>Réseau de test, données synthétiques, revue de sécurité interne sans audit indépendant.</span>
+  </footer>
+</body>
+</html>
