@@ -147,7 +147,9 @@ contract AgentReputationRegistryTest is Test {
     /// @notice revokeFeedback d'un index inexistant : UnknownFeedback.
     function test_revokeFeedback_revertsUnknownIndex() public {
         vm.prank(C1);
-        vm.expectRevert(abi.encodeWithSelector(AgentReputationRegistry.UnknownFeedback.selector, agentId, C1, uint256(1)));
+        vm.expectRevert(
+            abi.encodeWithSelector(AgentReputationRegistry.UnknownFeedback.selector, agentId, C1, uint256(1))
+        );
         rep.revokeFeedback(agentId, 1);
     }
 
@@ -156,7 +158,9 @@ contract AgentReputationRegistryTest is Test {
     // =====================================================================
 
     function test_readFeedback_revertsUnknownIndex() public {
-        vm.expectRevert(abi.encodeWithSelector(AgentReputationRegistry.UnknownFeedback.selector, agentId, C1, uint256(0)));
+        vm.expectRevert(
+            abi.encodeWithSelector(AgentReputationRegistry.UnknownFeedback.selector, agentId, C1, uint256(0))
+        );
         rep.readFeedback(agentId, C1, 0);
     }
 

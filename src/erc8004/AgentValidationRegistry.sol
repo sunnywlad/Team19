@@ -34,10 +34,7 @@ contract AgentValidationRegistry {
 
     /// @notice ERC-8004 : demande de validation déposée.
     event ValidationRequest(
-        bytes32 indexed requestHash,
-        address indexed validatorAddress,
-        uint256 indexed agentId,
-        string requestURI
+        bytes32 indexed requestHash, address indexed validatorAddress, uint256 indexed agentId, string requestURI
     );
     /// @notice ERC-8004 : réponse du validateur désigné.
     event ValidationResponse(
