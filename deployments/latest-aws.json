@@ -2,25 +2,26 @@
   "chainId": 191919,
   "rpc": "http://127.0.0.1:9670/ext/bc/RkJGt3ZenMaUz64EP1cUZeisftYMb9WaJdvYw54xfvkUccgke/rpc",
   "admin": "0xB38451f8731010c6734B0B4fBB3430c7D65A102a",
-  "startBlock": 9,
-  "timestamp": "20261010-230214",
+  "startBlock": 17,
+  "timestamp": "20261011-012140",
   "phase1": {
-    "VerificationMarket": "0xdd29da2e2451673e0216d361e847e69feb5e1044"
+    "VerificationMarket": "0xdc349103a8724c195cf81e12ea6caa12d1332f0d"
   },
   "phase2": {
-    "VerifierRegistry": "0xdea54b2a92e8ae683f453adf7b10d29ac301a19f",
-    "Slashing": "0x6e9b6537930711934b48ef22df581661306dbc0d",
-    "Rewards": "0x1d4f071530f3858ab0463750b9bd45e55753e6c7",
-    "StakedVerificationMarket": "0x34aa23216c2c8616600d155ffdc025db5da45922"
+    "VerifierRegistry": "0x937b9f82e92db64014e447df110940e00f5eff09",
+    "Slashing": "0xd8904dadcb2d325935d4baf1a4731f84bbc6fbd8",
+    "Rewards": "0xe2ff08a3d741bc76d1c827467f18adf7bdef4adb",
+    "StakedVerificationMarket": "0xedc6ea5ebb0fdf49fc6ea279ee6709ca83b2e5e7",
+    "VetoDesk": "0x35f7985e0fdf80cd56cb0e7007e341206b53d72b"
   },
   "phase3": {
-    "VerifierRegistry": "0xadcbc0c8e802d82368723fc2059df774ad2ec08b",
-    "Slashing": "0x17a182c7da6af46204c7431b36536d953669b3e8",
-    "Rewards": "0x7ddf908601af9860591ec929ac4955d92c4bdbb0",
-    "DrawnVerificationMarket": "0x69ed33ad58f0334e34468a1148e33e1bf3bfb045",
-    "AgentIdentityRegistry": "0x3c999f481c5e7fcd1500b1531aac19d24bdeeb39",
-    "AgentReputationRegistry": "0xdc34763c905fda71960c7d8dc4b0e2d995929ffb",
-    "AgentValidationRegistry": "0xd0f680a1e16b5e57645bc807964a80c816097030"
+    "VerifierRegistry": "0xdcc8dcdb1d46b88a3385a0b1c97d8ab6c1af5fdc",
+    "Slashing": "0x10782a8b4bf76fffac917df2cc3d7c95d9c08a9a",
+    "Rewards": "0x41d5db1f9b63fec06653ba840875a0010aefda00",
+    "DrawnVerificationMarket": "0x5a76ae5b18c17f69c169ed6fc8dd32cd0746843b",
+    "AgentIdentityRegistry": "0xf944db03e1ca79cd3cf1e8e555131bdcde3e033c",
+    "AgentReputationRegistry": "0xef14c42c63fb365acab259b146d72b8c089b7aa8",
+    "AgentValidationRegistry": "0x87d722d428a1f31af010cc2e990be48b1e250694"
   },
   "verifiers": {
     "1": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
@@ -30,9 +31,9 @@
   },
   "params": {
     "FEE": "1000000000000000000",
-    "COMMIT_WINDOW": 180,
-    "REVEAL_WINDOW": 60,
-    "CONTEST_WINDOW": 600,
+    "COMMIT_WINDOW": 30,
+    "REVEAL_WINDOW": 20,
+    "CONTEST_WINDOW": 60,
     "MIN_STAKE": "100000000000000000000",
     "LOCK_BPS": 2000,
     "STRIKE_LIMIT": 3,
