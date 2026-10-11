@@ -24,9 +24,4 @@ node_modules/
 # Commonly ignored directories
 .logs/
 .ignore/
-<<<<<<< HEAD
-# Notes de travail : lien symbolique vers Team19-notes, hors dépôt
-/docs
-=======
->>>>>>> origin/main
 # Dotenv file
