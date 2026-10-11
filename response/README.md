@@ -97,11 +97,13 @@ alerte, rapport.
 | Contrat | 10, 11, 12 | Notification à l'approbateur |
 | Contrat | 0, 7, 8, 13 | Rien de plus que le journal |
 | File du relais | Demande en attente depuis plus de 15 s, ou expirée | Alerte `AVAILABILITY` vers l'exploitation, une fois par demande |
+| Journal | `ENQUEUED` depuis plus de 15 s, sans `SUBMITTED` ni `QUEUE_EXPIRED` | La même alerte, sous la même clé : une fois par demande, relais arrêté ou non |
 
 Les blocages de la porte sont lus dans le journal, au moment où la porte les
 écrit. Les décisions du contrat sont lues dans l'indexeur du relais, chaque
 seconde, et recopiées dans le journal (`DECISION_OBSERVED`). La file est lue
-toutes les 5 secondes.
+toutes les 5 secondes, dans le relais et dans le journal : l'alerte de
+disponibilité ne dépend pas d'un relais en marche.
 
 Une alerte porte des faits bruts : identifiants, codes raison, motif du contrat.
 Elle s'affiche sur la sortie du service, et l'entrée `ALERT_SENT` en garde la trace.

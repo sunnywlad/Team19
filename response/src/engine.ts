@@ -108,6 +108,12 @@ export class ResponseEngine {
   readonly #refusals = new Map<string, { at: number; requestId: string }[]>();
   /** Jetons invalides récents, toutes sources confondues (ms). */
   #invalidTokens: number[] = [];
+  /** Demandes en file d'après le journal : ENQUEUED sans SUBMITTED ni QUEUE_EXPIRED. */
+  readonly #queued = new Map<string, { agent_id: string | null; client_id: string | null; enqueued_at_ms: number }>();
+  /** Demandes sorties de la file, ou déjà signalées : elles ne déclenchent plus rien. */
+  readonly #settled = new Set<string>();
+  /** Rang de la prochaine entrée du journal à lire pour la file. */
+  #queueSeq = 0;
   #replaying = false;
 
   constructor(deps: EngineDeps) {
@@ -355,6 +361,42 @@ export class ResponseEngine {
     }
   }
 
+  // La même surveillance, lue dans le journal : elle ne dépend pas du relais,
+  // qui peut être arrêté pendant qu'une demande attend. Même alerte et même clé
+  // que checkQueue : une seule alerte par demande, quelle que soit la source.
+  // L'attente se mesure depuis l'heure d'écriture de ENQUEUED.
+  checkJournalQueue(): void {
+    // Seules les entrées écrites depuis le dernier passage sont lues.
+    for (const entry of this.#deps.store.entries({ fromSeq: this.#queueSeq })) {
+      this.#queueSeq = entry.seq + 1;
+      if (entry.request_id === null) continue;
+      if (entry.type === "ENQUEUED") {
+        if (!this.#settled.has(entry.request_id) && !this.#queued.has(entry.request_id)) {
+          this.#queued.set(entry.request_id, { agent_id: entry.agent_id, client_id: entry.client_id, enqueued_at_ms: entry.ts_ms });
+        }
+      } else if (entry.type === "SUBMITTED" || entry.type === "QUEUE_EXPIRED") {
+        this.#queued.delete(entry.request_id);
+        this.#settled.add(entry.request_id);
+      }
+    }
+    const now = this.#deps.clock();
+    for (const [requestId, queued] of this.#queued) {
+      if (now - queued.enqueued_at_ms <= QUEUE_ALERT_AFTER_MS) continue;
+      try {
+        this.#alert(
+          { kind: "AVAILABILITY", recipients: ["OPERATIONS"], incident_id: null, request_id: requestId, agent_id: queued.agent_id, trigger: null, reason_codes: [], contract_reason: null },
+          queued.client_id,
+          `ALERT_SENT:AVAILABILITY:${requestId}`,
+        );
+      } catch (error) {
+        // Clé déjà prise par une alerte aux identifiants différents : elle est partie.
+        if (!(error instanceof JournalError) || error.code !== "IDEMPOTENCY_CONFLICT") throw error;
+      }
+      this.#queued.delete(requestId);
+      this.#settled.add(requestId);
+    }
+  }
+
   // Mode démo uniquement, après l'archivage du journal : les rapports sont
   // archivés eux aussi, et l'état repart de zéro comme le journal.
   reset(stamp: string): string | null {
@@ -370,6 +412,9 @@ export class ResponseEngine {
     this.#pauses.clear();
     this.#refusals.clear();
     this.#invalidTokens = [];
+    this.#queued.clear();
+    this.#settled.clear();
+    this.#queueSeq = 0;
     return archive;
   }
 
