@@ -2146,3 +2146,139 @@ main:focus {
     transition: none !important;
   }
 }
+
+/* --- Écran Campagne : chiffres figés d'une simulation hors ligne --- */
+.campagne-avis {
+  margin: 0 0 20px;
+  padding: 10px 14px;
+  border: 1px solid var(--simulation);
+  border-radius: 12px;
+  color: var(--simulation);
+  background: var(--simulation-fond);
+  font-weight: 600;
+}
+
+.campagne-tete {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: 18px 28px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.campagne-chiffre {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.campagne-chiffre strong {
+  font-size: 4.4rem;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--accepte);
+  font-variant-numeric: tabular-nums;
+}
+
+.campagne-passage {
+  margin-bottom: 14px;
+}
+
+.campagne-passage-titre {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 6px;
+}
+
+.campagne-zero {
+  color: var(--accepte);
+  font-weight: 700;
+}
+
+.campagne-barre {
+  display: block;
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.etape-porte {
+  fill: var(--accent);
+  background: var(--accent);
+}
+
+.etape-file {
+  fill: color-mix(in srgb, var(--accent) 55%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 55%, var(--surface));
+}
+
+.etape-relais {
+  fill: var(--bloque);
+  background: var(--bloque);
+}
+
+.etape-contrat {
+  fill: var(--entete-fond);
+  background: var(--entete-fond);
+  stroke: var(--trait);
+}
+
+.campagne-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  color: var(--discret);
+  font-size: 0.82rem;
+}
+
+.campagne-puce {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--trait);
+}
+
+.campagne-total > * {
+  font-weight: 750;
+  border-top: 2px solid var(--texte);
+}
+
+.campagne-residuel {
+  margin: 12px 0;
+}
+
+.campagne-perte dd {
+  color: var(--refuse);
+}
+
+.campagne-arrete dd {
+  color: var(--accepte);
+}
+
+.campagne-portee {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--discret);
+}
+
+.campagne-portee strong {
+  color: var(--texte);
+}
+
+@media (max-width: 900px) {
+  .campagne-tete {
+    grid-template-columns: 1fr;
+  }
+}
+
+.campagne-tete .compteurs dd {
+  font-size: 1.5rem;
+  white-space: nowrap;
+}

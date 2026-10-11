@@ -3,6 +3,7 @@ import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { renderScenario, text } from "./helpers.tsx";
 import { open } from "./tour.ts";
+import { CAMPAGNE } from "../src/data/campagne.ts";
 
 const value = async (testId: string): Promise<string> => text(await screen.findByTestId(testId));
 type Row = Record<string, unknown>;
@@ -173,5 +174,28 @@ describe("écran En attente", () => {
     });
     open("En attente");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
+  });
+});
+
+describe("écran Campagne", () => {
+  it("chiffres figés du rapport, étiquetés hors ligne, avec leurs réserves", () => {
+    renderScenario("1");
+    open("Campagne");
+    expect(text(screen.getByTestId("campagne-avis"))).toContain("ne les lit pas dans les services");
+    expect(text(screen.getByTestId("campagne-sorti"))).toBe("0 €");
+    expect(screen.getAllByTestId("campagne-famille")).toHaveLength(18);
+    expect(screen.getAllByTestId("campagne-passage").map(text)).toEqual([
+      expect.stringContaining("Porte d'entrée 292 · File d'attente 15 · Relais 15 · Contrat 178"),
+      expect.stringContaining("Porte d'entrée 180 · File d'attente 15 · Relais 15 · Contrat 290"),
+    ]);
+    // Le cas où des fonds partent et la réserve sur le détecteur s'affichent avec le reste.
+    expect(text(screen.getByTestId("campagne-perte"))).toBe("101 130 €");
+    expect(text(screen.getByTestId("campagne-portee"))).toContain("détecte 50 attaques sur 100 et bloque 4 factures légitimes sur 100");
+    expect(screen.getAllByText("campagne hors ligne").length).toBeGreaterThan(0);
+  });
+
+  it("les familles et les passages totalisent 500 tentatives", () => {
+    expect(CAMPAGNE.families.reduce((sum, f) => sum + f.attempts, 0)).toBe(500);
+    for (const p of CAMPAGNE.passages) expect(p.stopped.reduce((sum, n) => sum + n, 0)).toBe(500);
   });
 });

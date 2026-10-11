@@ -7,6 +7,7 @@ import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
 import { THEME_LABELS, useTheme, type Theme } from "./hooks/useTheme.ts";
 import { UNIT_LEGEND, formatLongDate } from "./lib/format.ts";
+import { CampagneView } from "./views/CampagneView.tsx";
 import { DecisionsView } from "./views/DecisionsView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
 import { JournalView } from "./views/JournalView.tsx";
@@ -19,6 +20,7 @@ const VIEWS = [
   { key: "decisions", label: "Décisions" },
   { key: "incident", label: "Incidents" },
   { key: "attente", label: "En attente" },
+  { key: "campagne", label: "Campagne" },
   { key: "journal", label: "Journal" },
 ] as const;
 type ViewKey = (typeof VIEWS)[number]["key"];
@@ -36,6 +38,7 @@ const HEADINGS: Record<ViewKey, { title: string; lead: string }> = {
   decisions: { title: "Décisions et plaçable", lead: "Ce que le contrat a décidé, lu dans ses événements, et ce qui l'a été avant lui." },
   incident: { title: "Incidents et réponse", lead: "Rapports d'incident, délais mesurés et agents écartés par le service de réponse." },
   attente: { title: "Validation humaine", lead: "Demandes que le contrat a renvoyées à un humain, avec leur échéance." },
+  campagne: { title: "Campagne de tests", lead: "Résultats figés d'une campagne simulée hors ligne, avec leurs réserves. Rien ici n'est lu en direct." },
   journal: { title: "Journal d'audit", lead: "Journal chaîné du service de réponse, sa tête et sa dernière vérification." },
 };
 
@@ -228,6 +231,7 @@ export function App({ client }: { client: ApiClient }) {
               {current === "incident" && <IncidentView view={view} />}
               {current === "journal" && <JournalView view={view} />}
               {current === "attente" && <PendingView view={view} />}
+              {current === "campagne" && <CampagneView />}
             </div>
           </main>
         )}
