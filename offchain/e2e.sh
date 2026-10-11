@@ -6,6 +6,9 @@
 #   MARKET_ADDRESS     surcharge le marché ; sans REGISTRY_ADDRESS, conserve phase 1
 #   REGISTRY_ADDRESS   surcharge le registre de phase 3
 #   E2E_AMOUNT          montant de la demande (défaut 50000)
+#   EVALUATOR_CMD      commande des évaluateurs (défaut : le stub) ;
+#   EVALUATOR_CMD_1..3 remplace EVALUATOR_CMD pour le vérificateur 1, 2 ou 3
+#   E2E_CONTENT         contenu jugé (champ prompt, défaut : Payer la facture INV-E2E-001)
 #   E2E_REQUESTS        nombre de cycles série (défaut 1)
 #   E2E_EXPECT_CLOSED   0 (défaut) ou 1. À 1, après les contrôles code et
 #                       VerdictRevealed, attend le statut Closed (close envoyé
@@ -44,6 +47,7 @@ CHAIN_ID="${CHAIN_ID:-191919}"
 E2E_AMOUNT="${E2E_AMOUNT:-50000}"
 E2E_REQUESTS="${E2E_REQUESTS:-1}"
 E2E_EXPECT_CLOSED="${E2E_EXPECT_CLOSED:-0}"
+E2E_CONTENT="${E2E_CONTENT:-Payer la facture INV-E2E-001}"
 case "$E2E_REQUESTS" in
   ''|*[!0-9]*|0)
     echo "[e2e] ERREUR : E2E_REQUESTS doit être un entier positif" >&2
@@ -189,6 +193,8 @@ for i in 1 2 3; do
   VK_VAR="VERIFIER_KEY_$i"
   VDIR_VAR="V${i}_DATA_DIR"
   echo "[e2e] Démarrage vérificateur $i..."
+  VCMD_VAR="EVALUATOR_CMD_$i"
+  VCMD="${!VCMD_VAR:-${EVALUATOR_CMD:-node evaluator-stub/index.ts}}"
   VERIFIER_KEY="${!VK_VAR}" \
   VERIFIER_DATA_DIR="${!VDIR_VAR}" \
   CACHE_URL="http://127.0.0.1:$CACHE_PORT" \
@@ -197,7 +203,7 @@ for i in 1 2 3; do
   RPC_URL="$RPC_URL" \
   CHAIN_ID="$CHAIN_ID" \
   INCIDENTS_LOG="$INCIDENTS_LOG" \
-  EVALUATOR_CMD="node evaluator-stub/index.ts" \
+  EVALUATOR_CMD="$VCMD" \
     node verifier/service.ts > "$TMP_DIR/verifier-$i.log" 2>&1 &
   PIDS+=($!)
   echo "[e2e] Vérificateur $i PID=$!"
@@ -262,12 +268,14 @@ echo "[e2e] Cycle $CYCLE/$E2E_REQUESTS"
 SALT="0x$(openssl rand -hex 32)"
 CREATED_AT=$(date +%s)
 
+PROMPT_JSON=$(node -e 'process.stdout.write(JSON.stringify(process.argv[1]))' "$E2E_CONTENT")
+
 PAYLOAD=$(cat <<EOF
 {
   "schemaVersion": 1,
   "requester": "$REQUESTER_ADDR",
   "agentId": "e2e-test",
-  "prompt": "Payer la facture INV-E2E-001",
+  "prompt": $PROMPT_JSON,
   "context": {},
   "plannedDecision": {
     "action": "pay",

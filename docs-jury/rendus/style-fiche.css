@@ -1,0 +1,15 @@
+/* Fiche d'une page : corps serré, filets fins, fonds blancs. */
+html, body { font-family: "Inter", "Helvetica Neue", Arial, sans-serif !important; font-size: 7.8pt !important; line-height: 1.22 !important; color: #111 !important; padding: 0 !important; margin: 0 !important; }
+h1 { font-size: 14pt !important; margin: 0 0 2pt !important; border: 0 !important; padding: 0 !important; font-weight: 700 !important; }
+h2 { font-size: 9.4pt !important; margin: 5pt 0 2pt !important; padding: 0 0 1pt !important; border-bottom: 0.6pt solid #111 !important; font-weight: 700 !important; }
+p { margin: 0 0 2.5pt !important; }
+table { border-collapse: collapse !important; width: 100% !important; margin: 0 0 1pt !important; display: table !important; }
+th, td { border: 0.4pt solid #888 !important; padding: 1.2pt 3.5pt !important; vertical-align: top !important; text-align: left !important; background: #fff !important; font-size: 7.8pt !important; line-height: 1.2 !important; }
+th { font-weight: 700 !important; border-bottom: 0.8pt solid #111 !important; }
+tr { background: #fff !important; }
+td:first-child { width: 17%; font-weight: 600; }
+td:nth-child(3):last-child { width: 37%; }
+code { font-family: "DejaVu Sans Mono", "Liberation Mono", monospace !important; font-size: 6.9pt !important; line-height: 1 !important; background: none !important; padding: 0 !important; color: #111 !important; border: 0 !important; }
+a { color: #111 !important; text-decoration: none !important; }
+ul { margin: 0 !important; padding-left: 11pt !important; }
+li { margin: 0 0 0.8pt !important; }

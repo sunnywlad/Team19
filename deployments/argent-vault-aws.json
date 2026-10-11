@@ -1,0 +1,40 @@
+{
+  "chainId": 191919,
+  "vaults": {
+    "rehearsal": {
+      "address": "0x12e611639ab72237cd8c3ca82b4e5f6db1f1a3a0",
+      "block": 158,
+      "status": "consommé"
+    },
+    "scenes": {
+      "address": "0x0bc40b79f1322ce6a3921ff6b7612f8f7a918e85",
+      "block": 297,
+      "status": "consommé"
+    },
+    "demo": {
+      "address": "0xc873ce84882339ead0d0c98598fb6e84c82b28af",
+      "block": 714,
+      "status": "neuf"
+    }
+  },
+  "roles": {
+    "owner": "0xA41597E4a78932C74F93DEC06885218f1d3606CE",
+    "admission": "0x62E9df434536352b6Bd06fAcdC24D29688B9f5b7",
+    "relay": "0x0CF3d0894A7a2eCE513b1c39AdF0f14DeB176aE9",
+    "approver": "0xBafcc81B2dB8512Bf01bb9A30BFC58b7eDE829ae",
+    "guardian": "0x6e3DcAD1D0C07a4F3a5E202d79f90F46AdF122d9",
+    "clientSigner": "0x7C9881F3B71B008804cF675bA1E82836C0A1bA09"
+  },
+  "consumedSceneVaults": [
+    "0xa80f1d06a42b30451659f99b7a6b1f92774188f3",
+    "0xbecc7396da53d1d200e606ff98ff41ac6a570fd2",
+    "0x32a471b5550867547612c9e8c3a02db996a4697a",
+    "0xfa00b71aa9f676aad59f3ea34346dfe520f1213b",
+    "0xcb3ca6d86edb9c265b37d99531f5e05f2cd9fdf8",
+    "0xf5eab681682e950bc4b9d959f2b561eca7a9109e",
+    "0x1846bafee5a2c0eb846fd07ed665702803a0b28c",
+    "0xdb1989ab4ded6a6eb62cdf735a1b3f4321c0b82d",
+    "0x0f3246d0e8b665434e1b688a133a6fe48a92c90f",
+    "0x84d80c0288e644430f58fa087a8edc278e9036a8"
+  ]
+}

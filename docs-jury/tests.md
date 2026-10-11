@@ -143,7 +143,7 @@ sans RPC ni admission, tourne pendant un bout en bout, s'arrête au Ctrl-C (code
 La suite de `offchain/` utilise `node:test` et des contrats sur anvil. Elle
 couvre les empreintes, lectures signées, cache, passerelle, évaluateur factice,
 services vérificateurs, reçus en échec, chaîne inactive et tirage.
-**192 tests npm passent** (34 suites, 0 échec), mesurés par `npm test`
+**199 tests npm passent** (34 suites, 0 échec), mesurés par `npm test`
 dans `offchain/` sur la révision intégrée.
 
 `offchain/e2e.sh` lance le cache, la passerelle et les services vérificateurs
