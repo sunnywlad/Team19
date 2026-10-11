@@ -827,12 +827,93 @@ contract ArgentVaultRulesTest is ArgentVaultBase {
 // =========================================================================
 
 contract ArgentVaultCase1AndPauseTest is ArgentVaultBase {
+    function test_M4_placementNouvelleFacture_refuseSansPaiement() public {
+        IArgentVault.Request memory r = _holdM4Placement();
+        vm.prank(ADMISSION);
+        vault.registerInvoice(keccak256("F-M4-NOUVELLE"), B_001, 20 * U);
+        assertEq(vault.admittedDebts(), 40 * U);
+        _assertM4PlacementRefused(r);
+    }
+
+    function test_M4_placementHausseReserve_refuseSansPaiement() public {
+        IArgentVault.Request memory r = _holdM4Placement();
+        vm.prank(OWNER);
+        vault.setSafetyReserve(30 * U);
+        assertEq(vault.safetyReserve(), 30 * U);
+        _assertM4PlacementRefused(r);
+    }
+
+    /// @dev Contre-exemple M4 : cash 100, dettes 20, réserve 10, seuil 0, placement 60.
+    function _holdM4Placement() internal returns (IArgentVault.Request memory r) {
+        vm.startPrank(ADMISSION);
+        vault.cancelInvoice(F_001);
+        vault.cancelInvoice(F_002);
+        vault.registerInvoice(keccak256("F-M4"), B_001, 20 * U);
+        bytes32 placementId = keccak256("P-M4");
+        vault.registerPlacement(placementId, B_PLACEMENT, 60 * U);
+        vm.stopPrank();
+        vm.startPrank(OWNER);
+        vault.setSafetyReserve(10 * U);
+        vault.setThreshold(0);
+        vm.stopPrank();
+        assertEq(vault.cash(), 100 * U);
+        assertEq(vault.placeable(), 70 * U);
+        r = _req(A_TRESO, ACTION_PLACE, placementId);
+        _assertOutcome(r, DECISION_HUMAN, REASON_ABOVE_THRESHOLD);
+        assertEq(vault.totalHeld(), 60 * U);
+        assertEq(vault.heldPlacements(), 60 * U);
+    }
+
+    function _assertM4PlacementRefused(IArgentVault.Request memory r) internal {
+        vm.recordLogs();
+        vm.prank(APPROVER);
+        vault.approve(r.requestId);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        assertEq(vault.cash(), 100 * U, "approve ne doit pas verser le placement");
+        assertEq(ACC_BPLACEMENT.balance, 0);
+        assertEq(_countPaid(logs), 0);
+        assertEq(logs.length, 2);
+        assertEq(logs[0].emitter, address(vault));
+        assertEq(logs[0].topics[0], IArgentVault.Decision.selector);
+        assertEq(logs[0].topics[1], r.requestId);
+        assertEq(logs[0].topics[2], r.agentId);
+        assertEq(logs[0].topics[3], C_DEMO);
+        assertEq(logs[0].data, abi.encode(ACTION_PLACE, DECISION_REFUSED, REASON_EXCEEDS_PLACEABLE, r.refId));
+        assertEq(logs[1].emitter, address(vault));
+        assertEq(logs[1].topics[0], IArgentVault.HoldReleased.selector);
+        assertEq(logs[1].topics[1], r.requestId);
+        assertEq(logs[1].topics[2], r.refId);
+        assertEq(logs[1].data, abi.encode(60 * U));
+        assertEq(vault.totalHeld(), 0);
+        assertEq(vault.heldPlacements(), 0);
+        assertEq(uint8(_placementStatus(r.refId)), uint8(IArgentVault.RefStatus.Admitted));
+        (,,,, uint64 deadline) = vault.pendingApproval(r.requestId);
+        assertEq(deadline, 0);
+        assertTrue(vault.isConsumed(r.requestId));
+        assertEq(vault.placeable(), 50 * U);
+        vm.prank(APPROVER);
+        vm.expectRevert(abi.encodeWithSelector(IArgentVault.NoPendingApproval.selector, r.requestId));
+        vault.approve(r.requestId);
+        _assertOutcome(r, DECISION_REFUSED, REASON_REQUEST_REPLAYED);
+    }
+
     function test_Cas1_approbationAvantEcheance_paie() public {
         bytes32 id = _holdF002();
+        // PAY_INVOICE conserve la marge même si les engagements changent pendant le hold.
+        vm.prank(ADMISSION);
+        vault.registerInvoice(keccak256("F-PAY-PENDANT-HOLD"), B_001, 20 * U);
+        vm.prank(OWNER);
+        vault.setSafetyReserve(30 * U);
+        uint256 cashBefore = vault.cash();
+        uint256 debtsBefore = vault.admittedDebts();
+        uint256 placeableBefore = vault.placeable();
         vm.prank(APPROVER);
         vault.approve(id);
         assertEq(ACC_B002.balance, 30 * U);
         assertEq(uint8(_status(F_002)), uint8(IArgentVault.RefStatus.Settled));
+        assertEq(vault.cash(), cashBefore - 30 * U);
+        assertEq(vault.admittedDebts(), debtsBefore - 30 * U);
+        assertEq(vault.placeable(), placeableBefore);
     }
 
     function test_Cas1_approbationApresEcheance_APPROVAL_TIMEOUT() public {
@@ -1270,6 +1351,7 @@ contract VaultHandler is Test {
     address internal approver;
     address internal guardian;
     address internal owner;
+    address internal admission;
 
     bytes32[] public invoices;
     bytes32[] public placements;
@@ -1281,6 +1363,7 @@ contract VaultHandler is Test {
     bool public placementBreach; // I3 violé
     mapping(bytes32 => uint256) public paidCount;
     uint256 internal nonce;
+    uint256 internal invoiceNonce;
 
     constructor(
         ArgentVault vault_,
@@ -1294,6 +1377,7 @@ contract VaultHandler is Test {
         vault = vault_;
         pk = pk_;
         (owner, relay, approver, guardian) = (roles[0], roles[1], roles[2], roles[3]);
+        admission = vault_.admission();
         invoices = invoices_;
         placements = placements_;
         agents = agents_;
@@ -1367,6 +1451,20 @@ contract VaultHandler is Test {
         vm.deal(address(this), amount);
         vault.fund{value: amount}();
         totalFunded += amount;
+    }
+
+    function registerInvoice(uint256 amount, uint256 seed) external {
+        amount = bound(amount, 1, 50e15);
+        bytes32 invoiceId = keccak256(abi.encode("F-HANDLER", ++invoiceNonce));
+        (bytes32 beneficiaryId,,) = vault.invoice(invoices[seed % invoices.length]);
+        vm.prank(admission);
+        vault.registerInvoice(invoiceId, beneficiaryId, amount);
+        invoices.push(invoiceId);
+    }
+
+    function setSafetyReserve(uint256 amount) external {
+        vm.prank(owner);
+        vault.setSafetyReserve(bound(amount, 0, 100e15));
     }
 
     function togglePause(bool vaultLevel, uint256 agentSeed) external {

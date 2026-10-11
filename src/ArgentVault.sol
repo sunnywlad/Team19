@@ -216,6 +216,15 @@ contract ArgentVault is IArgentVault {
             return;
         }
 
+        if (p.action != ACTION_PAY_INVOICE) {
+            uint256 locked = _admittedDebts + _safetyReserve + (_heldPlacements - p.amount);
+            uint256 balance = address(this).balance;
+            if (balance < locked || p.amount > balance - locked) {
+                _release(requestId, p, REASON_EXCEEDS_PLACEABLE);
+                return;
+            }
+        }
+
         Ref storage ref = p.action == ACTION_PAY_INVOICE ? _invoices[p.refId] : _placements[p.refId];
         bytes32 beneficiaryId = ref.beneficiaryId;
         delete _pending[requestId];
