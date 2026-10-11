@@ -93,7 +93,7 @@ Tous en secondes, valeurs de [specs/00-a-trancher.md](../../specs/00-a-trancher.
 | 0:00 – 0:15 | | Titre, puis une facture dont une ligne ordonne un paiement | « Un agent IA lit une facture. Une ligne cachée lui ordonne de payer un inconnu. S'il obéit, l'argent part. Argent Intelligent se place entre l'agent et la trésorerie. » |
 | 0:15 – 0:50 | 3 | Terminal : l'agent `A-DEM-2` envoie la facture piégée, réponse « rejected ». Puis `/agents/paused` et le rapport d'incident. Dashboard : ligne « bloquée à la porte d'entrée », code `INSTRUCTION_IN_DATA`, incident ouvert | « La porte d'entrée note chaque demande. Ici, le score dépasse le seuil : la demande est bloquée, le document mis en quarantaine, l'agent mis en pause, l'analyste alerté, le rapport écrit. Aucune de ces actions ne déplace de fonds : elles ne font que bloquer. Seul un humain lèvera la pause. » |
 | 0:50 – 1:25 | 4 | Dashboard : la même attaque, reformulée, passe la porte. Ligne « refusée par le contrat : facture inconnue ». Incident ouvert, montant sorti 0. Bandeau « COFFRE SIMULÉ : aucun fonds, aucune chaîne » lisible | « Maintenant, le cas que notre détecteur rate. L'attaque est reformulée, elle passe, et l'IA du client, trompée, signe la demande. C'est la règle de paiement qui l'arrête : cette facture n'est inscrite nulle part. Nous n'empêchons pas l'injection, nous bornons ses conséquences. Ce refus est rejoué ici par un faux coffre : le contrat reste à écrire. » |
-| 1:25 – 1:35 | 4 | Carton : section « Cas manqués » de la [fiche de défense](../fiche-defense.md), telle qu'elle est le jour du tournage | « Les attaques manquées sur notre jeu de test sont listées dans la fiche de défense. » Tant que rien n'est mesuré, le carton montre « à mesurer » et la phrase devient : « La mesure sur le jeu de test n'est pas encore faite. » |
+| 1:25 – 1:35 | 4 | Carton : section « Cas manqués » de la [fiche de défense](../fiche-defense.md), telle qu'elle est le jour du tournage : le tableau par famille et la liste des attaques manquées | « Notre porte détecte la moitié des attaques de notre jeu de test ; l'autre moitié est arrêtée par le contrat. Ce contrat n'est pas déployé : son refus est rejoué par un faux coffre, et cette seconde moitié reste à mesurer. » |
 | 1:35 – 1:55 | 6 | Dashboard : ligne « en attente d'approbation », 30, compte à rebours. Coupe. Ligne refusée, délai dépassé | « Au-dessus du seuil, la décision revient à un humain. Il voit la facture et le montant inscrits, pas la justification de l'agent. Sans réponse en trente secondes, la demande est refusée : un délai dépassé ne vaut jamais accord. » |
 | 1:55 – 2:20 | 2, 5, 7, 8 | Quatre plans de six secondes : « rejetée à l'entrée » ; scénario 5 dans le terminal, `QUEUE_EXPIRED` relais arrêté (le bandeau « relais indisponible » du dashboard dépend de l'alerte, qui ne part qu'à la relance du relais : écran non vu en réel, voir E2) ; « refusée : dépasse le plaçable » ; « refusée : facture déjà payée » | « Un jeton invalide : rejeté, sans punir l'agent usurpé. Le relais tombe : rien n'est autorisé. Un placement trop élevé : refusé. Une facture présentée deux fois : payée une fois. » |
 | 2:20 – 2:30 | | Terminal : vérification du journal, « 6 entrées, tête … », code 0 | « Chaque étape est dans un journal chaîné. Un script le vérifie ; modifier une entrée se voit. » |
@@ -103,9 +103,12 @@ Tous en secondes, valeurs de [specs/00-a-trancher.md](../../specs/00-a-trancher.
 
 Les formules écartées et leurs remplacements sont dans
 [questions-reponses.md](../pitch/questions-reponses.md), « Ce que nous ne disons pas ».
-Dans la vidéo en particulier : pas de chiffre de détection à l'oral tant que la
-fiche affiche « à mesurer », et pas de « le contrat refuse » sans « rejoué par
-un faux coffre » tant qu'il n'est pas déployé. Une fois déployé : jamais « le
+Dans la vidéo en particulier : la mesure du détecteur est faite, et un chiffre
+de détection ne se dit à l'oral que s'il figure dans la
+[fiche de défense](../fiche-defense.md), avec sa condition : jeu de test
+synthétique, une attaque pour une légitime. Une ligne que la fiche affiche
+encore « à mesurer » ne se chiffre pas. Pas de « le contrat refuse » sans
+« rejoué par un faux coffre » tant qu'il n'est pas déployé. Une fois déployé : jamais « le
 contrat paie » sans « sur réseau de test ». Le connecteur bancaire envisagé
 pour la production n'est pas montré et n'est jamais présenté comme existant
 ([README](../../README.md), « Cadrage du paiement »).

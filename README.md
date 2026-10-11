@@ -263,10 +263,16 @@ et qu'aucun chiffre de la fiche ne vient d'ailleurs que d'un fichier de mesure.
 
 ## Résultats
 
-Aucune mesure finale n'est enregistrée. Le tableau vit dans la
-[fiche de défense](docs/fiche-defense.md), rempli par un script depuis
-[docs/mesures/](docs/mesures/README.md). Les seuls chiffres existants viennent
-d'un jeu provisoire écrit par l'auteur des règles : ils ne sont pas repris ici.
+La mesure du détecteur est enregistrée. Sur un jeu de test synthétique, une
+attaque pour une légitime, il détecte 50 attaques sur 100 et bloque à tort 4
+demandes légitimes sur 100. Ces chiffres valent pour ce jeu, pas pour le monde
+réel : en production les attaques sont rares, et la part des blocages à tort
+serait bien plus forte.
+
+Le tableau complet, les cas manqués et les lignes encore « à mesurer » vivent
+dans la [fiche de défense](docs/fiche-defense.md), remplie par un script depuis
+[docs/mesures/](docs/mesures/README.md). Les chiffres du jeu provisoire écrit
+par l'auteur des règles ne sont pas repris ici.
 
 ## État des composants
 
@@ -277,7 +283,7 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 |---|---|---|---|---|
 | Agents scriptés | `relay/src/agents.ts` | oui | non | Ceux des tests passent par un bouchon de porte (`relay/src/gateway-stub.ts`). Les scènes de `make scenes` passent par `gateway/` |
 | Porte d'entrée | `gateway/` | oui | oui, au journal | Transmet à l'IA du client par `CLIENT_AI_URL` : enchaînement joué par `make scenes` |
-| Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesure finale absente |
+| Détecteur | `gateway/src/detector.ts` | oui | oui | Règles déterministes, sans modèle. Mesuré sur un jeu synthétique, une attaque pour une légitime : 50 attaques détectées sur 100, 4 demandes légitimes bloquées sur 100 ([fiche de défense](docs/fiche-defense.md)) |
 | Journal chaîné | `response/src/journal.ts` | oui | oui | Écrivain unique. « Au moins une fois » : une entrée peut apparaître deux fois, jamais zéro |
 | Service de réponse | `response/src/engine.ts` | oui | oui, à la porte et à l'API du relais | L'alerte est affichée et journalisée, envoyée à personne. Aucune pause sur la chaîne. L'alerte de disponibilité ne part pas tant que le relais est arrêté (écart E2) |
 | IA du client | `relay/src/client-ia.ts` | bouchon | oui, à la file | Signe tout ce qui passe le schéma. Aucun modèle. Balaie aussi la file pour expirer une demande, relais arrêté ou non |
@@ -287,7 +293,7 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Indexeur et API | `relay/src/indexer.ts`, `relay/src/api.ts` | oui | oui, au faux coffre | Dans `make demo`, indexe les événements du faux coffre. Aucun contrat déployé |
 | Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; le coffre est simulé tant qu'aucun contrat n'est déployé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo` |
 | Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; le mode chain attend le contrat. Deux écarts connus avec la spec, listés dans `demo/ecarts-connus.json` |
-| Mesure du détecteur | `docs/mesures/` | **absent** | | Jeu prêt dans `data/jeu-factures/`, non lancé |
+| Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par la [fiche de défense](docs/fiche-defense.md). Règles fixes de référence, délais et lignes qui demandent un contrat déployé : encore « à mesurer » |
 
 `src/`, `test/`, `script/` et `offchain/` contiennent d'autres contrats et leurs
 services (un marché de vérification, `src/VerificationMarket.sol`). Ce n'est pas
