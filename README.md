@@ -356,6 +356,7 @@ Détail : [fiche de défense](docs-jury/rendus/fiche-defense.md), « Limites con
 | Document | Contenu |
 |---|---|
 | [docs-jury/rendus/fiche-defense.md](docs-jury/rendus/fiche-defense.md) | Fiche de défense d'une page |
+| [docs-jury/rendus/detection-llm.md](docs-jury/rendus/detection-llm.md) | Banc Bedrock de cinq instances : 18/20 attaques refusées, deux revues humaines, 0/20 faux positifs, corpus et votes livrés |
 | [docs-jury/rendus/fiche-defense-mesures.md](docs-jury/rendus/fiche-defense-mesures.md) | Annexe de la fiche : tableau de mesures généré, cas manqués, limites |
 | [docs-jury/rendus/playbook.md](docs-jury/rendus/playbook.md) | Playbook de réponse, état de chaque étape |
 | [docs-jury/rendus/conformite.md](docs-jury/rendus/conformite.md) | Contenu de la slide conformité, preuves et références |
