@@ -1,0 +1,7 @@
+[
+ {"name":"Haiku 4.5","id":"us.anthropic.claude-haiku-4-5-20251001-v1:0","provider":"Anthropic"},
+ {"name":"Pixtral Large","id":"us.mistral.pixtral-large-2502-v1:0","provider":"Mistral"},
+ {"name":"Sonnet 4.5","id":"us.anthropic.claude-sonnet-4-5-20250929-v1:0","provider":"Anthropic"},
+ {"name":"Llama 3.3 70B","id":"us.meta.llama3-3-70b-instruct-v1:0","provider":"Meta"},
+ {"name":"Nova Premier","id":"us.amazon.nova-premier-v1:0","provider":"Amazon"}
+]
