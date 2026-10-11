@@ -37,10 +37,11 @@ la lancer trop tôt consomme le jeu de test.
 Le script refuse la mesure si `jeu_sha256` n'est pas celui du MANIFEST, ou si
 les identifiants ne sont pas ceux du jeu de test.
 
-À savoir : le banc écarte un tiers du fichier qu'il reçoit pour le réglage
-(`gateway/src/bench.ts`, `isTuning`). Sur `test.jsonl`, il mesure donc moins que
+À savoir : le banc mesure par défaut tout le fichier qu'il reçoit
+(`gateway/src/bench.ts`). Il n'en écarte un tiers pour le réglage (`isTuning`)
+qu'avec `--split`, qui ne s'emploie pas ici. Sur `test.jsonl`, il mesure donc
 les 100 légitimes et 100 attaques du fichier. La fiche affiche le nombre
-réellement mesuré. À trancher avec Loris avant la mesure finale.
+réellement mesuré.
 
 ## Référence « règles fixes » : `bench-reference.json`
 

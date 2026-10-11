@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Remplit le tableau de métriques et la section « cas manqués » de
-// docs/fiche-defense.md à partir des fichiers de docs/mesures/.
+// Remplit le tableau de métriques, la section « cas manqués » et la limite du
+// jeu à un pour un de docs/fiche-defense.md à partir des fichiers de docs/mesures/.
 //
 //   node docs/outils/remplir-fiche.mjs           réécrit la fiche
 //   node docs/outils/remplir-fiche.mjs --check   échoue si la fiche diffère
@@ -20,6 +20,7 @@ export const A_MESURER = "à mesurer";
 export const MARQUEURS = {
   metriques: ["<!-- metriques:debut -->", "<!-- metriques:fin -->"],
   casManques: ["<!-- cas-manques:debut -->", "<!-- cas-manques:fin -->"],
+  limiteJeu: ["<!-- limite-jeu:debut -->", "<!-- limite-jeu:fin -->"],
 };
 
 class MesureInvalide extends Error {}
@@ -129,10 +130,9 @@ export function rendreMetriques({ jeu, banc, origineBanc, reference, origineRefe
     `| Taille du jeu de test | ${jeu.test.etiquettes.legit} légitimes / ${jeu.test.etiquettes.attack} attaques | Lu dans le MANIFEST du jeu ; jeu de réglage : ${jeu.reglage.etiquettes.legit} / ${jeu.reglage.etiquettes.attack} |`,
     `| Échantillons mesurés par le banc | ${t ? `${t.legit} légitimes / ${t.attacks} attaques` : A_MESURER} | ${t ? `Détecteur \`${banc.detector_version}\`, seuil ${t.threshold}` : "Le banc écarte de lui-même un tiers du fichier qu'il reçoit"} |`,
     `| Taux de détection (rappel) | ${t ? `${t.true_positives} sur ${t.attacks} (${pourcent(t.recall)})` : A_MESURER} | Sur le jeu de test |`,
-    `| Précision | ${t ? pourcent(t.precision) : A_MESURER} | Sur le jeu de test, à 1 attaque pour 1 légitime |`,
     `| Faux positifs | ${t ? `${t.false_positives} sur ${t.legit} (${pourcent(t.false_positive_rate)})` : A_MESURER} | Nombre et taux, sur le jeu de test |`,
-    `| Mêmes mesures pour les règles fixes | ${r ? `rappel ${pourcent(r.recall)}, précision ${pourcent(r.precision)}, faux positifs ${r.false_positives} sur ${r.legit}` : A_MESURER} | Référence de comparaison |`,
-    `| Temps de calcul du détecteur | ${t ? `moyenne ${decimal(t.detection_ms.mean)} ms, maximum ${decimal(t.detection_ms.max)} ms` : A_MESURER} | Règles seules, hors réseau et hors journal |`,
+    `| Mêmes mesures pour les règles fixes | ${r ? `rappel ${pourcent(r.recall)}, faux positifs ${r.false_positives} sur ${r.legit}` : A_MESURER} | Référence de comparaison |`,
+    `| Temps de calcul du détecteur | ${t ? `moyenne ${decimal(t.detection_ms.mean)} ms, maximum ${decimal(t.detection_ms.max)} ms` : A_MESURER} | Règles seules, hors porte d'entrée |`,
     `| Attaques passées la porte d'entrée puis bloquées par le contrat | ${demo ? `${demo.passees_porte_bloquees_contrat} sur ${demo.attaques_jouees} jouées` : A_MESURER} | ${demo ? `Coffre utilisé : ${demo.coffre}` : "Demande un contrat déployé"} |`,
     `| Attaques ayant abouti à une sortie de fonds | ${demo ? `${demo.sorties_de_fonds} sur ${demo.attaques_jouees} jouées` : A_MESURER} | ${demo ? `Coffre utilisé : ${demo.coffre}` : "Demande un contrat déployé"} |`,
     `| Délai de détection, arrivée → détection | ${delai(delais?.porte?.arrivee_detection)} | Détection par la porte d'entrée |`,
@@ -169,6 +169,14 @@ export function rendreCasManques({ banc, origineBanc }) {
   ].join("\n");
 }
 
+// Limite du jeu à un pour un : elle cite le taux de faux positifs, donc elle sort de la mesure.
+export function rendreLimiteJeu({ banc }) {
+  const t = banc?.test;
+  if (!t || t.attacks !== t.legit || t.false_positives === 0) return "- 1 attaque pour 1 légitime est un choix de mesure, pas la fréquence réelle des attaques.";
+  const part = decimal(Number((t.false_positive_rate * 100).toFixed(1)));
+  return `- Le jeu est à un pour un (${t.attacks} attaques, ${t.legit} demandes légitimes). En production, les attaques sont rares : avec ${part} % de faux positifs, la majorité des blocages seraient des demandes légitimes bloquées. Les chiffres valent pour ce jeu synthétique, pas pour le monde réel.`;
+}
+
 function remplacer(texte, [debut, fin], contenu) {
   const i = texte.indexOf(debut);
   const j = texte.indexOf(fin);
@@ -178,7 +186,8 @@ function remplacer(texte, [debut, fin], contenu) {
 
 /** Texte que la fiche doit avoir, compte tenu des fichiers de mesure présents. */
 export function ficheAttendue(texte, mesures = charger()) {
-  return remplacer(remplacer(texte, MARQUEURS.metriques, rendreMetriques(mesures)), MARQUEURS.casManques, rendreCasManques(mesures));
+  const avecBlocs = remplacer(remplacer(texte, MARQUEURS.metriques, rendreMetriques(mesures)), MARQUEURS.casManques, rendreCasManques(mesures));
+  return remplacer(avecBlocs, MARQUEURS.limiteJeu, rendreLimiteJeu(mesures));
 }
 
 /** Liste des écarts entre la fiche et ses fichiers de mesure. Vide : tout va bien. */
