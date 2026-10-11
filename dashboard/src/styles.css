@@ -764,6 +764,79 @@ tbody th {
   font-size: 1.1rem;
 }
 
+.cas-ligne {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.cas-corps {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Effet b : anneau de compte à rebours, redessiné à chaque seconde de l'horloge locale --- */
+.anneau {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  color: var(--humain);
+}
+
+.anneau-absent {
+  color: var(--discret);
+  font-size: 1.2rem;
+}
+
+.anneau-fond {
+  fill: none;
+  stroke: var(--humain-fond);
+  stroke-width: 7;
+}
+
+.anneau-reste {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.9s linear;
+}
+
+.anneau-urgent {
+  color: var(--refuse);
+}
+
+.anneau-urgent .anneau-fond {
+  stroke: var(--refuse-fond);
+}
+
+.anneau-echu {
+  color: var(--refuse);
+}
+
+.anneau-texte {
+  fill: var(--texte);
+  font: 700 13px var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.attente-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.attente-liste li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 /* --- Diagramme du flux --- */
 .flux {
   margin: 0;

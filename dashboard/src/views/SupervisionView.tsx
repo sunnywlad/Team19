@@ -1,8 +1,11 @@
+import { OpaqueId } from "../components/atoms.tsx";
+import { CountdownRing } from "../components/CountdownRing.tsx";
 import { FlowPanel } from "../components/FlowPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { PlaceableValues } from "../components/PlaceablePanel.tsx";
 import { latestIncidents, offContractLines, pendingCases } from "../domain/activity.ts";
 import { readDecision } from "../domain/reasons.ts";
+import { formatRemaining } from "../lib/format.ts";
 import { vaultFed, type ViewProps } from "./shared.ts";
 
 /**
@@ -21,21 +24,47 @@ export function SupervisionView({ view }: { view: ViewProps }) {
           {(data) => {
             const kinds = data.decisions.map((d) => readDecision(d).kind);
             const count = (kind: string): number => kinds.filter((k) => k === kind).length;
+            const pending = pendingCases(data.decisions, data.events);
             return (
-              <dl className="compteurs">
-                <div>
-                  <dt>Acceptées et payées</dt>
-                  <dd data-testid="sup-acceptees">{count("accepte")}</dd>
-                </div>
-                <div>
-                  <dt>En validation humaine</dt>
-                  <dd data-testid="sup-attente">{pendingCases(data.decisions, data.events).length}</dd>
-                </div>
-                <div>
-                  <dt>Refusées par le contrat</dt>
-                  <dd data-testid="sup-refusees">{count("refuse")}</dd>
-                </div>
-              </dl>
+              <>
+                <dl className="compteurs">
+                  <div>
+                    <dt>Acceptées et payées</dt>
+                    <dd data-testid="sup-acceptees">{count("accepte")}</dd>
+                  </div>
+                  <div>
+                    <dt>En validation humaine</dt>
+                    <dd data-testid="sup-attente">{pending.length}</dd>
+                  </div>
+                  <div>
+                    <dt>Refusées par le contrat</dt>
+                    <dd data-testid="sup-refusees">{count("refuse")}</dd>
+                  </div>
+                </dl>
+                {pending.length > 0 && (
+                  <ul className="attente-liste" aria-label="Cas en validation humaine">
+                    {pending.map((c) => {
+                      const remaining = c.deadline === null ? null : c.deadline - Math.floor(now / 1000);
+                      return (
+                        <li key={c.requestId} data-testid="sup-cas">
+                          <CountdownRing deadline={c.deadline} decidedAt={c.blockTimestamp} now={now} />
+                          <span>
+                            <OpaqueId value={c.refId} />
+                            <br />
+                            <span className="discret">
+                              {remaining === null
+                                ? "délai non disponible"
+                                : remaining > 0
+                                  ? `${formatRemaining(remaining)} avant refus automatique`
+                                  : "échéance dépassée"}
+                            </span>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </>
             );
           }}
         </Panel>
