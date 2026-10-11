@@ -1,0 +1,185 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Composants Veto</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout : un diagramme de séquence (qui parle à qui, dans quel ordre), puis la fiche de chaque composant. */
+:root{
+  --bg:#f5f7f9;--surface:#ffffff;--ink:#17212b;--muted:#5b6876;--line:#d5dce3;
+  --accent:#0b5c7a;--accent-bg:#e0eef3;
+  --ok:#1b7a4b;--ok-bg:#e3f3ea;--warn:#8f5400;--warn-bg:#fbefd9;--stop:#b3261e;--stop-bg:#fbe4e2;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10161c;--surface:#18212a;--ink:#e6ecf1;--muted:#9aa8b5;--line:#2c3945;
+  --accent:#6cc1de;--accent-bg:#163441;
+  --ok:#63c690;--ok-bg:#17382a;--warn:#e6ad55;--warn-bg:#3d2e12;--stop:#f08a82;--stop-bg:#45201d;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10161c;--surface:#18212a;--ink:#e6ecf1;--muted:#9aa8b5;--line:#2c3945;
+  --accent:#6cc1de;--accent-bg:#163441;
+  --ok:#63c690;--ok-bg:#17382a;--warn:#e6ad55;--warn-bg:#3d2e12;--stop:#f08a82;--stop-bg:#45201d;
+  color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:36px 64px;display:flex;flex-direction:column;gap:36px}
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:30px;line-height:1.15;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:19px;font-weight:600;margin:0 0 12px;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lede{color:var(--muted);font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:22px;height:0;border-top:2px solid var(--ink);display:inline-block}
+.sw.s{border-color:var(--stop);border-top-style:dashed}.sw.w{border-color:var(--warn)}.sw.o{border-color:var(--ok)}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+svg{display:block;width:100%;min-width:1040px;height:auto;font-family:var(--sans)}
+figcaption{font-size:13.5px;color:var(--muted);max-width:76ch}
+/* SVG */
+.life{stroke:var(--line);stroke-width:1.5}
+.head{fill:var(--bg);stroke:var(--line)}
+.head.chain{fill:var(--accent-bg);stroke:var(--accent)}
+.hname{fill:var(--ink);font-size:12px;font-weight:600}
+.hown{fill:var(--muted);font-size:10px;font-family:var(--mono);letter-spacing:.04em}
+.arr{stroke:var(--ink);stroke-width:1.5;fill:none}
+.arr.stop{stroke:var(--stop);stroke-dasharray:5 4}.arr.warn{stroke:var(--warn)}.arr.ok{stroke:var(--ok)}
+.lab{fill:var(--ink);font-size:11.5px;paint-order:stroke;stroke:var(--surface);stroke-width:5px;stroke-linejoin:round}
+.lab.stop{fill:var(--stop)}.lab.warn{fill:var(--warn)}.lab.ok{fill:var(--ok)}
+.box{fill:var(--surface);stroke:var(--ink);stroke-width:1.2}
+.box.ok{stroke:var(--ok);fill:var(--ok-bg)}
+.bt{fill:var(--ink);font-size:10.5px}
+.mk{fill:var(--ink)}.mk.stop{fill:var(--stop)}.mk.warn{fill:var(--warn)}.mk.ok{fill:var(--ok)}
+/* table */
+table{border-collapse:collapse;width:100%;min-width:880px;font-size:13.5px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+tbody th{font-weight:600;white-space:nowrap}
+.own{font-family:var(--mono);font-size:11.5px;padding:1px 7px;border-radius:3px;background:var(--bg);color:var(--muted);white-space:nowrap}
+.own.chain{background:var(--accent-bg);color:var(--accent)}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
+.rule h3{font-size:15px;font-weight:600;margin:0 0 6px}
+.rule p{font-size:13.5px;color:var(--muted)}
+.note{font-size:13.5px;color:var(--muted);border-left:2px solid var(--accent);padding-left:12px}
+.brand{display:flex;align-items:center;gap:14px}.logo{width:84px;height:auto;flex-shrink:0}.logo .table{fill:#2E1A6B}.logo .seats{fill:#3A3A3A}.brand-name{font-size:26px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo .seats{fill:#B9B3C7}:root:not([data-theme="light"]) .logo .table{fill:#5B45B0}}:root[data-theme="dark"] .logo .seats{fill:#B9B3C7}:root[data-theme="dark"] .logo .table{fill:#5B45B0}:root{--accent:#2E1A6B;--accent-bg:#ECE8F6}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#B3A4F0;--accent-bg:#2A2347}}:root[data-theme="dark"]{--accent:#B3A4F0;--accent-bg:#2A2347}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="brand"><svg class="logo" viewBox="-260 -150 520 300" role="img" aria-label="Logo Veto : une table ovale portant un V, entourée de cinq sièges"><g class="seats"><g transform="translate(-205 40) rotate(-75)"><rect x="-30" y="-26" width="60" height="50" rx="7"/><rect x="-40" y="-20" width="8" height="40" rx="4"/><rect x="32" y="-20" width="8" height="40" rx="4"/></g><g transform="translate(-125 -62) rotate(-25)"><rect x="-30" y="-26" width="60" height="50" rx="7"/><rect x="-40" y="-20" width="8" height="40" rx="4"/><rect x="32" y="-20" width="8" height="40" rx="4"/></g><g transform="translate(0 -95) rotate(0)"><rect x="-30" y="-26" width="60" height="50" rx="7"/><rect x="-40" y="-20" width="8" height="40" rx="4"/><rect x="32" y="-20" width="8" height="40" rx="4"/></g><g transform="translate(125 -62) rotate(25)"><rect x="-30" y="-26" width="60" height="50" rx="7"/><rect x="-40" y="-20" width="8" height="40" rx="4"/><rect x="32" y="-20" width="8" height="40" rx="4"/></g><g transform="translate(205 40) rotate(75)"><rect x="-30" y="-26" width="60" height="50" rx="7"/><rect x="-40" y="-20" width="8" height="40" rx="4"/><rect x="32" y="-20" width="8" height="40" rx="4"/></g></g><ellipse cx="0" cy="40" rx="165" ry="78" class="table"/><path d="M -40 5 L 0 78 L 40 5" fill="none" stroke="#fff" stroke-width="20" stroke-linejoin="miter"/></svg><span class="brand-name">Veto</span></div>
+  <div class="eyebrow">Secure Horizons · track 1 Fintech Security</div>
+  <h1>Dix composants, douze étapes, un seul endroit qui paie</h1>
+  <p class="lede">Le diagramme suit une demande de l'agent jusqu'au dashboard. Chaque colonne est un composant, chaque flèche un message. Le contrat est le seul à décider et à déplacer des fonds.</p>
+  <div class="legend">
+    <span><i class="sw"></i> chemin normal</span>
+    <span><i class="sw s"></i> refus ou attaque détectée</span>
+    <span><i class="sw w"></i> validation humaine</span>
+    <span><i class="sw o"></i> paiement</span>
+  </div>
+</header>
+
+<figure>
+  <div class="scroll"><svg id="seq" role="img" aria-label="Diagramme de séquence : une demande passe par la porte d'entrée, l'IA du client, la file, le relais puis le contrat, qui décide et paie. Les refus déclenchent le service de réponse et une alerte humaine. Le dashboard ne fait que lire les événements du contrat."></svg></div>
+  <figcaption>Chaque étape numérotée écrit une entrée dans le journal chaîné. Les étapes 9 et 10 sont des événements du contrat, lisibles par n'importe qui sur la chaîne.</figcaption>
+</figure>
+
+<section>
+  <h2>Ce que chaque composant peut et ne peut pas faire</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Composant</th><th>À qui</th><th>Ce qu'il fait</th><th>Ce qu'il ne peut pas faire</th><th>Clé ou secret</th></tr></thead>
+    <tbody>
+      <tr><th>Agent demandeur</th><td><span class="own">client</span></td><td>Envoie une demande</td><td>Choisir un montant ou un bénéficiaire</td><td>Jeton court et révocable</td></tr>
+      <tr><th>Porte d'entrée</th><td><span class="own">nous</span></td><td>Teste chaque demande, donne un score et des codes raison, valide le schéma JSON</td><td>Payer, modifier une demande</td><td>Aucun</td></tr>
+      <tr><th>IA du client</th><td><span class="own">client</span></td><td>Gère la trésorerie et émet une demande signée</td><td>Payer directement</td><td>Clé de signature du client</td></tr>
+      <tr><th>File d'attente</th><td><span class="own">nous</span></td><td>Garde les demandes en attente</td><td>Modifier une demande sans invalider sa signature</td><td>Aucun</td></tr>
+      <tr><th>Relais</th><td><span class="own">nous</span></td><td>Soumet la demande signée au contrat</td><td>Créer une demande, détenir des fonds</td><td>Clé qui ne porte que du gaz</td></tr>
+      <tr><th>Contrat</th><td><span class="own chain">chaîne</span></td><td>Vérifie la signature, calcule le montant plaçable, décide 0, 1 ou 2, paie</td><td>Lire une base externe, payer hors de ses registres</td><td>Détient les fonds</td></tr>
+      <tr><th>Réponse</th><td><span class="own">nous</span></td><td>Met en quarantaine, met l'agent en pause, alerte, génère le rapport</td><td>Déplacer des fonds, lever une pause</td><td>Aucun</td></tr>
+      <tr><th>Humain</th><td><span class="own">client</span></td><td>Qualifie l'incident, approuve un cas 1, lève une pause</td><td>Changer le montant ou le bénéficiaire d'une demande</td><td>Clés d'approbateur, de gardien, de propriétaire : une par rôle</td></tr>
+      <tr><th>Indexeur et base</th><td><span class="own">nous</span></td><td>Copie les événements du contrat</td><td>Décider quoi que ce soit</td><td>Aucun</td></tr>
+      <tr><th>Dashboard</th><td><span class="own">nous</span></td><td>Affiche décisions, montant plaçable, délais, rapports</td><td>Déclencher un paiement</td><td>Aucun</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>Trois frontières de confiance</h2>
+  <div class="rules">
+    <div class="rule"><h3>Ce qui entre est une donnée</h3><p>Le contenu d'une facture ou d'un message n'a aucune autorité. La porte d'entrée le traite comme potentiellement hostile, à chaque demande.</p></div>
+    <div class="rule"><h3>La signature traverse nos systèmes</h3><p>La demande est signée par le client à l'étape 6 et vérifiée par le contrat à l'étape 9. Entre les deux, la file et le relais ne sont qu'un tuyau.</p></div>
+    <div class="rule"><h3>Seule la chaîne décide et paie</h3><p>Le contrat calcule sur son propre état. La base et le dashboard viennent après : s'ils tombent, aucune décision n'est faussée.</p></div>
+  </div>
+</section>
+
+<p class="note">Conception du 10 octobre 2026. Sur une chaîne publique, seuls des identifiants et des empreintes sont écrits. Si la file ou le relais tombe, aucune demande n'est autorisée.</p>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg', svg=document.getElementById('seq');
+  var L=[
+    ['agent','Agent demandeur','client'],['gate',"Porte d'entrée",'nous'],['ai','IA du client','client'],
+    ['queue',"File d'attente",'nous'],['relay','Relais','nous'],['contract','Contrat','chaîne'],
+    ['resp','Réponse','nous'],['human','Humain','client'],['store','Indexeur + base','nous'],['dash','Dashboard','nous']
+  ];
+  var X={}; L.forEach(function(l,i){X[l[0]]=70+120*i;});
+  var S=[
+    ['m','agent','gate','1 · demande + jeton',''],
+    ['s','gate',['2 · tests de sécurité','score, codes raison'],''],
+    ['s','gate',['3 · parsing JSON','schéma strict'],''],
+    ['m','gate','resp',"3 bis · échec : quarantaine, pause de l'agent",'stop'],
+    ['m','resp','human','alerte','stop'],
+    ['m','gate','ai','4 · demande validée',''],
+    ['s','ai',['5 · gestion de','trésorerie'],''],
+    ['m','ai','queue','6 · JSON signé',''],
+    ['s','queue',['7 · en attente','tuyau non fiable'],''],
+    ['m','queue','relay','8 · lit la demande',''],
+    ['m','relay','contract','soumet',''],
+    ['s','contract',['9 · signature, calcul','décision 0 / 1 / 2'],''],
+    ['s','contract',['2 · paiement','même transaction'],'ok'],
+    ['m','contract','resp','0 · refusé','stop'],
+    ['m','contract','human','1 · approbation demandée','warn'],
+    ['m','human','contract','10 · approuve, ou délai → refus','warn'],
+    ['m','contract','store','11 · événements du contrat',''],
+    ['m','resp','store',"rapport d'incident",''],
+    ['m','store','dash','12 · affichage','']
+  ];
+  var top=74, step=46, H=top+step*S.length+30, W=1220;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  function el(n,a,t){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;svg.appendChild(e);return e;}
+  var defs=el('defs',{});
+  ['','stop','warn','ok'].forEach(function(c){
+    var m=document.createElementNS(NS,'marker');
+    m.setAttribute('id','ah'+c);m.setAttribute('viewBox','0 0 10 10');m.setAttribute('refX','9');m.setAttribute('refY','5');
+    m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','7');m.setAttribute('orient','auto-start-reverse');
+    var p=document.createElementNS(NS,'path');p.setAttribute('d','M0 0L10 5L0 10z');p.setAttribute('class','mk '+c);
+    m.appendChild(p);defs.appendChild(m);
+  });
+  L.forEach(function(l){
+    var x=X[l[0]];
+    el('line',{x1:x,y1:52,x2:x,y2:H-10,'class':'life'});
+    el('rect',{x:x-56,y:8,width:112,height:44,rx:4,'class':'head'+(l[2]==='chaîne'?' chain':'')});
+    el('text',{x:x,y:27,'text-anchor':'middle','class':'hname'},l[1]);
+    el('text',{x:x,y:43,'text-anchor':'middle','class':'hown'},l[2]);
+  });
+  S.forEach(function(s,i){
+    var y=top+step*i+20;
+    if(s[0]==='m'){
+      var a=X[s[1]], b=X[s[2]], c=s[4];
+      el('line',{x1:a,y1:y,x2:b+(b>a?-2:2),y2:y,'class':'arr '+c,'marker-end':'url(#ah'+c+')'});
+      el('text',{x:(a+b)/2,y:y-7,'text-anchor':'middle','class':'lab '+c},s[3]);
+    }else{
+      var x=X[s[1]];
+      el('rect',{x:x-56,y:y-18,width:112,height:34,rx:4,'class':'box '+s[3]});
+      el('text',{x:x,y:y-4,'text-anchor':'middle','class':'bt'},s[2][0]);
+      el('text',{x:x,y:y+9,'text-anchor':'middle','class':'bt'},s[2][1]);
+    }
+  });
+})();
+</script>
+
+</body></html>
