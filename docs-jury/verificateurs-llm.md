@@ -152,6 +152,24 @@ plafond 500, liste désactivée, montant 400).
 
 Extrait : `docs-jury/preuves/llm-e2e-aws.md`.
 
+## Paramètres et compromis de la démo
+
+- Fenêtres de la pile de démo : commit 30 s, reveal 20 s, contest 60 s. Le vérificateur
+  dispose de la moitié de la fenêtre de commit, soit 15 s ; le délai interne du modèle
+  est de 12 s (délai du service moins 3 s). Un vote qui ne tient pas dans ce délai vaut 1
+  par `evaluator_timeout`, jamais une acceptation.
+- Modèles choisis pour la vitesse : Haiku 4.5, Pixtral Large et Sonnet 4.5, p95 de 2,3 à
+  4,3 s. Des modèles plus gros jugeraient peut-être mieux, mais tiendraient mal dans la
+  fenêtre de commit.
+- Appel déterministe et court : `temperature` 0, `maxTokens` 300. Le même contenu donne
+  en principe le même vote, et la sortie se limite à un JSON (vote, motifs, résumé).
+- Contrepartie : un petit modèle juge de façon plus superficielle. Il peut recopier un
+  faux verdict glissé dans la pièce (Nova Lite l'a fait), voter 2 sans pièce jointe
+  (Pixtral) ou refuser à tort sur un détail (Haiku, Sonnet).
+- C'est pourquoi la sécurité ne repose pas sur un modèle : plafond et palier décidés par
+  le code avant tout appel, comité de trois modèles à la majorité, et toute panne ou
+  tout délai dépassé donne le vote 1 (revue humaine), jamais une acceptation.
+
 ## Limites assumées
 
 - Liste de bénéficiaires : l'évaluateur ne la connaît pas et ne pose jamais
@@ -185,3 +203,8 @@ Extrait : `docs-jury/preuves/llm-e2e-aws.md`.
    que la liste est désactivée, ce qui est le cas sur les deux piles.
 7. Délai : p95 du banc à 4,3 s (Sonnet) pour un seuil de 10 s. Les passages sur chaîne ne
    mesurent pas la latence.
+
+## Pile permanente et client
+
+- Mode permanent : `E2E_SERVE=1 bash offchain/e2e.sh` laisse cache, passerelle (127.0.0.1:8700) et les trois vérificateurs allumés ; arrêt par Ctrl-C ou `offchain/tools/arreter-pile.sh`. Le jeton et le comité sont lus dans `~/.config/team19/`, jamais dans le dépôt.
+- Client : `GATEWAY_URL=… GATEWAY_TOKEN=… node offchain/tools/demander.mjs "<prompt>"` (ou `demander.sh`) envoie la demande, attend le statut Contest, puis affiche l'identifiant, les trois votes et le code final.

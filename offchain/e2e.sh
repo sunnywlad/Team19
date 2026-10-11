@@ -14,6 +14,12 @@
 #                       VerdictRevealed, attend le statut Closed (close envoyé
 #                       par les vérificateurs après contestDeadline), lu par
 #                       cast call getRequest, pendant au plus contestWindow+60 s.
+#   E2E_SERVE          0 (défaut) ou 1. À 1, la pile reste allumée au lieu de
+#                       jouer des cycles : passerelle sur 127.0.0.1:8700, jeton lu dans
+#                       ~/.config/team19/passerelle.env (créé en 600 s'il manque),
+#                       comité lu dans ~/.config/team19/llm-comite.env, journaux dans
+#                       E2E_LOG_DIR. Arrêt : Ctrl-C ou offchain/tools/arreter-pile.sh.
+#                       Le client est offchain/tools/demander.sh.
 set -euo pipefail
 
 # ─── 0. Répertoire de travail ────────────────────────────────────────────────
@@ -48,6 +54,14 @@ E2E_AMOUNT="${E2E_AMOUNT:-50000}"
 E2E_REQUESTS="${E2E_REQUESTS:-1}"
 E2E_EXPECT_CLOSED="${E2E_EXPECT_CLOSED:-0}"
 E2E_CONTENT="${E2E_CONTENT:-Payer la facture INV-E2E-001}"
+E2E_SERVE="${E2E_SERVE:-0}"
+if [ "$E2E_SERVE" = "1" ]; then
+  # Comité et plafond (EVALUATOR_CMD_1..3) : chargés sans jamais être affichés.
+  set -a
+  # shellcheck disable=SC1090
+  . "$HOME/.config/team19/llm-comite.env"
+  set +a
+fi
 case "$E2E_REQUESTS" in
   ''|*[!0-9]*|0)
     echo "[e2e] ERREUR : E2E_REQUESTS doit être un entier positif" >&2
@@ -61,6 +75,7 @@ find_free_port() {
 }
 CACHE_PORT=$(find_free_port)
 GATEWAY_PORT=$(find_free_port)
+if [ "$E2E_SERVE" = "1" ]; then GATEWAY_PORT=8700; fi
 echo "[e2e] Ports : cache=$CACHE_PORT gateway=$GATEWAY_PORT"
 
 # ─── 2. Pré-checks ──────────────────────────────────────────────────────────
@@ -130,11 +145,30 @@ export VERIFIER_KEY_1 VERIFIER_KEY_2 VERIFIER_KEY_3 REQUESTER_KEY REQUESTER_ADDR
 # ─── 4. Tokens aléatoires ────────────────────────────────────────────────────
 CACHE_WRITE_TOKEN=$(openssl rand -hex 32)
 GATEWAY_API_KEY=$(openssl rand -hex 32)
+if [ "$E2E_SERVE" = "1" ]; then
+  TOKEN_FILE="$HOME/.config/team19/passerelle.env"
+  if [ ! -f "$TOKEN_FILE" ]; then
+    mkdir -p "$(dirname "$TOKEN_FILE")"
+    ( umask 077; echo "GATEWAY_TOKEN=$(openssl rand -hex 32)" > "$TOKEN_FILE" )
+  fi
+  chmod 600 "$TOKEN_FILE"
+  GATEWAY_API_KEY=$(sed -n 's/^GATEWAY_TOKEN=//p' "$TOKEN_FILE" | head -1)
+  if [ -z "$GATEWAY_API_KEY" ]; then
+    echo "[e2e] ERREUR : GATEWAY_TOKEN absent de $TOKEN_FILE" >&2
+    exit 1
+  fi
+fi
 export CACHE_WRITE_TOKEN GATEWAY_API_KEYS="$GATEWAY_API_KEY"
 
 # ─── 5. Dossier temporaire ───────────────────────────────────────────────────
 TMP_DIR=$(mktemp -d /tmp/team19-e2e-XXXXXX)
 INCIDENTS_LOG="$TMP_DIR/incidents.log"
+# Journaux des services : dans TMP_DIR par défaut, dossier fixe en mode permanent.
+LOG_DIR="$TMP_DIR"
+if [ "$E2E_SERVE" = "1" ]; then
+  LOG_DIR="${E2E_LOG_DIR:-$HOME/code/sunnywlad/Team19-notes/logs/pile-aws}"
+  mkdir -p "$LOG_DIR"
+fi
 CACHE_DATA_DIR="$TMP_DIR/cache"
 V1_DATA_DIR="$TMP_DIR/verifier-1"
 V2_DATA_DIR="$TMP_DIR/verifier-2"
@@ -169,7 +203,7 @@ CACHE_WRITE_TOKEN="$CACHE_WRITE_TOKEN" \
 MARKET_ADDRESS="$MARKET_ADDRESS" \
 RPC_URL="$RPC_URL" \
 CHAIN_ID="$CHAIN_ID" \
-  node cache/server.ts > "$TMP_DIR/cache.log" 2>&1 &
+  node cache/server.ts > "$LOG_DIR/cache.log" 2>&1 &
 PIDS+=($!)
 echo "[e2e] Cache PID=$!"
 
@@ -184,7 +218,7 @@ MARKET_ADDRESS="$MARKET_ADDRESS" \
 RPC_URL="$RPC_URL" \
 CHAIN_ID="$CHAIN_ID" \
 INCIDENTS_LOG="$INCIDENTS_LOG" \
-  node gateway/server.ts > "$TMP_DIR/gateway.log" 2>&1 &
+  node gateway/server.ts > "$LOG_DIR/gateway.log" 2>&1 &
 PIDS+=($!)
 echo "[e2e] Passerelle PID=$!"
 
@@ -204,7 +238,7 @@ for i in 1 2 3; do
   CHAIN_ID="$CHAIN_ID" \
   INCIDENTS_LOG="$INCIDENTS_LOG" \
   EVALUATOR_CMD="$VCMD" \
-    node verifier/service.ts > "$TMP_DIR/verifier-$i.log" 2>&1 &
+    node verifier/service.ts > "$LOG_DIR/verifier-$i.log" 2>&1 &
   PIDS+=($!)
   echo "[e2e] Vérificateur $i PID=$!"
 done
@@ -227,7 +261,7 @@ if [ -n "$REGISTRY_ADDRESS" ]; then
       elapsed=$((elapsed + 1))
     done
     echo "[e2e] ERREUR : le vérificateur $label ($address) n'est pas actif après 60 s" >&2
-    tail -30 "$TMP_DIR/verifier-$label.log" >&2
+    tail -30 "$LOG_DIR/verifier-$label.log" >&2
     E2E_EXIT_CODE=1
     exit 1
   }
@@ -248,7 +282,7 @@ wait_port() {
     if [ $i -ge $max ]; then
       echo "[e2e] ERREUR : $name (port $port) ne répond pas après ${max}s" >&2
       echo "[e2e] Dernières lignes du journal :" >&2
-      tail -20 "$TMP_DIR/${name}.log" >&2
+      tail -20 "$LOG_DIR/${name}.log" >&2
       E2E_EXIT_CODE=1
       exit 1
     fi
@@ -259,6 +293,14 @@ wait_port() {
 
 wait_port "$CACHE_PORT" "cache"
 wait_port "$GATEWAY_PORT" "gateway"
+
+# ─── 10b. Mode permanent : on reste allumé ───────────────────────────────────
+if [ "$E2E_SERVE" = "1" ]; then
+  echo "$$" > "$LOG_DIR/pile.pid"
+  echo "[e2e] Pile permanente prête : passerelle 127.0.0.1:$GATEWAY_PORT (PID $$). Ctrl-C pour arrêter."
+  trap 'rm -f "$LOG_DIR/pile.pid"; exit 0' INT TERM
+  while true; do sleep 1; done
+fi
 
 # ─── 11. Cycles de demande ───────────────────────────────────────────────────
 for ((CYCLE = 1; CYCLE <= E2E_REQUESTS; CYCLE++)); do
@@ -307,9 +349,9 @@ if [ "$HTTP_STATUS" != "200" ]; then
   echo "[e2e] ERREUR : POST /requests a retourné HTTP $HTTP_STATUS" >&2
   echo "[e2e] Corps : $RESP" >&2
   echo "[e2e] === Fin journal cache ===" >&2
-  tail -40 "$TMP_DIR/cache.log" >&2
+  tail -40 "$LOG_DIR/cache.log" >&2
   echo "[e2e] === Fin journal passerelle ===" >&2
-  tail -40 "$TMP_DIR/gateway.log" >&2
+  tail -40 "$LOG_DIR/gateway.log" >&2
   E2E_EXIT_CODE=1
   exit 1
 fi
@@ -384,15 +426,15 @@ done
 if [ "$STATUS" != "Contest" ] && [ "$STATUS" != "Closed" ]; then
   echo "[e2e] ERREUR : statut Contest non atteint après ${MAX_POLL}s (dernier: $STATUS)" >&2
   echo "[e2e] === Fin journal cache ===" >&2
-  tail -40 "$TMP_DIR/cache.log" >&2
+  tail -40 "$LOG_DIR/cache.log" >&2
   echo "[e2e] === Fin journal passerelle ===" >&2
-  tail -40 "$TMP_DIR/gateway.log" >&2
+  tail -40 "$LOG_DIR/gateway.log" >&2
   echo "[e2e] === Fin journal vérificateur 1 ===" >&2
-  tail -40 "$TMP_DIR/verifier-1.log" >&2
+  tail -40 "$LOG_DIR/verifier-1.log" >&2
   echo "[e2e] === Fin journal vérificateur 2 ===" >&2
-  tail -40 "$TMP_DIR/verifier-2.log" >&2
+  tail -40 "$LOG_DIR/verifier-2.log" >&2
   echo "[e2e] === Fin journal vérificateur 3 ===" >&2
-  tail -40 "$TMP_DIR/verifier-3.log" >&2
+  tail -40 "$LOG_DIR/verifier-3.log" >&2
   E2E_EXIT_CODE=1
   exit 1
 fi
@@ -505,12 +547,12 @@ fi
 
 if [ "$FAIL" -eq 1 ]; then
   echo "[e2e] === Fin journal cache ===" >&2
-  tail -40 "$TMP_DIR/cache.log" >&2
+  tail -40 "$LOG_DIR/cache.log" >&2
   echo "[e2e] === Fin journal passerelle ===" >&2
-  tail -40 "$TMP_DIR/gateway.log" >&2
+  tail -40 "$LOG_DIR/gateway.log" >&2
   for v in 1 2 3; do
     echo "[e2e] === Fin journal vérificateur $v ===" >&2
-    tail -40 "$TMP_DIR/verifier-$v.log" >&2
+    tail -40 "$LOG_DIR/verifier-$v.log" >&2
   done
   E2E_EXIT_CODE=1
   exit 1
