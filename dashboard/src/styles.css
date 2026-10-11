@@ -554,6 +554,17 @@ button {
   font-weight: 500;
 }
 
+.mot-attente {
+  color: var(--moutarde);
+  font-weight: 500;
+}
+
+.telechargement {
+  padding: 12px 0 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--trait-doux);
+}
+
 /* Boutons : ils changent ce qu'on regarde, rien d'autre. */
 .bouton-lien,
 .bouton-plein {

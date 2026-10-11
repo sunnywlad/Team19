@@ -1,6 +1,6 @@
 // Écrans Incident, Journal et En attente, sur les scénarios qui les concernent.
-import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { renderScenario, text } from "./helpers.tsx";
 import { open } from "./tour.ts";
 
@@ -194,5 +194,30 @@ describe("page Validation", () => {
     open("Validation");
     expect(text(await screen.findByTestId("commande-expire"))).toMatch(/^node demo\/human\.mjs expire 0x[0-9a-f]{64}$/);
     expect(screen.queryByTestId("commande-approve")).toBeNull();
+  });
+});
+
+describe("page Alertes et rapports", () => {
+  it("scénario 3 : alerte de sécurité lue au journal, et rapport enregistré tel que l'API l'a servi", async () => {
+    const saved: Blob[] = [];
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: (b: Blob) => (saved.push(b), "blob:local"), revokeObjectURL: () => undefined }));
+    const clicks: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      clicks.push(this.download);
+    });
+    const calls: { method: string; url: string }[] = [];
+    renderScenario("3", { calls });
+    open("Alertes et rapports");
+    const [alert] = await screen.findAllByTestId("alerte");
+    expect(text(alert as Element)).toMatch(/^alerte de sécurité · pour analyste, trésorier/);
+    expect(await value("rapport-empreinte")).toMatch(/^[0-9a-f]{64}$/);
+    const before = calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Télécharger le rapport (JSON)" }));
+    expect(calls.length).toBe(before);
+    expect(clicks).toHaveLength(1);
+    expect(clicks[0]).toMatch(/^rapport-incident-0x[0-9a-f]{64}\.json$/);
+    const report = JSON.parse(await (saved[0] as Blob).text()) as { incident_id: string; trigger: string };
+    expect(report.trigger).toBe("DETECTOR_SCORE");
+    expect(document.querySelectorAll("a[href]")).toHaveLength(0);
   });
 });

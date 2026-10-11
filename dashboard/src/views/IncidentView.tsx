@@ -1,8 +1,11 @@
 import { useState } from "react";
-import type { IncidentItem } from "../api/types.ts";
+import type { IncidentItem, JournalEntry } from "../api/types.ts";
 import { ClockTag, Amount, DecisionBadge, OpaqueId, SourceTag, Untrusted } from "../components/atoms.tsx";
 import { DelaysNote, DelaysTable } from "../components/DelaysPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
+import { AlertsPanel } from "../components/AlertsPanel.tsx";
+import { Icon } from "../components/icons.tsx";
+import { reportFileName, saveJson } from "../lib/download.ts";
 import { Counter } from "../components/Rolling.tsx";
 import { chainPausedAgents, latestIncidents } from "../domain/activity.ts";
 import { chainPauseTimestamp } from "../domain/delays.ts";
@@ -19,11 +22,35 @@ import { formatDateTime, formatTime } from "../lib/format.ts";
 import { EXCERPT_MAX } from "../lib/safeText.ts";
 import { sameWorld, vaultFed, type ViewProps } from "./shared.ts";
 
-function Report({ item, chainPause, fakeVault }: { item: IncidentItem; chainPause: number | null; fakeVault: boolean }) {
+/** Empreinte du rapport, telle que le journal l'a consignée (INCIDENT_REPORT_GENERATED). */
+function reportDigest(journal: JournalEntry[], incidentId: string): string | null {
+  const entry = [...journal].reverse().find((e) => e.type === "INCIDENT_REPORT_GENERATED" && e.data.incident_id === incidentId);
+  const digest = entry?.data.report_sha256;
+  return typeof digest === "string" && /^[0-9a-f]{64}$/.test(digest) ? digest : null;
+}
+
+function Download({ item, digest }: { item: IncidentItem; digest: string | null }) {
+  const name = reportFileName(item.report.incident_id);
+  if (name === null) return <p className="indisponible">Identifiant d'incident hors format : téléchargement indisponible.</p>;
+  return (
+    <div className="telechargement">
+      <button type="button" className="bouton-plein" data-ui="export" onClick={() => saveJson(name, item.report)}>
+        <Icon name="telecharger" /> Télécharger le rapport (JSON)
+      </button>
+      <p className="discret">
+        Le rapport tel que <code>GET /incidents</code> l'a servi, validé par son schéma, enregistré sans nouvel appel. Empreinte consignée au journal :{" "}
+        {digest === null ? <span className="indisponible">Non mesuré</span> : <code className="empreinte" data-testid="rapport-empreinte">{digest}</code>}
+      </p>
+    </div>
+  );
+}
+
+function Report({ item, chainPause, fakeVault, digest }: { item: IncidentItem; chainPause: number | null; fakeVault: boolean; digest: string | null }) {
   const { report } = item;
   const contract = report.contract ? readDecision({ ...report.contract, effective_decision: report.contract.decision }) : null;
   return (
     <div className="rapport" data-testid="rapport">
+      <Download item={item} digest={digest} />
       <dl className="fiche">
         <div>
           <dt>Incident</dt>
@@ -251,7 +278,7 @@ export function IncidentView({ view, initialIncident = null }: { view: ViewProps
                       </li>
                     ))}
                   </ul>
-                  {current && <Report fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
+                  {current && <Report digest={reportDigest(data.journal, current.report.incident_id)} fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
                 </>
               )}
             </>
@@ -259,7 +286,9 @@ export function IncidentView({ view, initialIncident = null }: { view: ViewProps
         }}
       </Panel>
 
-      <div className="grille-bas">
+      <AlertsPanel view={view} />
+
+      <div className="grille-deux">
         <Panel title="Agents en pause, hors chaîne" id="titre-pauses" source={sources.response} snapshot={response} now={now}>
           {(data) => {
             const offchain = data.pausedAgents.filter((p) => p.scope === "OFFCHAIN");
