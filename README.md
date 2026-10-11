@@ -304,11 +304,16 @@ voisins réels, pas à un bouchon. **Absent** : n'existe pas.
 | Dashboard | `dashboard/` | oui | simulé par défaut | Lecture seule. Lit `relay/` et `response/` sur demande (`dashboard/README.md`) ; en mode fake le coffre est simulé, et la page l'affiche : bandeau « COFFRE SIMULÉ » dans `make demo`. En mode chain, le bandeau ne s'affiche pas |
 | Commande de démo | `Makefile` | oui | oui | `make demo`, `make scenes`. Coffre simulé par défaut ; `VAULT_MODE=chain` déploie le contrat sur anvil. Deux écarts connus avec la spec, listés dans `demo/ecarts-connus.json` |
 | Mesure du détecteur | `docs/mesures/` | oui | | Jeu de test de `data/jeu-factures/` lancé, résultat dans `docs/mesures/bench-test.json`, repris par la [fiche de défense](docs/fiche-defense.md). Règles fixes de référence et délais : encore « à mesurer ». Les lignes du contrat se lisent dans la fiche, avec leur réserve |
+| Marché de vérification | `src/` | oui | oui, sur le L1 AWS | Prouvé sur le L1 de démo (`docs-jury/preuves/`) ; son verdict n'entre pas encore dans la décision du coffre |
+| L1 VETO | `infra/l1/` | oui | oui | L1 privé Avalanche, chainId 191919, VETO natif, TxAllowList et Native Minter |
+| Passerelle, cache et vérificateurs | `offchain/` | oui | oui, au marché | Services de vérification ; l'évaluateur est factice, le vérificateur LLM est en construction |
 
-`src/`, `test/`, `script/` et `offchain/` contiennent aussi d'autres contrats et
-leurs services (un marché de vérification, `src/VerificationMarket.sol`). Ce
-n'est pas le coffre de [specs/02-contrat.md](specs/02-contrat.md), et ils ne
-sont pas dans le flux décrit ici : voir [docs-jury/](docs-jury/README.md).
+`src/`, `test/`, `script/` et `offchain/` contiennent aussi un marché de
+vérification, prouvé de bout en bout sur le L1 de démo
+([docs-jury/](docs-jury/README.md)). Au temps 1, son verdict n'entre pas dans
+la décision du coffre ; leur jonction est conçue, non construite. Les specs
+donnent Fuji (chainId 43113), tandis que la chaîne utilisée est le L1 AWS
+(chainId 191919).
 
 ## Limites connues
 
@@ -350,12 +355,21 @@ Détail : [fiche de défense](docs/fiche-defense.md), « Limites ».
 | [docs/demo/script-video.md](docs/demo/script-video.md) | Script de la vidéo de démo |
 | [docs/deck/plan.md](docs/deck/plan.md) | Plan du deck en huit slides |
 | [docs/mesures/](docs/mesures/README.md) | Fichiers de mesure et leur format |
+| [docs-jury/README.md](docs-jury/README.md) | Partie blockchain : sommaire, état du marché et du coffre, décomptes de tests mesurés |
+| [docs-jury/architecture.md](docs-jury/architecture.md) | L1 privé VETO (chainId 191919, TxAllowList, Native Minter), contrats par phase, ArgentVault, part hors chaîne |
+| [docs-jury/flux-demande.md](docs-jury/flux-demande.md) | Parcours d'une demande dans le marché : commit, reveal, code 0/1/2, contestation |
+| [docs-jury/fautes.md](docs-jury/fautes.md) | Les trois fautes des vérificateurs, leurs sanctions, nos limites |
+| [docs-jury/rapport-securite.md](docs-jury/rapport-securite.md) | Revue de sécurité interne du marché, du coffre et du L1 ; pas un audit indépendant |
+| [docs-jury/tests.md](docs-jury/tests.md) | Suites Foundry et hors chaîne, familles de tests, commandes |
+| [docs-jury/mesures-gaz.md](docs-jury/mesures-gaz.md) | Tailles des contrats et coûts en gaz mesurés |
+| [docs-jury/rejouer-la-demo.md](docs-jury/rejouer-la-demo.md) | Redéployer la pile et rejouer la scène d'attaque sur le L1 |
+| [docs-jury/preuves/](docs-jury/preuves/README.md) | Extraits nettoyés des runs : scène d'attaque et bout en bout sur le L1, coffre, Slither, gaz |
 
 ## Équipe
 
 | Nom | Rôle |
 |---|---|
-| Wladimir | Contrat |
+| Wladimir | Contrats (coffre ArgentVault, marché de vérification), L1 Avalanche VETO, services de vérification hors chaîne |
 | Loris | Porte d'entrée et réponse |
 | Joseph | Relais, dashboard, CI, livrables |
 | Nicolas | Pitch et relecture |

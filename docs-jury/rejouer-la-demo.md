@@ -77,5 +77,5 @@ ADMIN_PRIVATE_KEY=… ./script/heartbeat.sh --prepare <RPC>   # une fois par cha
 forge test
 ```
 
-La suite compte 253 tests, tous au vert. Cette commande ne touche pas la chaîne :
+La suite compte 332 tests, tous au vert. Cette commande ne touche pas la chaîne :
 elle s'exécute dans l'EVM local de Foundry.
