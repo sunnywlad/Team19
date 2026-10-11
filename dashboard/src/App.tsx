@@ -9,17 +9,19 @@ import { DecisionsView } from "./views/DecisionsView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
 import { JournalView } from "./views/JournalView.tsx";
 import { PendingView } from "./views/PendingView.tsx";
+import { SupervisionView } from "./views/SupervisionView.tsx";
 import type { ViewProps } from "./views/shared.ts";
 
 const VIEWS = [
+  { key: "supervision", label: "Supervision" },
   { key: "decisions", label: "Décisions" },
-  { key: "incident", label: "Incident" },
-  { key: "journal", label: "Journal" },
+  { key: "incident", label: "Incidents" },
   { key: "attente", label: "En attente" },
+  { key: "journal", label: "Journal" },
 ] as const;
 type ViewKey = (typeof VIEWS)[number]["key"];
 
-/** L'écran vient de l'ancre de l'adresse, comparée à une liste fermée. */
+/** L'écran vient de l'ancre de l'adresse, comparée à une liste fermée. Sans ancre connue : Décisions, l'écran de référence. */
 function viewFromHash(): ViewKey {
   const wanted = window.location.hash.replace(/^#/, "");
   return VIEWS.find((v) => v.key === wanted)?.key ?? "decisions";
@@ -77,38 +79,54 @@ export function App({ client }: { client: ApiClient }) {
         Aller au contenu
       </button>
       <header className="entete">
-        <div className="entete-titre">
-          <h1>Argent Intelligent</h1>
-          <p className="lecture-seule">Tableau de bord en lecture seule</p>
-        </div>
-        <Freshness view={view} />
-        <button type="button" className="theme" data-ui="affichage" onClick={nextTheme}>
-          Thème : {THEME_LABELS[theme]}
-        </button>
-      </header>
-      <nav className="onglets" aria-label="Écrans" ref={tabs} onKeyDown={onTabKey}>
-        {VIEWS.map((v) => (
-          <button
-            key={v.key}
-            type="button"
-            data-ui="navigation"
-            aria-current={current === v.key ? "page" : undefined}
-            // Une seule étape de tabulation pour la barre : les flèches font le reste.
-            tabIndex={current === v.key ? 0 : -1}
-            onClick={() => show(v.key)}
-          >
-            {v.label}
+        <div className="cadre entete-haut">
+          <div className="marque">
+            <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" focusable="false">
+              <rect className="marque-fond" x="1" y="1" width="30" height="30" rx="9" />
+              <path className="marque-trait" d="M9 17l5 5 9-11" />
+            </svg>
+            <div>
+              <h1>Argent Intelligent</h1>
+              <p className="lecture-seule">Tableau de bord en lecture seule</p>
+            </div>
+          </div>
+          <Freshness view={view} />
+          <button type="button" className="theme" data-ui="affichage" onClick={nextTheme}>
+            Thème : {THEME_LABELS[theme]}
           </button>
-        ))}
-      </nav>
-      <Banners view={view} />
-      <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
-        {current === "decisions" && <DecisionsView view={view} />}
-        {current === "incident" && <IncidentView view={view} />}
-        {current === "journal" && <JournalView view={view} />}
-        {current === "attente" && <PendingView view={view} />}
-      </main>
-      <footer className="pied">
+        </div>
+        <div className="cadre entete-bas">
+          <nav className="onglets" aria-label="Écrans" ref={tabs} onKeyDown={onTabKey}>
+            {VIEWS.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                data-ui="navigation"
+                aria-current={current === v.key ? "page" : undefined}
+                // Une seule étape de tabulation pour la barre : les flèches font le reste.
+                tabIndex={current === v.key ? 0 : -1}
+                onClick={() => show(v.key)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </header>
+      <div className="cadre contenu">
+        <Banners view={view} />
+        <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
+          {current === "supervision" && <SupervisionView view={view} />}
+          {current === "decisions" && <DecisionsView view={view} />}
+          {current === "incident" && <IncidentView view={view} />}
+          {current === "journal" && <JournalView view={view} />}
+          {current === "attente" && <PendingView view={view} />}
+        </main>
+      </div>
+      <footer className="cadre pied">
+        <p className="pied-mention" data-testid="pied-mention">
+          Données fictives · réseau de test
+        </p>
         <p>
           Cette page n'émet que des lectures (GET) : elle ne peut ni payer, ni mettre en pause, ni approuver. Identifiants opaques abrégés,
           aucune donnée nominative. {UNIT_LEGEND}.
