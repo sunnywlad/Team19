@@ -39,6 +39,27 @@ test("port de contrôle : absent sans DEMO_MODE=1, absent sans faux coffre", asy
   s.close();
 });
 
+test("port 8788 : sans DEMO_MODE=1 ou sans VAULT_MODE=fake, le port n'existe pas", async () => {
+  const s = makeStack();
+  // Un port libre, puis rendu : rien ne doit s'y mettre à écouter.
+  const probe = createApi({ indexer: s.indexer, queue: s.queue, confirmations: 1, vault: s.vault });
+  const port = await listen(probe, 0);
+  await new Promise((resolve) => probe.close(resolve));
+  const closed = async (): Promise<boolean> => fetch(`http://127.0.0.1:${port}/demo/approve`, { method: "POST" }).then(() => false, () => true);
+  const P = { DEMO_CONTROL_PORT: String(port) };
+  for (const env of [{ ...P, VAULT_MODE: "fake" }, { ...P, VAULT_MODE: "fake", DEMO_MODE: "" }, { ...P, VAULT_MODE: "fake", DEMO_MODE: "true" }, { ...P, DEMO_MODE: "1" }, { ...P, VAULT_MODE: "chain", DEMO_MODE: "1" }]) {
+    assert.equal(await startDemoControl(s.vault, env), null, JSON.stringify(env));
+    assert.ok(await closed(), `rien n'écoute avec ${JSON.stringify(env)}`);
+  }
+  // Les deux ensemble : il existe.
+  const control = await startDemoControl(s.vault, { ...P, VAULT_MODE: "fake", DEMO_MODE: "1" });
+  assert.ok(control);
+  assert.equal(control.port, port);
+  assert.equal(await closed(), false);
+  await new Promise((resolve) => control.server.close(resolve));
+  s.close();
+});
+
 test("port de contrôle : l'API en lecture seule ne sert aucune route de démo", async () => {
   const s = makeStack();
   const api = createApi({ indexer: s.indexer, queue: s.queue, confirmations: 1, vault: s.vault });

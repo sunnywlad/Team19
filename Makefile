@@ -105,8 +105,8 @@ scene:
 demo-test:
 	node --disable-warning=ExperimentalWarning --test "demo/test/*.test.mjs"
 
-# Démo en mode fake, scènes 1, 2, 3, 4 et 8, deux fois, puis vérification du
-# journal et arrêt.
+# Démo en mode fake, scènes 1, 2, 3, 4 et 8, deux fois, vérification du journal,
+# recherche de secrets dans les logs, droits de var/demo/, pid périmés, arrêt.
 demo-smoke:
 	node demo/smoke.mjs
 
