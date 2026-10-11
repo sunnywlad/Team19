@@ -81,8 +81,8 @@ export function loadConfig({ env = process.env, envFile = join(ROOT, ".env") } =
     ignoredPorts,
     url,
     chainId: get("CHAIN_ID") ?? "31337",
-    // Mode chain : toujours l'anvil local de la démo, jamais un RPC posé ailleurs.
-    rpcUrl: url("anvil"),
+    // RPC externe seulement s'il est fourni et que son eth_chainId vaut CHAIN_ID.
+    rpcUrl: get("RPC_URL") ?? url("anvil"),
     gatewayDataDir: get("GATEWAY_DATA_DIR") ?? join(ROOT, "gateway", "var"),
     journalFile: get("JOURNAL_FILE") ?? join(ROOT, "response", "var", "journal.jsonl"),
     dashboard: (get("DEMO_DASHBOARD") ?? "1") !== "0",

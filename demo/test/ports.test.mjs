@@ -23,7 +23,7 @@ test("un .env avec GATEWAY_PORT=8700 ne déplace pas la porte", () => {
     const config = loadConfig({ env: {}, envFile });
     assert.deepEqual(config.ports, PORTS);
     assert.equal(config.url("gateway"), "http://127.0.0.1:8780");
-    assert.equal(config.rpcUrl, "http://127.0.0.1:8545", "mode chain : l'anvil local, pas le RPC de .env");
+    assert.equal(config.rpcUrl, "http://203.0.113.7:8545", "le RPC fourni dans .env est retenu sans déplacer les ports");
     assert.deepEqual(config.ignoredPorts, ["JOURNAL_PORT", "GATEWAY_PORT", "CLIENT_IA_PORT", "API_PORT", "DEMO_CONTROL_PORT"]);
     const gateway = services(config).find((s) => s.name === "gateway");
     assert.equal(gateway.port, 8780);
