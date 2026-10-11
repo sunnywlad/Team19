@@ -1,4 +1,4 @@
-import type { Sources } from "../api/types.ts";
+import type { Source, Sources, TagSource, VaultOrigin } from "../api/types.ts";
 import type { Reaction } from "../components/DecisionsTable.tsx";
 import type { RelayData, ResponseData } from "../data/load.ts";
 import { reactionsFor } from "../domain/activity.ts";
@@ -10,8 +10,20 @@ export type ViewProps = {
   vault: Snapshot<import("../api/types.ts").VaultState>;
   response: Snapshot<ResponseData>;
   sources: Sources;
+  /** Contrat ou faux coffre derrière le relais. */
+  vaultOrigin: VaultOrigin;
   now: number;
 };
+
+/**
+ * Étiquette d'un panneau alimenté par le coffre (décisions, événements, état).
+ * « réel » seulement si le relais est réel ET qu'il lit un contrat : un faux
+ * coffre ne doit jamais se lire comme un vrai.
+ */
+export function vaultFed(source: Source, origin: VaultOrigin): TagSource {
+  if (source !== "reel" || origin === "chaine" || origin === "sans-objet") return source;
+  return origin === "faux-coffre" ? "faux-coffre" : "non-confirme";
+}
 
 /**
  * Les données du service de réponse se rapportent-elles aux mêmes demandes que

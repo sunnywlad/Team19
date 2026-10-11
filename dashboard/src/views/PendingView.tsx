@@ -3,7 +3,7 @@ import { Panel } from "../components/Panel.tsx";
 import { pendingCases } from "../domain/activity.ts";
 import { actionLabel } from "../domain/reasons.ts";
 import { formatRemaining, formatTime } from "../lib/format.ts";
-import type { ViewProps } from "./shared.ts";
+import { vaultFed, type ViewProps } from "./shared.ts";
 
 /**
  * Cas en attente d'un humain (décision 1). Seuls les faits inscrits au contrat
@@ -12,9 +12,9 @@ import type { ViewProps } from "./shared.ts";
  * permet d'approuver ou de refuser.
  */
 export function PendingView({ view }: { view: ViewProps }) {
-  const { relay, sources, now } = view;
+  const { relay, sources, vaultOrigin, now } = view;
   return (
-    <Panel title="Cas en attente d'une validation humaine" id="titre-attente" source={sources.relay} snapshot={relay} now={now}>
+    <Panel title="Cas en attente d'une validation humaine" id="titre-attente" source={vaultFed(sources.relay, vaultOrigin)} snapshot={relay} now={now}>
       {(data) => {
         const cases = pendingCases(data.decisions, data.events);
         return (

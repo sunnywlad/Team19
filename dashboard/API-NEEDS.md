@@ -128,6 +128,7 @@ ferait passer pour refusé un cas 1 dont le montant est toujours bloqué.
 | Variable (proxy local, jamais dans le bundle) | Effet |
 |---|---|
 | `RELAY_HAS_VAULT=1` | `/vault` est lu sur le relais |
+| `RELAY_VAULT_MODE=chain` ou `fake` | servi par le proxy (`/api/local/mode`) : `fake` affiche « COFFRE SIMULÉ » et l'étiquette « simulation » ; absent : « origine non confirmée » |
 | `RESPONSE_API_URL=http://127.0.0.1:…` | les § 2 à 5 sont lus sur le service de réponse |
 | `RESPONSE_API_TOKEN=…` | jeton ajouté par le proxy, côté serveur |
 

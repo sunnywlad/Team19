@@ -1,7 +1,7 @@
 // Briques d'affichage. Toute valeur venue d'une API passe par l'une d'elles :
 // identifiant abrégé, montant ou « non disponible », texte non fiable inerte.
 import type { ReactNode } from "react";
-import type { Source } from "../api/types.ts";
+import type { TagSource } from "../api/types.ts";
 import { DECISION_WORDS, type DecisionKind } from "../domain/reasons.ts";
 import { UNIT_LABEL, abbreviateId, formatWei } from "../lib/format.ts";
 import { EXCERPT_MAX, neutralize } from "../lib/safeText.ts";
@@ -64,7 +64,21 @@ export function DecisionBadge({ kind }: { kind: DecisionKind }) {
   );
 }
 
-export function SourceTag({ source }: { source: Source }) {
+export function SourceTag({ source }: { source: TagSource }) {
+  if (source === "faux-coffre") {
+    return (
+      <span className="source source-simulation" title="Faux coffre en mémoire dans le relais : aucun fonds, aucune chaîne">
+        simulation
+      </span>
+    );
+  }
+  if (source === "non-confirme") {
+    return (
+      <span className="source source-simulation" title="Le proxy local n'a pas dit si le relais lit un contrat ou un faux coffre">
+        origine non confirmée
+      </span>
+    );
+  }
   return source === "reel" ? (
     <span className="source source-reel">réel</span>
   ) : (

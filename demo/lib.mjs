@@ -187,7 +187,9 @@ export function services(config) {
       health: `${config.url("dashboard")}/`,
       // Mode LIVE. FIXTURES_API_URL pointe sur un port où rien n'écoute : son
       // défaut (8788) est le port de contrôle de la démo.
-      env: () => ({ RELAY_API_URL: config.url("relay"), RESPONSE_API_URL: journal, RELAY_HAS_VAULT: "1", FIXTURES_API_URL: `http://${HOST}:8789` }),
+      // RELAY_VAULT_MODE : lu par le proxy local du dashboard, qui affiche alors
+      // « COFFRE SIMULÉ » en mode fake. Rien n'est ajouté aux réponses du relais.
+      env: () => ({ RELAY_API_URL: config.url("relay"), RESPONSE_API_URL: journal, RELAY_HAS_VAULT: "1", RELAY_VAULT_MODE: config.mode, FIXTURES_API_URL: `http://${HOST}:8789` }),
     });
   }
   return list;

@@ -24,8 +24,18 @@ Réel, contre l'API du relais (`cd ../relay && npm start`, port 8787) et le
 service de réponse (`cd ../response && npm start`, port 8790) :
 
 ```bash
-RELAY_HAS_VAULT=1 RESPONSE_API_URL=http://127.0.0.1:8790 npm run dev
+RELAY_HAS_VAULT=1 RELAY_VAULT_MODE=chain RESPONSE_API_URL=http://127.0.0.1:8790 npm run dev
 ```
+
+`RELAY_VAULT_MODE` dit ce que le relais a derrière lui : `chain` (un contrat) ou
+`fake` (son faux coffre en mémoire, `VAULT_MODE=fake`). Le proxy local le sert à
+la page par `GET /api/local/mode` ; la valeur n'est pas dans le bundle et l'API
+du relais n'a aucun champ de plus. Avec `fake`, un bandeau permanent « COFFRE
+SIMULÉ : aucun fonds, aucune chaîne » s'affiche et les panneaux alimentés par
+le faux coffre (plaçable, décisions, cas en attente, pauses sur la chaîne)
+portent l'étiquette « simulation » ; la file et le journal gardent « réel ».
+Sans la variable, ces panneaux portent « origine non confirmée » : jamais
+« réel » par défaut. `make demo` la pose.
 
 Sans ces deux variables, le coffre et le service de réponse restent simulés :
 lancer alors aussi `npm run dev:fixtures`.
