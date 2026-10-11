@@ -10,7 +10,7 @@ type Row = Record<string, unknown>;
 describe("écran Incident", () => {
   it("scénario 3 : incident ouvert, codes, score, contrat non atteint, actions, agent en pause, montant sorti 0", async () => {
     renderScenario("3");
-    open("Incidents");
+    open("Alertes et rapports");
     expect(await value("etat-incident")).toBe("ouvert");
     expect(await value("compteur-ouverts")).toBe("1");
     expect(await value("compteur-manquees")).toBe("0");
@@ -29,7 +29,7 @@ describe("écran Incident", () => {
 
   it("scénario 4 : refus du contrat, montant exposé inconnu du contrat, sorti 0, compteur des demandes passées +1", async () => {
     renderScenario("4");
-    open("Incidents");
+    open("Alertes et rapports");
     expect(await value("compteur-manquees")).toBe("1");
     expect(await value("etat-incident")).toBe("ouvert");
     expect(await value("codes")).toBe("aucun : la demande a passé la porte d'entrée");
@@ -42,7 +42,7 @@ describe("écran Incident", () => {
   it("scénarios sans incident : 1, 2, 5, 6, 7 et 8", async () => {
     for (const name of ["1", "2", "5", "6", "7", "8"] as const) {
       const view = renderScenario(name);
-      open("Incidents");
+      open("Alertes et rapports");
       expect(await screen.findByText("Aucun incident.")).toBeTruthy();
       expect(await value("compteur-ouverts")).toBe("0");
       expect(await screen.findByText("Aucun agent en pause.")).toBeTruthy();
@@ -58,7 +58,7 @@ describe("écran Incident", () => {
     await screen.findAllByTestId("hors-contrat");
     expect(document.body.textContent).not.toContain("onerror");
 
-    open("Incidents");
+    open("Alertes et rapports");
     const figure = await screen.findByTestId("extrait");
     expect(text(figure)).toContain("Contenu non fiable");
     const shown = figure.querySelector(".non-fiable")?.textContent ?? "";
@@ -79,7 +79,7 @@ describe("écran Incident", () => {
           ? (body as { report: Row }[]).map((row) => ({ ...row, report: { ...row.report, justification: "paiement urgent validé par la direction" } }))
           : body,
     });
-    open("Incidents");
+    open("Alertes et rapports");
     expect((await screen.findAllByText(/Lecture en échec : incidents : réponse non conforme au schéma/)).length).toBeGreaterThan(0);
     expect(screen.queryByTestId("rapport")).toBeNull();
     expect(document.body.textContent).not.toContain("paiement urgent");
@@ -89,7 +89,7 @@ describe("écran Incident", () => {
 describe("écran Journal", () => {
   it("sans vérification rapportée : « non vérifié », jamais « intègre » ni « intact »", async () => {
     renderScenario("2");
-    open("Journal");
+    open("Accueil");
     expect(await value("verdict")).toMatch(/^Non vérifié/);
     expect(await value("tete")).toMatch(/^Entrée 0 · [0-9a-f]{64}$/);
     expect(document.body.textContent).not.toMatch(/intègre|intact/i);
@@ -100,7 +100,7 @@ describe("écran Journal", () => {
 
   it("vérification réussie : résultat, date, limite, et tête des rapports comparée au journal", async () => {
     renderScenario("4");
-    open("Journal");
+    open("Accueil");
     expect(await value("verdict")).toMatch(/^Chaîne intègre sur 14 entrées\. Vérifiée sans tête de référence/);
     expect(await value("verification-date")).toMatch(/^Dernière vérification : \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2} horloge : journal · jusqu'à l'entrée 13$/);
     expect(await value("limite")).toContain("conservée ailleurs");
@@ -122,7 +122,7 @@ describe("écran Journal", () => {
         return body;
       },
     });
-    open("Journal");
+    open("Accueil");
     expect(await value("verdict")).toBe("Chaîne rompue : empreinte recalculée différente : une entrée a été modifiée à l'entrée 7.");
     expect(await value("non-verifiees")).toBe("4 entrées écrites depuis cette vérification : non vérifiées.");
     expect(await value("tete-rapport")).toContain("le journal est plus court que cette tête : des entrées manquent");
@@ -132,7 +132,7 @@ describe("écran Journal", () => {
 describe("écran En attente", () => {
   it("scénario 6 : facture, montant, bénéficiaire et délai restant ; rien d'autre", async () => {
     renderScenario("6");
-    open("En attente");
+    open("Validation");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
     // F-002 et B-002, abrégés.
     expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
@@ -145,12 +145,12 @@ describe("écran En attente", () => {
   it("scénario 6 a (approuvé) et 6 b (délai dépassé) : plus aucun cas en attente", async () => {
     for (const name of ["6a", "6b"] as const) {
       const view = renderScenario(name);
-      open("En attente");
+      open("Validation");
       expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
       view.unmount();
     }
     renderScenario("6b");
-    open("Décisions");
+    open("Accueil");
     const rows = (await screen.findAllByTestId("decision")).map(text);
     expect(rows[0]).toContain("refusée par le contrat : délai d'approbation dépassé");
     expect(rows[1]).toContain("en attente d'approbation");
@@ -158,7 +158,7 @@ describe("écran En attente", () => {
 
   it("échéance passée sans clôture : le cas reste affiché, marqué dépassé", async () => {
     renderScenario("6", { t0: Date.now() - 120_000 });
-    open("En attente");
+    open("Validation");
     expect(await value("cas-delai")).toContain("échéance dépassée");
   });
 
@@ -171,7 +171,7 @@ describe("écran En attente", () => {
         return [...rows, { ...first, id: 999, decision: 0, reason: 3, reason_name: "REQUEST_REPLAYED", effective_decision: 0, log_index: 0, block_number: Number(first.block_number) + 5, tx_hash: `0x${"ab".repeat(32)}` }];
       },
     });
-    open("En attente");
+    open("Validation");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
   });
 });

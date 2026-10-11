@@ -200,9 +200,9 @@ function Report({ item, chainPause, fakeVault }: { item: IncidentItem; chainPaus
   );
 }
 
-export function IncidentView({ view }: { view: ViewProps }) {
+export function IncidentView({ view, initialIncident = null }: { view: ViewProps; initialIncident?: string | null }) {
   const { relay, response, sources, now } = view;
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(initialIncident);
   const linked = sameWorld(sources);
   return (
     <>

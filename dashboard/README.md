@@ -71,5 +71,5 @@ Chaque panneau porte son étiquette « réel » ou « simulation ».
 - **Fraîcheur.** Lecture toutes les 2 s, recul exponentiel en cas d'erreur. Au-delà de 10 s sans lecture réussie : bandeau « données indisponibles » et valeurs grisées.
 - **Décision.** Lue dans les événements `Decision`, jamais dans un reçu. Motif inconnu, ou décision qui ne va pas avec son motif : traité comme un refus.
 - **Délais.** Une durée n'est calculée qu'entre deux horodatages de la même horloge (journal ou bloc), et l'affiche.
-- **Accessibilité.** Décision en mots et icône, pas seulement en couleur ; thème clair, sombre ou système ; barre d'écrans au clavier (flèches, Début, Fin) ; tableaux en fiches sur écran étroit.
+- **Accessibilité.** Décision en mots et icône, pas seulement en couleur ; thème sombre unique (aubergine, crème, AA vérifié) ; barre d'écrans au clavier (flèches, Début, Fin) ; tableaux en fiches sur écran étroit.
 - **Réseau.** Serveur lié à `127.0.0.1`, CSP stricte, aucune ressource externe, proxy qui refuse tout sauf `GET`.

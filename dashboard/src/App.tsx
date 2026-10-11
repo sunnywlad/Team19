@@ -1,30 +1,26 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ApiClient } from "./api/client.ts";
 import { Banners, Freshness } from "./components/Banners.tsx";
+import { VetoMark } from "./components/icons.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
-import { THEME_LABELS, useTheme } from "./hooks/useTheme.ts";
 import { UNIT_LEGEND } from "./lib/format.ts";
-import { DecisionsView } from "./views/DecisionsView.tsx";
+import { HomeView } from "./views/HomeView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
-import { JournalView } from "./views/JournalView.tsx";
 import { PendingView } from "./views/PendingView.tsx";
-import { SupervisionView } from "./views/SupervisionView.tsx";
 import type { ViewProps } from "./views/shared.ts";
 
-const VIEWS = [
-  { key: "supervision", label: "Supervision" },
-  { key: "decisions", label: "Décisions" },
-  { key: "incident", label: "Incidents" },
-  { key: "attente", label: "En attente" },
-  { key: "journal", label: "Journal" },
+export const VIEWS = [
+  { key: "accueil", label: "Accueil" },
+  { key: "validation", label: "Validation" },
+  { key: "alertes", label: "Alertes et rapports" },
 ] as const;
-type ViewKey = (typeof VIEWS)[number]["key"];
+export type ViewKey = (typeof VIEWS)[number]["key"];
 
-/** L'écran vient de l'ancre de l'adresse, comparée à une liste fermée. Sans ancre connue : Décisions, l'écran de référence. */
+/** L'écran vient de l'ancre de l'adresse, comparée à une liste fermée. Sans ancre connue : l'accueil. */
 function viewFromHash(): ViewKey {
   const wanted = window.location.hash.replace(/^#/, "");
-  return VIEWS.find((v) => v.key === wanted)?.key ?? "decisions";
+  return VIEWS.find((v) => v.key === wanted)?.key ?? "accueil";
 }
 
 /** Le dashboard : il lit, il n'agit pas. Aucun bouton ici ne déclenche un paiement, une pause ou une approbation. */
@@ -39,19 +35,25 @@ export function App({ client }: { client: ApiClient }) {
   const view: ViewProps = { relay, vault, response, sources: client.sources, vaultOrigin, now };
 
   const [current, setCurrent] = useState<ViewKey>(viewFromHash);
+  /** Incident à ouvrir sur la page « Alertes et rapports », choisi depuis l'accueil. */
+  const [incident, setIncident] = useState<string | null>(null);
   useEffect(() => {
     const onHash = (): void => setCurrent(viewFromHash());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  const main = useRef<HTMLElement>(null);
+  const tabs = useRef<HTMLElement>(null);
   const show = (key: ViewKey): void => {
     setCurrent(key);
     window.history.replaceState(null, "", `#${key}`);
   };
-
-  const [theme, nextTheme] = useTheme();
-  const main = useRef<HTMLElement>(null);
-  const tabs = useRef<HTMLElement>(null);
+  /** Changement de page depuis le contenu : le clavier suit, en haut de la nouvelle page. */
+  const go = (key: ViewKey): void => {
+    show(key);
+    main.current?.focus();
+  };
 
   /** Flèches, Début et Fin passent d'un écran à l'autre, comme dans une barre d'onglets. */
   const onTabKey = (event: KeyboardEvent<HTMLElement>): void => {
@@ -66,10 +68,10 @@ export function App({ client }: { client: ApiClient }) {
             : event.key === "End"
               ? VIEWS.length - 1
               : -1;
-    const view = VIEWS[target];
-    if (!view) return;
+    const next = VIEWS[target];
+    if (!next) return;
     event.preventDefault();
-    show(view.key);
+    show(next.key);
     tabs.current?.querySelectorAll("button")[target]?.focus();
   };
 
@@ -81,19 +83,14 @@ export function App({ client }: { client: ApiClient }) {
       <header className="entete">
         <div className="cadre entete-haut">
           <div className="marque">
-            <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" focusable="false">
-              <rect className="marque-fond" x="1" y="1" width="30" height="30" rx="9" />
-              <path className="marque-trait" d="M9 17l5 5 9-11" />
-            </svg>
+            <VetoMark />
             <div>
-              <h1>Argent Intelligent</h1>
-              <p className="lecture-seule">Tableau de bord en lecture seule</p>
+              <h1>Veto</h1>
+              <p className="marque-sous">Argent Intelligent</p>
             </div>
+            <p className="lecture-seule">lecture seule</p>
           </div>
           <Freshness view={view} />
-          <button type="button" className="theme" data-ui="affichage" onClick={nextTheme}>
-            Thème : {THEME_LABELS[theme]}
-          </button>
         </div>
         <div className="cadre entete-bas">
           <nav className="onglets" aria-label="Écrans" ref={tabs} onKeyDown={onTabKey}>
@@ -116,11 +113,18 @@ export function App({ client }: { client: ApiClient }) {
       <div className="cadre contenu">
         <Banners view={view} />
         <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
-          {current === "supervision" && <SupervisionView view={view} />}
-          {current === "decisions" && <DecisionsView view={view} />}
-          {current === "incident" && <IncidentView view={view} />}
-          {current === "journal" && <JournalView view={view} />}
-          {current === "attente" && <PendingView view={view} />}
+          {current === "accueil" && (
+            <HomeView
+              view={view}
+              onOpenValidation={() => go("validation")}
+              onOpenIncident={(id) => {
+                setIncident(id);
+                go("alertes");
+              }}
+            />
+          )}
+          {current === "validation" && <PendingView view={view} />}
+          {current === "alertes" && <IncidentView view={view} initialIncident={incident} />}
         </main>
       </div>
       <footer className="cadre pied">
