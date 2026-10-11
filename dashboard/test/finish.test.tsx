@@ -20,7 +20,7 @@ describe("états", () => {
     renderScenario("2");
     expect(await screen.findByText("Aucune décision du contrat pour l'instant.")).toBeTruthy();
     expect(await screen.findByText("Aucun incident : aucun délai à mesurer.")).toBeTruthy();
-    open("Incident");
+    open("Incidents");
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
     expect(await screen.findByText("Aucun agent en pause sur la chaîne.")).toBeTruthy();
     open("En attente");
@@ -80,18 +80,20 @@ describe("clavier", () => {
     expect(document.activeElement?.textContent).toBe("Décisions");
 
     await user.keyboard("{ArrowRight}");
-    expect(document.activeElement?.textContent).toBe("Incident");
-    expect(screen.getByRole("button", { name: "Incident", current: "page" })).toBeTruthy();
+    expect(document.activeElement?.textContent).toBe("Incidents");
+    expect(screen.getByRole("button", { name: "Incidents", current: "page" })).toBeTruthy();
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
 
     await user.keyboard("{End}");
+    expect(screen.getByRole("button", { name: "Journal", current: "page" })).toBeTruthy();
+    await user.keyboard("{ArrowLeft}");
     expect(screen.getByRole("button", { name: "En attente", current: "page" })).toBeTruthy();
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
-    await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("button", { name: "Décisions", current: "page" })).toBeTruthy();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Supervision", current: "page" })).toBeTruthy();
     await user.keyboard("{ArrowLeft}{Home}");
-    expect(screen.getByRole("button", { name: "Décisions", current: "page" })).toBeTruthy();
-    expect(window.location.hash).toBe("#decisions");
+    expect(screen.getByRole("button", { name: "Supervision", current: "page" })).toBeTruthy();
+    expect(window.location.hash).toBe("#supervision");
   });
 
   it("« Aller au contenu » amène le clavier dans l'écran, et l'écran suit l'ancre de l'adresse", async () => {

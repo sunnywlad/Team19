@@ -42,7 +42,7 @@ describe("mode faux coffre", () => {
     expect(tagOf("Arrêtées à la porte d'entrée")).toBe("réel");
     expect(text(screen.getByLabelText("Dernière mise à jour par source"))).toMatch(/relais réel .*coffre simulation .*service de réponse réel/);
 
-    for (const [tab, title] of [["En attente", "Cas en attente d'une validation humaine"], ["Incident", "Agents en pause, sur la chaîne"]] as const) {
+    for (const [tab, title] of [["En attente", "Cas en attente d'une validation humaine"], ["Incidents", "Agents en pause, sur la chaîne"]] as const) {
       open(tab);
       await screen.findByRole("heading", { name: title });
       expect(tagOf(title)).toBe("simulation");
@@ -56,11 +56,11 @@ describe("mode faux coffre", () => {
 
   it("rapport d'incident : la décision « du contrat » est marquée faux coffre, et seulement en mode fake", async () => {
     const fake = render(<App client={realClient({ vault: "fake" }, [], 200, "4")} />);
-    open("Incident");
+    open("Incidents");
     expect(text(await screen.findByTestId("decision-contrat-simulee"))).toBe("simulation faux coffre : aucun contrat n'a jugé");
     fake.unmount();
     render(<App client={realClient({ vault: "chain" }, [], 200, "4")} />);
-    open("Incident");
+    open("Incidents");
     await screen.findByTestId("decision-contrat");
     expect(screen.queryByTestId("decision-contrat-simulee")).toBeNull();
   });

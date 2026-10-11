@@ -2,7 +2,7 @@
 // chaque incident proposé.
 import { fireEvent, screen } from "@testing-library/react";
 
-export const SCREENS = ["Décisions", "Incident", "Journal", "En attente"] as const;
+export const SCREENS = ["Supervision", "Décisions", "Incidents", "En attente", "Journal"] as const;
 
 export function open(name: (typeof SCREENS)[number]): void {
   fireEvent.click(screen.getByRole("button", { name }));

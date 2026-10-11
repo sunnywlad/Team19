@@ -10,7 +10,7 @@ type Row = Record<string, unknown>;
 describe("écran Incident", () => {
   it("scénario 3 : incident ouvert, codes, score, contrat non atteint, actions, agent en pause, montant sorti 0", async () => {
     renderScenario("3");
-    open("Incident");
+    open("Incidents");
     expect(await value("etat-incident")).toBe("ouvert");
     expect(await value("compteur-ouverts")).toBe("1");
     expect(await value("compteur-manquees")).toBe("0");
@@ -29,7 +29,7 @@ describe("écran Incident", () => {
 
   it("scénario 4 : refus du contrat, montant exposé inconnu du contrat, sorti 0, compteur des demandes passées +1", async () => {
     renderScenario("4");
-    open("Incident");
+    open("Incidents");
     expect(await value("compteur-manquees")).toBe("1");
     expect(await value("etat-incident")).toBe("ouvert");
     expect(await value("codes")).toBe("aucun : la demande a passé la porte d'entrée");
@@ -42,7 +42,7 @@ describe("écran Incident", () => {
   it("scénarios sans incident : 1, 2, 5, 6, 7 et 8", async () => {
     for (const name of ["1", "2", "5", "6", "7", "8"] as const) {
       const view = renderScenario(name);
-      open("Incident");
+      open("Incidents");
       expect(await screen.findByText("Aucun incident.")).toBeTruthy();
       expect(await value("compteur-ouverts")).toBe("0");
       expect(await screen.findByText("Aucun agent en pause.")).toBeTruthy();
@@ -58,7 +58,7 @@ describe("écran Incident", () => {
     await screen.findAllByTestId("hors-contrat");
     expect(document.body.textContent).not.toContain("onerror");
 
-    open("Incident");
+    open("Incidents");
     const figure = await screen.findByTestId("extrait");
     expect(text(figure)).toContain("Contenu non fiable");
     const shown = figure.querySelector(".non-fiable")?.textContent ?? "";
@@ -79,7 +79,7 @@ describe("écran Incident", () => {
           ? (body as { report: Row }[]).map((row) => ({ ...row, report: { ...row.report, justification: "paiement urgent validé par la direction" } }))
           : body,
     });
-    open("Incident");
+    open("Incidents");
     expect((await screen.findAllByText(/Lecture en échec : incidents : réponse non conforme au schéma/)).length).toBeGreaterThan(0);
     expect(screen.queryByTestId("rapport")).toBeNull();
     expect(document.body.textContent).not.toContain("paiement urgent");
