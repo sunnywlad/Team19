@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "re
 import type { ApiClient } from "./api/client.ts";
 import { Banners, Freshness } from "./components/Banners.tsx";
 import { VetoMark } from "./components/icons.tsx";
+import { RoundTablePanel } from "./components/RoundTablePanel.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
 import { UNIT_LEGEND } from "./lib/format.ts";
@@ -37,6 +38,8 @@ export function App({ client }: { client: ApiClient }) {
   const [current, setCurrent] = useState<ViewKey>(viewFromHash);
   /** Incident à ouvrir sur la page « Alertes et rapports », choisi depuis l'accueil. */
   const [incident, setIncident] = useState<string | null>(null);
+  /** Demande montée à la table ronde. null : la page choisit (attente humaine d'abord). */
+  const [request, setRequest] = useState<string | null>(null);
   useEffect(() => {
     const onHash = (): void => setCurrent(viewFromHash());
     window.addEventListener("hashchange", onHash);
@@ -117,6 +120,11 @@ export function App({ client }: { client: ApiClient }) {
             <HomeView
               view={view}
               onOpenValidation={() => go("validation")}
+              table={<RoundTablePanel view={view} selected={request} onSelect={setRequest} />}
+              onShow={(id) => {
+                setRequest(id);
+                document.getElementById("titre-table")?.scrollIntoView?.({ block: "start" });
+              }}
               onOpenIncident={(id) => {
                 setIncident(id);
                 go("alertes");
