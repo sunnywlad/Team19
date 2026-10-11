@@ -7,7 +7,7 @@ import {IVerifierRegistry} from "../src/interfaces/IVerifierRegistry.sol";
 
 /// @title Tests VerifierRegistry phase 2
 /// @notice Suite forge-std conforme a spec-lot6.md. src/ non modifie.
-/// @dev minStake = 100 CHK, lockBps = 2000 (20 % de la caution totale bloques par mission).
+/// @dev minStake = 100 VETO, lockBps = 2000 (20 % de la caution totale bloques par mission).
 contract VerifierRegistryTest is Test {
     VerifierRegistry internal registry;
 

@@ -303,7 +303,13 @@ describe('phase 3 off-chain — tirage et registre', { concurrency: false }, () 
     const { h, requestId, receipt } = await manualRequest('fallback-chain');
     const marker = await manualRequest('poll-marker');
     const wallet = makeWalletClient(requesterKey, rpcUrl, CHAIN_ID);
-    await wallet.sendTransaction({ to: requester.address, value: 0n, gas: 21_000n }); // bloc intermédiaire pour le tirage du marqueur.
+    const pad = await wallet.sendTransaction({ to: requester.address, value: 0n, gas: 21_000n });
+    // Attendre le reçu pour empêcher le tirage de partager le bloc intermédiaire.
+    const padReceipt = await assertSuccessfulReceipt(pad, 'Le bloc intermédiaire du marqueur doit être miné avant le tirage');
+    const drawBlock = await makePublicClient(rpcUrl, CHAIN_ID).readContract({
+      address: marketAddress, abi: drawnMarketAbi, functionName: 'drawBlock', args: [marker.requestId],
+    });
+    assert.ok(padReceipt.blockNumber >= drawBlock, `Bloc intermédiaire ${padReceipt.blockNumber} attendu au moins à drawBlock=${drawBlock}`);
     const markerDrawResult = await sendControlled({
       publicClient: makePublicClient(rpcUrl, CHAIN_ID), walletClient: wallet,
       address: marketAddress, abi: marketAbiWithErrors,
@@ -317,7 +323,7 @@ describe('phase 3 off-chain — tirage et registre', { concurrency: false }, () 
       await waitUntil(() => handle.state.get(marker.requestId)?.step === 'committed', 15_000, 'le service traite le tirage marqueur et avance au-delà des deux RequestCreated');
       if (markerDrawResult.status === 'success') {
         assert.equal(markerDrawResult.receipt.status, 'success', `Tirage explicite du marqueur après drawBlock attendu. Vu : ${describeTxs(markerTxs)}`);
-        assert.ok(markerDrawResult.receipt.blockNumber > marker.receipt.blockNumber, 'CommitteeDrawn du marqueur doit arriver après sa création');
+        assert.ok(markerDrawResult.receipt.blockNumber > drawBlock, `CommitteeDrawn du marqueur au bloc ${markerDrawResult.receipt.blockNumber} doit arriver après drawBlock=${drawBlock}`);
       }
 
       const drawHash = await wallet.writeContract({

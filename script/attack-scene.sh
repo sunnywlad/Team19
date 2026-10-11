@@ -162,9 +162,9 @@ appel() {
   cast call "$@" --rpc-url "$RPC"
 }
 
-# Montant wei -> CHK lisible.
-chk() {
-  printf '%s CHK' "$(cast from-wei "$1")"
+# Montant wei -> VETO lisible.
+veto() {
+  printf '%s VETO' "$(cast from-wei "$1")"
 }
 
 # Titre d'étape, lisible devant le jury.
@@ -265,7 +265,7 @@ echo "    Slashing                : $SLASHING"
 echo "    AgentIdentityRegistry   : $IDENTITY"
 echo "    AgentReputationRegistry : $REPUTATION"
 echo "    Admin / trésor          : $ADMIN_ADDR"
-echo "    Frais d'une demande     : $(chk "$FEE")"
+echo "    Frais d'une demande     : $(veto "$FEE")"
 
 # Adresses de test (index 1-5 du mnemonic Foundry).
 V1="$(addr_test 1)"; V2="$(addr_test 2)"; V3="$(addr_test 3)"; V4="$(addr_test 4)"
@@ -287,9 +287,9 @@ ROLE_INTRUS="$(appel "$TX_ALLOW_LIST" 'readAllowList(address)(uint256)' "$INTRUS
 ROLE_INTRUS="${ROLE_INTRUS%% *}"
 echo "  readAllowList(intrus) = $ROLE_INTRUS  (0 = aucun droit d'écriture)"
 echo
-echo "  L'admin envoie d'abord un peu de CHK à l'intrus (l'envoi VERS lui est permis)…"
+echo "  L'admin envoie d'abord un peu de VETO à l'intrus (l'envoi VERS lui est permis)…"
 admin_send "$INTRUS" --value "$(cast to-wei 1 ether)"
-echo "  Solde de l'intrus : $(chk "$(cast balance "$INTRUS" --rpc-url "$RPC")")  (il a du gaz)"
+echo "  Solde de l'intrus : $(veto "$(cast balance "$INTRUS" --rpc-url "$RPC")")  (il a du gaz)"
 echo
 echo "  L'intrus tente une transaction (un simple transfert de 0 vers lui-même,"
 echo "  pour que SEULE la TxAllowList puisse la refuser). On attend un REFUS du nœud :"
@@ -315,7 +315,7 @@ etape "ÉTAPE (b) — Faute 1 : un membre tiré ne commit pas → saisie 1 % + s
 preuve "un vérificateur tiré qui ne commit pas est saisi de 1 % de sa caution et prend un strike, constaté automatiquement à la finalisation."
 
 # 1. Inscription des 4 candidats avec la caution minimale lue sur la chaîne.
-echo "  minStake lue sur le registre : $(chk "$MIN_STAKE")"
+echo "  minStake lue sur le registre : $(veto "$MIN_STAKE")"
 echo "  Les index 1 à 4 s'inscrivent (register) avec la caution minimale…"
 for i in 1 2 3 4; do
   a="$(addr_test "$i")"
@@ -325,7 +325,7 @@ for i in 1 2 3 4; do
     echo "    index $i ($a) : déjà inscrit"
   else
     send_as "$i" "$REGISTRY" 'register()' --value "$MIN_STAKE"
-    echo "    index $i ($a) : inscrit, caution $(chk "$MIN_STAKE")"
+    echo "    index $i ($a) : inscrit, caution $(veto "$MIN_STAKE")"
   fi
 done
 
@@ -386,7 +386,7 @@ echo "  Membres PRÉSENTS (commit + reveal) : ${PRESENTS[0]}  ${PRESENTS[1]}"
 AVANT_B="$(appel "$REGISTRY" 'total(address)(uint256)' "$ABSENT")"
 AVANT_B="${AVANT_B%% *}"
 STRIKE_AVANT_B="$(appel "$SLASHING" 'strikesOf(address)(uint8)' "$ABSENT")"
-echo "  Caution de l'absent AVANT : $(chk "$AVANT_B")  | strikes AVANT : ${STRIKE_AVANT_B%% *}"
+echo "  Caution de l'absent AVANT : $(veto "$AVANT_B")  | strikes AVANT : ${STRIKE_AVANT_B%% *}"
 
 # 9. Les deux présents commit (vote Accept=2, reasons=0, detailHash=0, salt fixe).
 VOTE_ACCEPT=2
@@ -424,8 +424,8 @@ APRES_B="${APRES_B%% *}"
 STRIKE_APRES_B="$(appel "$SLASHING" 'strikesOf(address)(uint8)' "$ABSENT")"
 SAISIE_B=$(python3 -c "print(int('$AVANT_B')-int('$APRES_B'))")
 PCT_B=$(python3 -c "a=int('$AVANT_B'); print('n/a' if a==0 else f'{(int(\"$SAISIE_B\")*10000)//a/100}%')")
-echo "  Caution de l'absent APRÈS : $(chk "$APRES_B")  | strikes APRÈS : ${STRIKE_APRES_B%% *}"
-echo "  Saisie : $(chk "$SAISIE_B")  (soit $PCT_B de la caution)"
+echo "  Caution de l'absent APRÈS : $(veto "$APRES_B")  | strikes APRÈS : ${STRIKE_APRES_B%% *}"
+echo "  Saisie : $(veto "$SAISIE_B")  (soit $PCT_B de la caution)"
 if [[ "$SAISIE_B" == "0" ]]; then
   echo "  ✗ ANOMALIE : aucune saisie constatée pour la faute 1." >&2
   exit 1
@@ -452,7 +452,7 @@ for i in 1 2 3 4; do
     # On remonte au-dessus de minStake (minStake + le manque) pour laisser une marge.
     appoint="$(python3 -c "print(int('$manque')+int('$MIN_STAKE'))")"
     send_as "$i" "$REGISTRY" 'register()' --value "$appoint"
-    echo "    index $i : recomplété de $(chk "$appoint") (était sous minStake)"
+    echo "    index $i : recomplété de $(veto "$appoint") (était sous minStake)"
   fi
 done
 
@@ -518,7 +518,7 @@ admin_send "$MARKET" 'finalize(uint256)' "$REQ_C"
 # 8. Caution du fautif AVANT contestation.
 AVANT_C="$(appel "$REGISTRY" 'total(address)(uint256)' "$FAUTIF")"
 AVANT_C="${AVANT_C%% *}"
-echo "  Caution du fautif AVANT contestation : $(chk "$AVANT_C")"
+echo "  Caution du fautif AVANT contestation : $(veto "$AVANT_C")"
 
 # 9. Pendant la fenêtre de contestation, contest(requestId, verifier, facts, contentHash).
 echo "  contest($REQ_C, fautif, facts, contentHash) — par l'admin, pendant la fenêtre de contestation…"
@@ -540,8 +540,8 @@ APRES_C="$(appel "$REGISTRY" 'total(address)(uint256)' "$FAUTIF")"
 APRES_C="${APRES_C%% *}"
 SAISIE_C=$(python3 -c "print(int('$AVANT_C')-int('$APRES_C'))")
 PCT_C=$(python3 -c "a=int('$AVANT_C'); print('n/a' if a==0 else f'{(int(\"$SAISIE_C\")*10000)//a/100}%')")
-echo "  Caution du fautif APRÈS : $(chk "$APRES_C")"
-echo "  Saisie : $(chk "$SAISIE_C")  (soit $PCT_C de la caution)"
+echo "  Caution du fautif APRÈS : $(veto "$APRES_C")"
+echo "  Saisie : $(veto "$SAISIE_C")  (soit $PCT_C de la caution)"
 if [[ "$SAISIE_C" == "0" ]]; then
   echo "  ✗ ANOMALIE : aucune saisie constatée pour la faute 3." >&2
   exit 1
@@ -571,7 +571,7 @@ for i in 1 2 3 4; do
   if [[ "$manque" != "0" ]]; then
     appoint="$(python3 -c "print(int('$manque')+int('$MIN_STAKE'))")"
     send_as "$i" "$REGISTRY" 'register()' --value "$appoint"
-    echo "    index $i : recomplété de $(chk "$appoint")"
+    echo "    index $i : recomplété de $(veto "$appoint")"
   fi
 done
 
@@ -639,7 +639,7 @@ for i in 1 2 3 4; do
   tot="$(appel "$REGISTRY" 'total(address)(uint256)' "$a")"; tot="${tot%% *}"
   lck="$(appel "$REGISTRY" 'locked(address)(uint256)' "$a")"; lck="${lck%% *}"
   st="$(appel "$SLASHING" 'strikesOf(address)(uint8)' "$a")"; st="${st%% *}"
-  echo "    index $i ($a) : caution $(chk "$tot") (bloqué $(chk "$lck")) | strikes $st"
+  echo "    index $i ($a) : caution $(veto "$tot") (bloqué $(veto "$lck")) | strikes $st"
 done
 
 echo

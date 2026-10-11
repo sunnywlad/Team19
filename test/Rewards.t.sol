@@ -8,7 +8,7 @@ import {NATIVE_MINTER} from "../src/precompiles/INativeMinter.sol";
 
 /// @title Tests Rewards phase 2
 /// @notice Suite forge-std conforme a spec-lot6.md. src/ non modifie.
-/// @dev Le precompile NativeMinter est remplace par un faux via vm.etch ; sa provision CHK vient
+/// @dev Le precompile NativeMinter est remplace par un faux via vm.etch ; sa provision VETO vient
 ///      de vm.deal. Le contrat de test joue le role du marche (setMarket(address(this))).
 contract RewardsTest is Test {
     Rewards internal rewards;

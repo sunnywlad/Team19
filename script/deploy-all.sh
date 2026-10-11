@@ -89,8 +89,8 @@ fi
 TX_ALLOW_LIST="0x0200000000000000000000000000000000000002"
 NATIVE_MINTER="0x0200000000000000000000000000000000000001"
 
-# Montant plancher frappé à chaque adresse de test : 1000 CHK.
-MILLE_CHK="$(cast to-wei 1000 ether)"
+# Montant plancher frappé à chaque adresse de test : 1000 VETO.
+MILLE_VETO="$(cast to-wei 1000 ether)"
 
 # --------------------------------------------------------------------------
 # Adresses de test : index 1-4 du mnemonic Foundry par défaut, surchargeables.
@@ -159,7 +159,7 @@ detecter_legacy() {
 # --------------------------------------------------------------------------
 # 1. chainId
 # --------------------------------------------------------------------------
-echo "==> [1/8] Lecture du chainId"
+echo "==> [1/9] Lecture du chainId"
 CHAIN_ID="$(cast chain-id --rpc-url "$RPC")"
 echo "    chainId = $CHAIN_ID"
 echo "    admin   = $ADMIN_ADDR"
@@ -172,7 +172,7 @@ detecter_legacy
 #    readAllowList(address) renvoie le rôle (0 = None, 1 = Enabled, 2 = Admin).
 #    Si rôle 0, on appelle setEnabled(address) ; sinon on ne touche à rien.
 # --------------------------------------------------------------------------
-echo "==> [2/8] TxAllowList ($TX_ALLOW_LIST) : droit d'écriture des adresses 1-4"
+echo "==> [2/9] TxAllowList ($TX_ALLOW_LIST) : droit d'écriture des adresses 1-4"
 for addr in "${VERIFIERS[@]}"; do
   role="$(cast call "$TX_ALLOW_LIST" "readAllowList(address)(uint256)" "$addr" --rpc-url "$RPC")"
   # cast peut renvoyer "0" ou "0 [0e0]" ; on garde le premier champ.
@@ -186,20 +186,20 @@ for addr in "${VERIFIERS[@]}"; do
 done
 
 # --------------------------------------------------------------------------
-# 3. Native Minter : chaque adresse de test doit disposer d'au moins 1000 CHK.
+# 3. Native Minter : chaque adresse de test doit disposer d'au moins 1000 VETO.
 #    Idempotent : on ne frappe que le complément manquant.
 # --------------------------------------------------------------------------
-echo "==> [3/8] Native Minter ($NATIVE_MINTER) : solde plancher 1000 CHK pour 1-4"
+echo "==> [3/9] Native Minter ($NATIVE_MINTER) : solde plancher 1000 VETO pour 1-4"
 for addr in "${VERIFIERS[@]}"; do
   solde="$(cast balance "$addr" --rpc-url "$RPC")"
   # Comparaison en entiers 256 bits via python3 (bash ne gère pas ces grands nombres).
-  # Affiche le complément manquant si solde < 1000 CHK, sinon une chaîne vide.
-  manque="$(python3 -c "s=int('$solde'); c=int('$MILLE_CHK'); print(c-s if s<c else '')")"
+  # Affiche le complément manquant si solde < 1000 VETO, sinon une chaîne vide.
+  manque="$(python3 -c "s=int('$solde'); c=int('$MILLE_VETO'); print(c-s if s<c else '')")"
   if [[ -n "$manque" ]]; then
-    echo "    $addr : solde < 1000 CHK -> mint du complément"
+    echo "    $addr : solde < 1000 VETO -> mint du complément"
     cast_send "$NATIVE_MINTER" "mintNativeCoin(address,uint256)" "$addr" "$manque"
   else
-    echo "    $addr : solde >= 1000 CHK, rien à faire"
+    echo "    $addr : solde >= 1000 VETO, rien à faire"
   fi
 done
 
@@ -236,7 +236,7 @@ START_BLOCK="$(cast block-number --rpc-url "$RPC")"
 # --------------------------------------------------------------------------
 # 4. Phase 1 : VerificationMarket
 # --------------------------------------------------------------------------
-echo "==> [4/8] Phase 1 : DeployVerificationMarket"
+echo "==> [4/9] Phase 1 : DeployVerificationMarket"
 forge script script/DeployVerificationMarket.s.sol \
   --rpc-url "$RPC" "${SIGNER_OPTS[@]}" --broadcast ${LEGACY_FLAG:+--legacy}
 P1_MARKET="$(lire_adresse DeployVerificationMarket.s.sol VerificationMarket)"
@@ -245,7 +245,7 @@ echo "    VerificationMarket = $P1_MARKET"
 # --------------------------------------------------------------------------
 # 5. Phase 2 : Registry, Slashing, Rewards, StakedVerificationMarket
 # --------------------------------------------------------------------------
-echo "==> [5/8] Phase 2 : DeployPhase2"
+echo "==> [5/9] Phase 2 : DeployPhase2"
 forge script script/DeployPhase2.s.sol \
   --rpc-url "$RPC" "${SIGNER_OPTS[@]}" --broadcast ${LEGACY_FLAG:+--legacy}
 P2_REGISTRY="$(lire_adresse DeployPhase2.s.sol VerifierRegistry)"
@@ -261,7 +261,7 @@ echo "    StakedVerificationMarket = $P2_MARKET"
 # 6. Phase 3 : marché à comité tiré + ERC-8004. Optimiseur obligatoire :
 #    sans lui, DrawnVerificationMarket dépasse 24 576 octets.
 # --------------------------------------------------------------------------
-echo "==> [6/8] Phase 3 : DeployPhase3 (--optimize --optimizer-runs 200)"
+echo "==> [6/9] Phase 3 : DeployPhase3 (--optimize --optimizer-runs 200)"
 forge script script/DeployPhase3.s.sol --optimize --optimizer-runs 200 \
   --rpc-url "$RPC" "${SIGNER_OPTS[@]}" --broadcast ${LEGACY_FLAG:+--legacy}
 P3_REGISTRY="$(lire_adresse DeployPhase3.s.sol VerifierRegistry)"
@@ -281,10 +281,10 @@ echo "    AgentValidationRegistry = $P3_VALIDATION"
 
 # --------------------------------------------------------------------------
 # 7. Native Minter : chaque contrat Rewards (phase 2 et 3) doit être autorisé
-#    à frapper (il verse le bonus en CHK). Même interface d'allow list que
+#    à frapper (il verse le bonus en VETO). Même interface d'allow list que
 #    la TxAllowList : readAllowList/setEnabled. Idempotent.
 # --------------------------------------------------------------------------
-echo "==> [7/8] Native Minter : autorisation de frappe des contrats Rewards"
+echo "==> [7/9] Native Minter : autorisation de frappe des contrats Rewards"
 for rewards in "$P2_REWARDS" "$P3_REWARDS"; do
   role="$(cast call "$NATIVE_MINTER" "readAllowList(address)(uint256)" "$rewards" --rpc-url "$RPC")"
   role="${role%% *}"
@@ -297,9 +297,36 @@ for rewards in "$P2_REWARDS" "$P3_REWARDS"; do
 done
 
 # --------------------------------------------------------------------------
-# 8. Écriture du JSON des adresses : horodaté + copie vers latest.json.
+# 8. VetoDesk : guichet d'émission de VETO (opérateur = admin), autorisé à
+#    frapper sur le Native Minter. Idempotent pour l'autorisation.
 # --------------------------------------------------------------------------
-echo "==> [8/8] Écriture des adresses dans deployments/"
+echo "==> [8/9] VetoDesk : déploiement et autorisation de frappe"
+DESK_JSON="$(forge create src/VetoDesk.sol:VetoDesk --json \
+  --rpc-url "$RPC" "${SIGNER_OPTS[@]}" --broadcast ${LEGACY_FLAG:+--legacy})"
+if [[ "$JSON_READER" == "jq" ]]; then
+  VETO_DESK="$(jq -r .deployedTo <<<"$DESK_JSON")"
+else
+  VETO_DESK="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["deployedTo"])' <<<"$DESK_JSON")"
+fi
+VETO_DESK="$(tr '[:upper:]' '[:lower:]' <<<"$VETO_DESK")"
+if [[ ! "$VETO_DESK" =~ ^0x[0-9a-f]{40}$ ]]; then
+  echo "ERREUR : adresse de VetoDesk illisible : $VETO_DESK" >&2
+  exit 1
+fi
+echo "    VetoDesk = $VETO_DESK"
+role="$(cast call "$NATIVE_MINTER" "readAllowList(address)(uint256)" "$VETO_DESK" --rpc-url "$RPC")"
+role="${role%% *}"
+if [[ "$role" == "0" ]]; then
+  echo "    VetoDesk : rôle 0 -> setEnabled (minter)"
+  cast_send "$NATIVE_MINTER" "setEnabled(address)" "$VETO_DESK"
+else
+  echo "    VetoDesk : rôle $role (déjà autorisé), rien à faire"
+fi
+
+# --------------------------------------------------------------------------
+# 9. Écriture du JSON des adresses : horodaté + copie vers latest.json.
+# --------------------------------------------------------------------------
+echo "==> [9/9] Écriture des adresses dans deployments/"
 mkdir -p deployments
 STAMP="$(date -u +%Y%m%d-%H%M%S)"
 OUT="deployments/${CHAIN_ID}-${STAMP}.json"
@@ -315,6 +342,7 @@ if [[ "$JSON_READER" == "jq" ]]; then
     --arg p1_market "$P1_MARKET" \
     --arg p2_registry "$P2_REGISTRY" --arg p2_slashing "$P2_SLASHING" \
     --arg p2_rewards "$P2_REWARDS" --arg p2_market "$P2_MARKET" \
+    --arg veto_desk "$VETO_DESK" \
     --arg p3_registry "$P3_REGISTRY" --arg p3_slashing "$P3_SLASHING" \
     --arg p3_rewards "$P3_REWARDS" --arg p3_market "$P3_MARKET" \
     --arg p3_identity "$P3_IDENTITY" --arg p3_reputation "$P3_REPUTATION" \
@@ -334,7 +362,8 @@ if [[ "$JSON_READER" == "jq" ]]; then
         VerifierRegistry: $p2_registry,
         Slashing: $p2_slashing,
         Rewards: $p2_rewards,
-        StakedVerificationMarket: $p2_market
+        StakedVerificationMarket: $p2_market,
+        VetoDesk: $veto_desk
       },
       phase3: {
         VerifierRegistry: $p3_registry,
@@ -373,7 +402,8 @@ data={
     "VerifierRegistry": "$P2_REGISTRY",
     "Slashing": "$P2_SLASHING",
     "Rewards": "$P2_REWARDS",
-    "StakedVerificationMarket": "$P2_MARKET"
+    "StakedVerificationMarket": "$P2_MARKET",
+    "VetoDesk": "$VETO_DESK"
   },
   "phase3": {
     "VerifierRegistry": "$P3_REGISTRY",

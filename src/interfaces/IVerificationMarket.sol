@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /// @title IVerificationMarket
-/// @notice Interface figée en phase 0 : demande payée en CHK, comité, commit puis reveal, code 0/1/2, contestation.
+/// @notice Interface figée en phase 0 : demande payée en VETO, comité, commit puis reveal, code 0/1/2, contestation.
 /// @dev Le contenu de la demande ne passe jamais par la chaîne : seul H y est inscrit.
 interface IVerificationMarket {
     // ---------------------------------------------------------------------
@@ -40,7 +40,7 @@ interface IVerificationMarket {
     struct Request {
         address requester;
         bytes32 h; // keccak256(abi.encode(facts, contentHash))
-        uint96 fee; // CHK payé, en wei
+        uint96 fee; // VETO payé, en wei
         uint64 createdAt;
         uint64 commitDeadline; // commits acceptés si block.timestamp < commitDeadline
         uint64 revealDeadline; // reveals acceptés si commitDeadline <= block.timestamp < revealDeadline
@@ -116,7 +116,7 @@ interface IVerificationMarket {
     // Écriture
     // ---------------------------------------------------------------------
 
-    /// @notice Dépose une demande. msg.value >= requestFee(), en CHK natif.
+    /// @notice Dépose une demande. msg.value >= requestFee(), en VETO natif.
     /// @return requestId identifiant croissant, à partir de 1.
     function createRequest(bytes32 h) external payable returns (uint256 requestId);
 

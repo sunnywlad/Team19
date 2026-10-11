@@ -7,7 +7,7 @@ import {INativeMinter} from "../../src/precompiles/INativeMinter.sol";
 /// @notice Faux précompilé NativeMinter pour les tests Foundry.
 /// @dev On ne peut pas frapper de la monnaie native depuis un contrat de test.
 ///      Choix documenté : ce mock est préalimenté par `vm.deal` (le test crédite son solde),
-///      puis `mintNativeCoin` transfère réellement les CHK à `to`, reproduisant l'effet de solde
+///      puis `mintNativeCoin` transfère réellement les VETO à `to`, reproduisant l'effet de solde
 ///      du vrai précompilé. En plus, chaque appel est enregistré (`minted`, `totalMintedTo`),
 ///      ce qui permet aux tests d'assurer soit le solde reçu, soit les appels passés.
 ///      Pose : `vm.etch(NATIVE_MINTER, address(new MockNativeMinter).code)` puis

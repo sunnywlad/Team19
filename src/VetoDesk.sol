@@ -3,11 +3,11 @@ pragma solidity ^0.8.24;
 
 import {INativeMinter, NATIVE_MINTER} from "./precompiles/INativeMinter.sol";
 
-/// @title ChkDesk
-/// @notice Guichet d'émission de CHK : un opérateur frappe des CHK pour un client payé hors chaîne.
+/// @title VetoDesk
+/// @notice Guichet d'émission de VETO : un opérateur frappe des VETO pour un client payé hors chaîne.
 /// @dev La frappe passe par le précompilé NativeMinter. Le client doit par ailleurs être admis sur
 ///      la TxAllowList par l'admin du L1, hors de ce contrat.
-contract ChkDesk {
+contract VetoDesk {
     // ---------------------------------------------------------------------
     // Erreurs propres au contrat
     // ---------------------------------------------------------------------
@@ -54,7 +54,7 @@ contract ChkDesk {
         emit OperatorSet(operator, allowed);
     }
 
-    /// @notice Frappe `amount` CHK au client pour un paiement hors chaîne identifié par `paymentRef`.
+    /// @notice Frappe `amount` VETO au client pour un paiement hors chaîne identifié par `paymentRef`.
     ///         Référence rejouée : revert. Opérateur seul.
     function credit(address client, uint256 amount, bytes32 paymentRef) external {
         if (!isOperator[msg.sender]) revert OnlyOperator(msg.sender);

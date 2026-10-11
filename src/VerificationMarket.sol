@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {IVerificationMarket} from "./interfaces/IVerificationMarket.sol";
 
 /// @title VerificationMarketBase
-/// @notice Logique commune des marchés : demande payée en CHK, commit puis reveal, agrégation 0/1/2,
+/// @notice Logique commune des marchés : demande payée en VETO, commit puis reveal, agrégation 0/1/2,
 ///         contestation. Le comité est lu par `_committee(requestId)`, surchargé par chaque marché.
 /// @dev Phase 1 (comité fixe) et phase 3 (comité tiré) partagent cette base. Aucun appel externe ici,
 ///      donc pas de garde de réentrance ; les crochets d'extension gèrent la caution (phase 2 et 3).
@@ -56,7 +56,7 @@ abstract contract VerificationMarketBase is IVerificationMarket {
     // Écriture
     // ---------------------------------------------------------------------
 
-    /// @notice Dépose une demande payée en CHK natif ; H est le seul contenu inscrit.
+    /// @notice Dépose une demande payée en VETO natif ; H est le seul contenu inscrit.
     function createRequest(bytes32 h) external payable returns (uint256 requestId) {
         if (h == bytes32(0)) revert ZeroHash();
         if (msg.value < fee) revert InsufficientFee(msg.value, fee);

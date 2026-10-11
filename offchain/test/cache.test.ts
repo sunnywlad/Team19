@@ -270,6 +270,8 @@ describe('cache server — intégration complète', () => {
   describe('GET /content/{h} statut Contest : membre du comité refusé', () => {
     let h: Hex;
     let requestId: bigint;
+    // Les trois membres révèlent ce même détail, donc le même detailHash.
+    const detailSame = Buffer.from('{"vote":2,"reasons":[],"summary":"contest-test"}');
 
     before(async () => {
       // Préparer un payload distinct
@@ -302,8 +304,7 @@ describe('cache server — intégration complète', () => {
       requestId = (logs[0].args as { requestId: bigint }).requestId;
 
       // Chaque vérificateur commit
-      const detail0 = Buffer.from('{"vote":2,"reasons":[],"summary":"contest-test"}');
-      const detailHash = keccak256(new Uint8Array(detail0));
+      const detailHash = keccak256(new Uint8Array(detailSame));
       const saltV = ('0x' + '0a'.repeat(32)) as Hex;
       const commitment = commitmentOf({ chainId: BigInt(CHAIN_ID), market: marketAddress, requestId, verifier: v0.address, vote: 2, reasons: 0, detailHash, salt: saltV });
       const c1 = commitmentOf({ chainId: BigInt(CHAIN_ID), market: marketAddress, requestId, verifier: v1.address, vote: 2, reasons: 0, detailHash, salt: saltV });
@@ -362,6 +363,28 @@ describe('cache server — intégration complète', () => {
       const headers = await signRead(requester, BigInt(CHAIN_ID), requestId, h);
       const res = await fetch(url(`/content/${h}?requestId=${requestId}`), { headers });
       assert.equal(res.status, 200, 'Le requester doit pouvoir accéder au contenu en statut Contest');
+    });
+
+    it('GET /detail : trois membres, même detailHash, trois dépôts → un détail par membre (constat 3)', async () => {
+      // Les trois ont révélé avant les dépôts : sur l'ancien schéma, chaque dépôt
+      // tombait sur le premier membre et écrasait le même fichier.
+      for (let i = 0; i < 3; i++) {
+        const post = await fetch(url(`/detail/${requestId}`), {
+          method: 'POST', headers: { 'Content-Type': 'application/octet-stream' }, body: detailSame,
+        });
+        assert.equal(post.status, 200);
+      }
+
+      const headers = await signRead(requester, BigInt(CHAIN_ID), requestId, h);
+      const res = await fetch(url(`/detail/${requestId}`), { headers });
+      assert.equal(res.status, 200);
+      const body = await res.json() as { details: { verifier: string; detail: string }[] };
+      const got = body.details.map(d => d.verifier.toLowerCase()).sort();
+      const want = committee.map(a => a.toLowerCase()).sort();
+      assert.deepEqual(got, want, 'un détail attendu pour chacun des trois membres');
+      for (const d of body.details) {
+        assert.equal(Buffer.from(d.detail, 'base64').toString(), detailSame.toString());
+      }
     });
   });
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 /// @title IVerifierRegistry
-/// @notice Interface figée en phase 0, construite en phase 2 : inscription, caution CHK, part bloquée par mission.
+/// @notice Interface figée en phase 0, construite en phase 2 : inscription, caution VETO, part bloquée par mission.
 /// @dev En phase 1, VerificationMarket utilise un comité fixe et n'appelle pas ce registre.
 interface IVerifierRegistry {
     event VerifierRegistered(address indexed verifier, uint256 stake);
@@ -16,7 +16,7 @@ interface IVerifierRegistry {
     error StakeLockedInMission(address verifier, uint256 locked);
     error OnlyMarket(address caller);
 
-    /// @notice Inscription d'un vérificateur admis par l'équipe, caution en CHK natif (msg.value).
+    /// @notice Inscription d'un vérificateur admis par l'équipe, caution en VETO natif (msg.value).
     function register() external payable;
 
     /// @notice Sortie et retrait de la caution, refusés tant qu'une part est bloquée.

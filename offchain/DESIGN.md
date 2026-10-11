@@ -69,11 +69,11 @@ Aucune clé n'est écrite dans un fichier versionné. Les tests utilisent les cl
 
 ## Cache (§ 8)
 
-- Stockage disque : `data/cache/content/<h>.bin` (octets bruts reçus, jamais resérialisés), `<h>.facts.json`, `data/cache/detail/<requestId>/<verifier>.bin`. Écriture atomique (fichier temporaire puis `rename`).
+- Stockage disque : `data/cache/content/<h>.bin` (octets bruts reçus, jamais resérialisés), `<h>.facts.json`, `data/cache/detail/<requestId>/<detailHash>.bin` (stockage adressé par le contenu, sans attribution au déposant ; des détails identiques partagent un fichier). Écriture atomique (fichier temporaire puis `rename`).
 - `POST /content` : corps JSON `{ payload: base64, facts: {amount, currency, beneficiaryId, referenceId} }`. Le cache valide le payload, vérifie que `facts` égale `deriveFacts(payload)` (sinon 400), calcule `contentHash` et `h`, stocke, rend `{ contentHash, h }`. Idempotent (même h : 200, même réponse).
 - `GET /content/{h}?requestId=N` : en-têtes signés (§ 8). Contrôles : expiry dans le futur et à moins de 60 s ; signature valide ; `getRequest(N).h == h` ; rôle : membre du comité si statut `Commit` ou `Reveal`, `requester` si statut ∈ {Commit, Reveal, Contest}, adresse de `SECURITY_ADDRESSES` si statut `Contest`. Statut `Closed` ou `None` : 404. Rend `{ payload: base64, facts }`. 401 signature, 403 rôle, 404 inconnu.
-- `POST /detail/{requestId}` : corps = octets bruts de la ligne. Accepté si `keccak256(octets)` égale le `detailHash` révélé (`getReveal`) d'au moins un membre du comité ; stocké sous ce vérificateur. Sinon 409. Sans signature : un dépôt adressé par son hash révélé n'apporte rien à un tiers (décision notée dans `etat-offchain.md`).
-- `GET /detail/{requestId}` : mêmes en-têtes signés, avec le `h` de la demande lu sur la chaîne. Statut `Contest` seulement ; rôle `requester` ou sécurité. Rend `{ details: [{ verifier, detail: base64 }] }`.
+- `POST /detail/{requestId}` : corps = octets bruts de la ligne. Accepté si `keccak256(octets)` égale le `detailHash` révélé (`getReveal`) d'au moins un membre du comité ; stocké sous ce hash. Sinon 409. Sans signature : un dépôt adressé par son hash révélé n'apporte rien à un tiers (décision notée dans `etat-offchain.md`).
+- `GET /detail/{requestId}` : mêmes en-têtes signés, avec le `h` de la demande lu sur la chaîne. Statut `Contest` seulement ; rôle `requester` ou sécurité. Relit sur la chaîne le comité (`getCommittee`) et le `detailHash` révélé par chacun (`getReveal`), puis rend un détail par membre révélé dont le fichier `<detailHash>.bin` existe : `{ details: [{ verifier, detail: base64 }] }`.
 - Suppression : boucle de surveillance de `RequestClosed` (getLogs par intervalle, dernier bloc lu gardé sur disque) ; efface contenu et détails de la demande. Le lien requestId → h vient de `getRequest`.
 
 ## Passerelle (§ 9)

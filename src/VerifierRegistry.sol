@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {IVerifierRegistry} from "./interfaces/IVerifierRegistry.sol";
 
 /// @title VerifierRegistry
-/// @notice Phase 2 : inscription des vérificateurs, caution en CHK natif, part bloquée par mission.
+/// @notice Phase 2 : inscription des vérificateurs, caution en VETO natif, part bloquée par mission.
 /// @dev `admit`/`revoke` par l'admin ; `register`/`exit` par le vérificateur ; `lockStake`/`unlockStake`
 ///      par le marché ; `slash`/`seize` par le contrat Slashing. CEI sur tous les transferts.
 contract VerifierRegistry is IVerifierRegistry {
@@ -110,7 +110,7 @@ contract VerifierRegistry is IVerifierRegistry {
     // Inscription et sortie (vérificateur)
     // ---------------------------------------------------------------------
 
-    /// @notice Dépôt de caution en CHK natif. Premier dépôt < minStake : rejeté. Admission requise.
+    /// @notice Dépôt de caution en VETO natif. Premier dépôt < minStake : rejeté. Admission requise.
     function register() external payable {
         if (!admitted[msg.sender]) revert NotAdmitted(msg.sender);
         if (!registered[msg.sender]) {
