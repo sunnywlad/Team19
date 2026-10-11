@@ -8,8 +8,8 @@ comment un auditeur vérifie une décision. Elle ne revendique aucune conformit�
 | Texte | Ce que l'outil apporte | Ce qu'on ne revendique pas |
 |---|---|---|
 | DORA | Journal chaîné dont l'altération se détecte, rapport d'incident prérempli, horodatages de détection, de pause et d'alerte dans chaque rapport | Classification de l'incident, notification à une autorité, toute revendication de conformité |
-| AI Act | Journalisation automatique de chaque étape, validation humaine prévue pour les montants au-dessus du seuil, pause levée par un humain seulement | Qualification du système (haut risque ou non) |
-| MiCA | Démonstration prévue sur un réseau de test, avec des fonds de test en monnaie native | Statut de prestataire de services sur crypto-actifs |
+| AI Act | Journalisation automatique de chaque étape, validation humaine pour les montants au-dessus du seuil, appliquée par le contrat sur réseau de test local, pause levée par un humain seulement | Qualification du système (haut risque ou non) |
+| MiCA | Démonstration sur un réseau de test local (anvil), avec des fonds de test en monnaie native | Statut de prestataire de services sur crypto-actifs |
 | AML | Chaîne d'autorité de chaque demande (agent, client, signature, décision), décision finale humaine au-dessus du seuil | Vérification d'identité, filtrage de sanctions |
 | RGPD | Données synthétiques ; identifiants opaques et empreintes seulement dans le journal et dans l'interface du contrat | Anonymisation |
 
@@ -20,8 +20,8 @@ Ce que le dépôt montre derrière chaque ligne :
 | Journal chaîné | [specs/04-journal.md](../specs/04-journal.md), `response/src/journal.ts`, six chaînes d'essai dans `specs/examples/journal/` | Sans empreinte de tête gardée ailleurs, une troncature en fin de journal ou une réécriture complète passent inaperçues (§ 6 de la spec) |
 | Rapport prérempli | `response/src/report.ts`, schéma `specs/schemas/incident-report.schema.json` | Le montant exposé reste vide |
 | Horodatages et délais | Champ `timestamps` du rapport, [specs/05-incident.md](../specs/05-incident.md) § 5 | Aucun délai n'est encore mesuré : voir la [fiche de défense](fiche-defense.md) |
-| Validation humaine au-dessus du seuil | [specs/02-contrat.md](../specs/02-contrat.md) § 6 | Règle du contrat, qui n'est pas écrit. Elle est rejouée par un faux coffre |
-| Réseau de test | `.env.example` : clés de test seulement | Aucun contrat n'est déployé aujourd'hui |
+| Validation humaine au-dessus du seuil | [specs/02-contrat.md](../specs/02-contrat.md) § 6, `src/ArgentVault.sol`, `test/ArgentVault.t.sol` | Règle du contrat, jouée sur un réseau de test local (anvil) seulement. En mode fake, elle est rejouée par un faux coffre |
+| Réseau de test | `VAULT_MODE=chain make demo` déploie `src/ArgentVault.sol` sur anvil (chaîne 31337). `.env.example` : clés de test seulement | Réseau local, lancé par nous, avec les clés de développement publiques d'anvil. Aucun réseau de test public n'est testé |
 | Identifiants et empreintes | Schéma `specs/schemas/journal-entry.schema.json` : aucun champ libre | Le document gelé en quarantaine, lui, est conservé en clair sur le disque du service |
 
 <!-- ce-que-nous-ne-disons-pas:debut -->
@@ -42,9 +42,11 @@ s'applique plus, et le connecteur devient un composant de confiance à concevoir
 n'existe pas : ni code, ni spec.
 
 **État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](../specs/02-contrat.md) § 1
-et § 8) et de l'interface gelée. Aucun contrat n'est écrit ni déployé : il est
-rejoué par un faux coffre, sans fonds. « Démontré » vaudra le jour où le contrat
-tournera sur le réseau de test.
+et § 8) et de l'interface gelée. Le contrat est écrit (`src/ArgentVault.sol`) et
+`VAULT_MODE=chain make demo` le déploie sur un réseau de test local (anvil,
+chaîne 31337) : « démontré » vaut pour ce réseau local et pour lui seul. Aucun
+réseau de test public n'est testé. En mode fake, le mode par défaut, rien n'est
+payé : un faux coffre rejoue les règles, sans fonds.
 
 Conséquence pour la slide : les lignes MiCA et AML du tableau valent pour le
 premier mode. Avec un connecteur bancaire, la question réglementaire change de
@@ -111,9 +113,10 @@ Les routes sont celles des services lancés en local (`relay/README.md`,
 
 Réserves à dire à l'auditeur :
 
-- Les étapes 2 et 5 demandent un contrat. Il n'y en a pas : l'index des
-  décisions est vide et `/vault` répond 503. Elles ne se rejouent aujourd'hui
-  que sur le faux coffre des tests de `relay/`.
+- Les étapes 2 et 5 lisent le contrat en `VAULT_MODE=chain` seulement, sur un
+  réseau de test local (anvil) que nous lançons nous-mêmes : « un nœud de son
+  choix » ne vaut aujourd'hui que pour ce nœud local. En mode fake, elles
+  lisent un faux coffre : transaction et bloc y sont simulés.
 - Le journal est « au moins une fois » : une entrée peut y figurer deux fois,
   par exemple `ENQUEUED` ou `REQUEST_SIGNED` après une reprise. Jamais zéro
   (`relay/README.md`, « Journal : boîte d'envoi »).
@@ -121,7 +124,7 @@ Réserves à dire à l'auditeur :
   authentification entre composants : les services n'écoutent que sur la
   machine locale.
 - `agent_id` est affirmé par le client dans la demande signée. Le contrat en
-  vérifierait le mandat déclaré, pas l'identité réelle.
+  vérifie le mandat déclaré, pas l'identité réelle.
 
 ## Réponse à « si votre modèle se trompe, qui est responsable ? »
 
@@ -137,8 +140,9 @@ Deux précisions honnêtes sur l'état du dépôt :
 - Il n'y a pas de modèle dans le chemin de démo. Le détecteur est un jeu de
   règles déterministes (`gateway/src/detector.ts`), et l'« IA du client » est
   un bouchon qui signe tout ce qui passe le schéma (`relay/src/client-ia.ts`).
-- « La règle décide » est aujourd'hui une interface gelée et un faux coffre, pas
-  un contrat déployé.
+- « La règle décide » est un contrat (`src/ArgentVault.sol`) déployé sur un
+  réseau de test local (anvil) seulement. Par défaut, la démo tourne sur un
+  faux coffre.
 
 ## Question ouverte : sommes-nous un prestataire tiers de nos clients ?
 
