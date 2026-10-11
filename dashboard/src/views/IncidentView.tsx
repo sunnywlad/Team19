@@ -5,6 +5,8 @@ import { DelaysNote, DelaysTable } from "../components/DelaysPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { Counter } from "../components/Rolling.tsx";
 import { chainPausedAgents, latestIncidents } from "../domain/activity.ts";
+import { useArrival } from "../hooks/useArrival.ts";
+import { PauseBadge } from "../components/PauseBadge.tsx";
 import { chainPauseTimestamp } from "../domain/delays.ts";
 import {
   ACTION_TAKEN_LABELS,
@@ -204,6 +206,9 @@ export function IncidentView({ view }: { view: ViewProps }) {
   const { relay, response, sources, now } = view;
   const [selected, setSelected] = useState<string | null>(null);
   const linked = sameWorld(sources);
+  // Effet d : un incident apparu depuis l'ouverture de la page. Les plus anciens d'abord pour useArrival.
+  const known = response.data ? latestIncidents(response.data.incidents) : null;
+  const arrival = useArrival<{ key: string }>([known ? [...known].reverse().map((i) => ({ key: i.report.incident_id })) : null]);
   return (
     <>
       <Panel title="Incidents" id="titre-incidents" source={sources.response} snapshot={response} now={now}>
@@ -216,6 +221,9 @@ export function IncidentView({ view }: { view: ViewProps }) {
             current && linked && relay.data && current.report.contract
               ? chainPauseTimestamp(relay.data.events, current.report.authority_chain.agent_id, current.report.contract.block_number)
               : null;
+          // Agents en pause : hors chaîne (service de réponse), sur la chaîne (événements, seulement s'ils sont du même monde).
+          const offchain = new Set(data.pausedAgents.filter((p) => p.scope === "OFFCHAIN").map((p) => p.agent_id));
+          const onchain = new Set(linked && relay.data ? chainPausedAgents(relay.data.events).map((p) => p.agentId) : []);
           return (
             <>
               <dl className="compteurs">
@@ -235,24 +243,44 @@ export function IncidentView({ view }: { view: ViewProps }) {
               {incidents.length === 0 ? (
                 <p className="vide">Aucun incident.</p>
               ) : (
-                <>
-                  <ul className="selecteur" aria-label="Choisir un incident">
-                    {incidents.map((i) => (
-                      <li key={i.report.incident_id}>
-                        <button
-                          type="button"
-                          data-ui="navigation"
-                          aria-pressed={i === current}
-                          onClick={() => setSelected(i.report.incident_id)}
-                        >
-                          <OpaqueId value={i.report.incident_id} /> · {TRIGGER_LABELS[i.report.trigger]} ·{" "}
-                          {i.report.human_decision === null ? "ouvert" : "qualifié"}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="incidents-grille">
+                  <div className="incidents-colonne">
+                    <h3 className="incidents-titre">Incidents récents</h3>
+                    <ul className="incidents-liste" aria-label="Choisir un incident">
+                      {incidents.map((i) => {
+                        const id = i.report.incident_id;
+                        const agent = i.report.authority_chain.agent_id;
+                        const fresh = arrival !== null && arrival.item.key === id;
+                        const scopes = [offchain.has(agent) ? "hors chaîne" : null, onchain.has(agent) ? "sur la chaîne" : null].filter((x) => x !== null);
+                        return (
+                          <li
+                            // Nouvelle clé à l'arrivée : la carte rejoue son entrée, une fois.
+                            key={fresh ? `${id}:${arrival.count}` : id}
+                            className={fresh ? "carte-incident carte-arrivee" : "carte-incident"}
+                            data-testid="carte-incident"
+                            data-arrivee={fresh ? "true" : "false"}
+                          >
+                            <button type="button" data-ui="navigation" aria-pressed={i === current} onClick={() => setSelected(id)}>
+                              <span className="carte-ligne">
+                                <OpaqueId value={id} />
+                                <span className={i.report.human_decision === null ? "statut statut-ouvert" : "statut statut-qualifie"}>
+                                  {i.report.human_decision === null ? "ouvert" : "qualifié"}
+                                </span>
+                                <span className="carte-heure">{formatTime(i.report.generated_at_ms)}</span>
+                              </span>
+                              <span className="carte-titre">{TRIGGER_LABELS[i.report.trigger]}</span>
+                              <span className="carte-agent">
+                                Agent <OpaqueId value={agent} />
+                                {scopes.length > 0 && <PauseBadge scopes={scopes} />}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                   {current && <Report fakeVault={vaultFed(sources.relay, view.vaultOrigin) === "faux-coffre"} item={current} chainPause={pause} />}
-                </>
+                </div>
               )}
             </>
           );
@@ -269,7 +297,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
               <ul className="hors-contrat">
                 {offchain.map((p) => (
                   <li key={`${p.agent_id}:${p.paused_at_ms}`} data-testid="agent-en-pause">
-                    Agent <OpaqueId value={p.agent_id} /> en pause depuis {formatTime(p.paused_at_ms)} <ClockTag clock="journal" />{" "}
+                    <PauseBadge scopes={["hors chaîne"]} /> Agent <OpaqueId value={p.agent_id} /> en pause depuis {formatTime(p.paused_at_ms)} <ClockTag clock="journal" />{" "}
                     <span className="discret">
                       · incident <OpaqueId value={p.incident_id} />
                     </span>
@@ -288,7 +316,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
               <ul className="hors-contrat">
                 {onchain.map((p) => (
                   <li key={p.agentId} data-testid="agent-en-pause-chaine">
-                    Agent <OpaqueId value={p.agentId} /> en pause depuis le bloc {p.blockNumber} ({formatTime(p.blockTimestamp * 1000)}){" "}
+                    <PauseBadge scopes={["sur la chaîne"]} /> Agent <OpaqueId value={p.agentId} /> en pause depuis le bloc {p.blockNumber} ({formatTime(p.blockTimestamp * 1000)}){" "}
                     <ClockTag clock="bloc" />
                   </li>
                 ))}

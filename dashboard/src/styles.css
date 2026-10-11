@@ -1209,6 +1209,232 @@ tbody th {
   }
 }
 
+
+/* --- Effet d : incidents récents en cartes, l'arrivée glisse en tête --- */
+.incidents-grille {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.incidents-titre {
+  margin-top: 0;
+}
+
+.incidents-liste {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carte-incident button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 14px 12px 16px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.carte-incident button:hover {
+  border-color: var(--accent);
+  transform: translateX(2px);
+}
+
+/* Carte choisie : liseré gauche, comme la maquette ; aria-pressed le dit aussi. */
+.carte-incident button[aria-pressed="true"] {
+  background: var(--accent-fond);
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.carte-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.carte-heure {
+  margin-left: auto;
+  color: var(--discret);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.carte-titre {
+  font-weight: 650;
+}
+
+.carte-agent {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  color: var(--discret);
+  font-size: 0.86rem;
+}
+
+.statut {
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+}
+
+.statut-ouvert {
+  color: var(--refuse);
+  background: var(--refuse-fond);
+}
+
+.statut-qualifie {
+  color: var(--bloque);
+  background: var(--bloque-fond);
+}
+
+.carte-arrivee {
+  animation: glisse 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.carte-arrivee button {
+  animation: repere 1.6s ease-out both;
+}
+
+@keyframes glisse {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes repere {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow: 0 0 0 4px var(--accent-fond), 0 0 0 5px var(--accent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Pastille « en pause » : un point qui pulse tant que l'agent est en pause. */
+.pastille-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px 0 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--refuse);
+  background: var(--refuse-fond);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pastille-pause svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.pastille-pause-point {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pastille-pause-point::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.8s ease-out infinite;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
+/* --- Effet e : mode présentation --- */
+.presenter kbd,
+.bouton-sortie kbd {
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  font: 600 0.75rem var(--mono);
+}
+
+.entete-bas .presenter {
+  margin-bottom: 8px;
+}
+
+.mode-presentation .entete {
+  display: none;
+}
+
+.mode-presentation .contenu {
+  max-width: none;
+  padding-top: 16px;
+}
+
+.presentation-barre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bouton-sortie {
+  padding: 6px 14px;
+  background: var(--surface);
+  border: 1px solid var(--trait);
+  border-radius: 999px;
+}
+
+.bouton-sortie:hover {
+  border-color: var(--accent);
+}
+
+.mode-presentation .panneau-flux-grand {
+  animation: entre 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.mode-presentation .panneau-flux-grand .flux-svg {
+  max-height: 64vh;
+}
+
+@media (max-width: 1100px) {
+  .incidents-grille {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Lu par les lecteurs d'écran, invisible à l'œil. */
 .visuellement-cache {
   position: absolute;

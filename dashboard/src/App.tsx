@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ApiClient } from "./api/client.ts";
 import { Banners, Freshness } from "./components/Banners.tsx";
+import { FlowPanel } from "./components/FlowPanel.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
 import { THEME_LABELS, useTheme } from "./hooks/useTheme.ts";
@@ -69,6 +70,38 @@ export function App({ client }: { client: ApiClient }) {
   };
 
   const [theme, nextTheme] = useTheme();
+
+  // Effet e : touche « P », mode présentation pour la vidéo. Nav masquée, diagramme agrandi ;
+  // bandeaux, étiquettes de provenance et pied restent. Échap en sort.
+  const [presenting, setPresenting] = useState(false);
+  const togglePresenting = useCallback((next?: boolean): void => {
+    setPresenting((current) => {
+      const value = next ?? !current;
+      // Plein écran si le navigateur l'accepte ; sinon, la page seule change.
+      if (value && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => undefined);
+      if (!value && document.fullscreenElement) document.exitFullscreen?.().catch(() => undefined);
+      return value;
+    });
+  }, []);
+  useEffect(() => {
+    const onKey = (event: globalThis.KeyboardEvent): void => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      if (event.key === "p" || event.key === "P") togglePresenting();
+      else if (event.key === "Escape") togglePresenting(false);
+    };
+    // Sortie du plein écran par le navigateur : on quitte aussi le mode présentation.
+    const onFullscreen = (): void => {
+      if (!document.fullscreenElement) setPresenting(false);
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("fullscreenchange", onFullscreen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("fullscreenchange", onFullscreen);
+    };
+  }, [togglePresenting]);
   const main = useRef<HTMLElement>(null);
   const tabs = useRef<HTMLElement>(null);
 
@@ -93,7 +126,7 @@ export function App({ client }: { client: ApiClient }) {
   };
 
   return (
-    <div className="page">
+    <div className={presenting ? "page mode-presentation" : "page"} data-presentation={presenting ? "oui" : "non"}>
       <button type="button" className="evitement" data-ui="navigation" onClick={() => main.current?.focus()}>
         Aller au contenu
       </button>
@@ -132,10 +165,24 @@ export function App({ client }: { client: ApiClient }) {
               </button>
             ))}
           </nav>
+          <button type="button" className="presenter" data-ui="affichage" aria-keyshortcuts="P" onClick={() => togglePresenting(true)}>
+            Mode présentation <kbd>P</kbd>
+          </button>
         </div>
       </header>
       <div className="cadre contenu">
         <Banners view={view} />
+        {presenting ? (
+          <main id="contenu" ref={main} tabIndex={-1} aria-label="Mode présentation">
+            <div className="presentation-barre">
+              <p className="discret">Mode présentation : le flux de la dernière issue, agrandi. Lecture seule, comme le reste.</p>
+              <button type="button" className="bouton-sortie" data-ui="affichage" aria-keyshortcuts="Escape" onClick={() => togglePresenting(false)}>
+                Quitter <kbd>Échap</kbd>
+              </button>
+            </div>
+            <FlowPanel view={view} large />
+          </main>
+        ) : (
         <main id="contenu" ref={main} tabIndex={-1} aria-label={VIEWS.find((v) => v.key === current)?.label}>
           {/* Nouvelle clé à chaque écran : il entre en fondu, une fois. */}
           <div key={current} className="vue">
@@ -150,6 +197,7 @@ export function App({ client }: { client: ApiClient }) {
             {current === "attente" && <PendingView view={view} />}
           </div>
         </main>
+        )}
       </div>
       <footer className="pied">
         <div className="cadre pied-haut">
