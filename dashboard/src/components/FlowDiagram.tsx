@@ -44,9 +44,18 @@ const EDGES: Record<FlowEdge, string> = {
 
 const TONES = ["accepte", "humain", "refuse", "bloque", "repos"] as const;
 
-type Props = { outcome: Outcome | null; origin: VaultOrigin };
+type Props = {
+  outcome: Outcome | null;
+  origin: VaultOrigin;
+  /**
+   * Rang de la dernière arrivée, si « outcome » vient d'apparaître dans les
+   * données. Chaque nouvelle valeur rejoue l'illumination du chemin ; null :
+   * chemin affiché sans animation (ouverture de la page, rien de neuf).
+   */
+  pulse?: number | null;
+};
 
-export function FlowDiagram({ outcome, origin }: Props) {
+export function FlowDiagram({ outcome, origin, pulse = null }: Props) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const captionId = `${uid}-legende`;
   const tone = outcome?.tone ?? null;
@@ -59,7 +68,12 @@ export function FlowDiagram({ outcome, origin }: Props) {
     const active = onPath(id);
     const state = active ? (id === last || id === "reponse" ? "fin" : "passe") : "repos";
     return (
-      <g key={id} className={`noeud noeud-${state} ${active ? `ton-${tone}` : ""}`} data-noeud={id} data-etat={active ? "actif" : "repos"}>
+      <g
+        key={id}
+        className={`noeud noeud-${state}${active ? ` ton-${tone} rang-${outcome?.nodes.indexOf(id) ?? 0}` : ""}`}
+        data-noeud={id}
+        data-etat={active ? "actif" : "repos"}
+      >
         <rect x={box.x} y={box.y} width={box.w} height={box.h} rx="12" />
         <text className="noeud-nom" x={box.x + box.w / 2} y={box.y + 24} textAnchor="middle">
           {NODE_LABELS[id]}
@@ -72,7 +86,14 @@ export function FlowDiagram({ outcome, origin }: Props) {
   };
 
   return (
-    <figure className="flux" data-testid="flux" data-ton={tone ?? "aucun"}>
+    <figure
+      // Nouvelle clé à chaque arrivée : le tracé est remonté et son animation rejouée, une fois.
+      key={pulse === null ? "fixe" : `arrivee-${pulse}`}
+      className={pulse === null ? "flux" : "flux flux-nouveau"}
+      data-testid="flux"
+      data-ton={tone ?? "aucun"}
+      data-nouveau={pulse === null ? "false" : "true"}
+    >
       <svg
         className="flux-svg"
         viewBox="0 0 970 290"
@@ -89,12 +110,14 @@ export function FlowDiagram({ outcome, origin }: Props) {
           ))}
         </defs>
         {(Object.keys(EDGES) as FlowEdge[]).map((edge) => {
-          const active = outcome?.edges.includes(edge) ?? false;
+          const rank = outcome?.edges.indexOf(edge) ?? -1;
+          const active = rank >= 0;
           const t = active && tone ? tone : "repos";
           return (
             <path
               key={edge}
-              className={`arete ${active ? `arete-active ton-${t}` : "arete-repos"}`}
+              // Le rang dans le chemin règle le départ du tracé : l'illumination suit le sens de la demande.
+              className={`arete ${active ? `arete-active ton-${t} rang-${rank}` : "arete-repos"}`}
               data-arete={edge}
               data-etat={active ? "actif" : "repos"}
               d={EDGES[edge]}
@@ -105,6 +128,11 @@ export function FlowDiagram({ outcome, origin }: Props) {
         })}
         {(Object.keys(boxes) as FlowNode[]).map(node)}
       </svg>
+      {pulse !== null && outcome !== null && (
+        <p className="visuellement-cache" role="status" data-testid="flux-annonce">
+          Nouvelle issue : la demande est {outcome.summary}.
+        </p>
+      )}
       <figcaption id={captionId} className="flux-legende" data-testid="flux-legende">
         {outcome === null ? (
           <span className="vide">Aucune issue pour l'instant : aucun chemin à montrer.</span>
