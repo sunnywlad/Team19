@@ -8,9 +8,10 @@ Règles de ce plan : aucun chiffre qui ne sorte de la
 ligne qu'elle affiche encore « à mesurer », la slide la dit « à mesurer » aussi. Les formules écartées sont dans
 [questions-reponses.md](../pitch/questions-reponses.md).
 
-Les slides 2 et 7 (cible, modèle économique) ne s'appuient sur aucune source du
-dépôt ni du kit : ce sont des **hypothèses à valider par Nicolas**, écrites sans
-chiffre de marché.
+La slide 2 (cible) ne s'appuie sur aucune source du dépôt ni du kit : c'est une
+**hypothèse à valider par Nicolas**, écrite sans chiffre de marché. La slide 7
+s'appuie sur [modele-economique.md](../../docs-jury/rendus/modele-economique.md), qui sépare ce qui
+est construit de ce qui reste une hypothèse.
 
 ## 1. Problème
 
@@ -43,21 +44,21 @@ montant et le bénéficiaire sont ceux déjà inscrits. Deux : deux filets, un
 détecteur à l'entrée, une règle de paiement derrière. Trois : la réponse est
 automatique mais ne fait que bloquer ; lever une pause est un geste humain.
 Dire que nous n'empêchons pas l'injection : nous en bornons les conséquences.
-Cadrage du paiement ([README](../../README.md)) : sur réseau de test local
-(anvil), le contrat paie avec des fonds de test ; en production, `Paid` serait
+Cadrage du paiement ([README](../../README.md)) : sur réseau de test (anvil et
+notre L1 de test), le contrat paie avec des fonds de test ; en production, `Paid` serait
 l'autorisation qu'un connecteur bancaire consommerait : envisagé, non construit.
 
 ## 4. Comment ça marche
 
 **Texte.** Le schéma du [README](../../README.md) : dix composants, douze étapes,
 de l'agent au dashboard. En couleur : ce qui tourne, contrat compris, avec la
-mention « réseau de test local ». En gris : ce qui n'est pas construit, la pause
+mention « réseau de test ». En gris : ce qui n'est pas construit, la pause
 sur la chaîne et le connecteur bancaire.
 
 **Notes orales.** Suivre une demande : porte d'entrée, IA du client, file,
 relais, contrat, indexeur, dashboard. Le document ne dépasse jamais la porte.
-Être net sur l'état : le contrat existe, il décide et paie sur un réseau de
-test local (anvil), pas ailleurs. Le mode par défaut de la démo reste un faux
+Être net sur l'état : le contrat existe, il décide et paie sur réseau de
+test, anvil et notre L1 Avalanche de test, pas ailleurs : Fuji n'est pas testé. Le mode par défaut de la démo reste un faux
 coffre qui rejoue ses règles en mémoire : dire lequel des deux est à l'écran.
 
 ## 5. Démo
@@ -72,11 +73,12 @@ facture légitime. Délais d'attente en secondes. Repli : la vidéo.
 
 ## 6. Ce que nous avons mesuré, et nos limites
 
-**Texte.** Le tableau de la fiche de défense, tel quel, avec ses cases « à
+**Texte.** Le tableau de la fiche de défense, tel quel, avec sa case « à
 mesurer ». En tête : 50 attaques détectées sur 100, 4 demandes légitimes
 bloquées sur 100, sur un jeu synthétique de 200 échantillons, une attaque pour
-une légitime. En dessous : données synthétiques, contrat déployé sur un réseau
-de test local seulement, pas d'audit indépendant.
+une légitime. En dessous : données synthétiques, contrat déployé sur réseau
+de test seulement (anvil et L1 de test à un validateur), pas d'audit
+indépendant.
 
 **Notes orales.** Lire les deux chiffres avec leur condition : jeu de test
 synthétique de 200 échantillons, une attaque pour une légitime, mesuré le
@@ -85,22 +87,24 @@ la majorité des blocages seraient des demandes légitimes. Par famille : la
 mieux tenue est `hors-mandat`, 8 sur 8 ; les plus faibles sont
 `doublon-facture`, 1 sur 8, et `fausse-autorite`, 2 sur 8. Nommer un cas
 manqué : `t-003`, une facture présentée en double, que la porte laisse passer.
-Les lignes encore « à mesurer » se disent telles quelles : règles fixes de
-référence et délais. Les lignes du contrat se lisent comme la fiche les
+La ligne encore « à mesurer » se dit telle quelle : règles fixes de
+référence. Les délais se lisent avec leur réserve : un incident par chemin,
+une valeur observée, pas une distribution. Les lignes du contrat se lisent comme la fiche les
 affiche le jour du pitch, avec leur réserve, sans rien y ajouter. Ne citer
 aucun chiffre du jeu provisoire.
 
 ## 7. Conformité et modèle économique
 
 **Texte.** À gauche, le tableau de [conformite.md](../../docs-jury/rendus/conformite.md) : ce que
-l'outil apporte, ce qu'on ne revendique pas. À droite, hypothèse : un
-abonnement par coffre protégé.
+l'outil apporte, ce qu'on ne revendique pas. À droite, deux revenus : un
+abonnement par coffre protégé (hypothèse), la vente de VETO pour faire juger
+une décision (contrat écrit et testé, aucun encaissement réel).
 
 **Notes orales.** Conformité : nous ne revendiquons rien ; nous apportons un
 journal vérifiable, un rapport prérempli et des horodatages. Un auditeur
 vérifie une décision en cinq étapes sans nous faire confiance. Modèle
-économique : une hypothèse, pas un plan validé ; aucun prix, aucun revenu
-annoncé.
+économique : le circuit du jeton est construit, le reste est une hypothèse ;
+aucun prix, aucun revenu annoncé.
 
 ## 8. Équipe
 
@@ -108,5 +112,5 @@ annoncé.
 relais, dashboard, CI, livrables. Nicolas : pitch et relecture.
 
 **Notes orales.** Une phrase par personne. Finir sur ce qui reste à faire, dans
-l'ordre : poser la pause d'un agent sur la chaîne, remplir les lignes encore
-« à mesurer », sortir du réseau de test local.
+l'ordre : poser la pause d'un agent sur la chaîne, mesurer la référence
+« règles fixes », sortir de nos réseaux de test.

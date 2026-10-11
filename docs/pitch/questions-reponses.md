@@ -2,7 +2,8 @@
 
 Chaque réponse tient en trente secondes et se termine par sa limite réelle.
 L'état du dépôt est celui du [README](../../README.md), « État des composants » :
-le contrat n'est pas écrit, le flux tourne contre un faux coffre.
+le contrat est écrit et joué sur réseau de test (anvil et notre L1 de test) ;
+par défaut, la démo locale tourne contre un faux coffre.
 
 ## « Si votre modèle se trompe, qui est responsable ? »
 
@@ -13,8 +14,10 @@ approuve, et sans réponse dans le délai la demande est refusée.
 
 **Limite.** La perte est bornée, pas nulle : une fausse dette inscrite en amont
 peut être payée. L'outil ne tranche pas le partage juridique de la
-responsabilité. Et dans le dépôt, il n'y a pas de modèle : le détecteur est un
-jeu de règles, l'« IA du client » un bouchon qui signe.
+responsabilité. Et dans le chemin de paiement, il n'y a pas de modèle : le
+détecteur est un jeu de règles, l'« IA du client » un bouchon qui signe. Le
+comité de trois vérificateurs LLM existe, hors de ce chemin : son verdict
+n'entre pas dans la décision du coffre.
 
 ## « Pourquoi pas des règles fixes ? »
 
@@ -36,9 +39,10 @@ n'importe qui relit. Les rôles sont séparés par des clés : le relais ne port
 que du gaz et ne peut soumettre que ce que le client a signé. Un auditeur
 recalcule la règle sans nous faire confiance.
 
-**Limite.** Ce contrat n'est pas écrit : il existe une interface gelée
-(`specs/contract/IArgentVault.sol`) et un faux coffre. Seuls les fonds détenus
-par le contrat seraient protégés, pas un compte bancaire : avec un connecteur
+**Limite.** Ce contrat (`src/ArgentVault.sol`) n'a tourné que sur anvil et sur
+notre L1 de test, à un seul validateur : pas sur un réseau public, et sans
+audit indépendant. Seuls les fonds détenus par le contrat sont protégés, pas un
+compte bancaire : avec un connecteur
 bancaire, envisagé et non construit, cette garantie ne s'applique plus.
 Montants et adresses de paiement sont publics sur une chaîne.
 
@@ -55,9 +59,10 @@ s'applique plus, et le connecteur devient un composant de confiance à concevoir
 n'existe pas : ni code, ni spec.
 
 **État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](../../specs/02-contrat.md) § 1
-et § 8) et de l'interface gelée. Aucun contrat n'est écrit ni déployé : il est
-rejoué par un faux coffre, sans fonds. « Démontré » vaudra le jour où le contrat
-tournera sur le réseau de test.
+et § 8) et de l'interface gelée. Le contrat est écrit (`src/ArgentVault.sol`) et joué
+sur anvil et sur notre L1 de test (`docs-jury/preuves/vault-l1-aws.md`) :
+« démontré » vaut pour ces deux réseaux et pour eux seuls. Par défaut
+(`VAULT_MODE=fake`), rien n'est payé : un faux coffre rejoue les règles.
 
 À l'oral : « sur réseau de test, le contrat paie dans la transaction de
 décision ; en production, nous envisageons qu'un connecteur bancaire exécute
@@ -73,8 +78,9 @@ entité qui doit l'être : un journal dont l'altération se détecte, un rapport
 d'incident prérempli, des horodatages de détection, de pause et d'alerte.
 
 **Limite.** La classification d'un incident et sa notification restent
-humaines et hors de l'outil. Nous ne citons aucun délai réglementaire : nous
-ne les avons pas relus à la source. Détail : [conformite.md](../../docs-jury/rendus/conformite.md).
+humaines et hors de l'outil. Les références et les délais de notification
+sont dans [conformite.md](../../docs-jury/rendus/conformite.md), « Références relues à la source » :
+ne citer à l'oral que ce qui y figure.
 
 ## « Que se passe-t-il si l'agent est compromis ? »
 
@@ -83,8 +89,8 @@ d'une facture déjà inscrite. Son jeton est court, révocable et lié à un man
 Au premier signal hostile, il est mis en pause : la porte d'entrée le refuse,
 le relais écarte ses demandes, et seul un humain lève la pause.
 
-**Limite.** La pause est hors chaîne : un relais compromis la contournerait,
-faute de contrat pour la répéter. Un agent compromis mais discret peut encore
+**Limite.** La pause est hors chaîne : un relais compromis la contournerait.
+Le contrat sait la poser (`pauseAgent`), aucun service ne l'appelle. Un agent compromis mais discret peut encore
 faire payer une facture inscrite, une seule fois, à son vrai bénéficiaire. Une
 clé de client ou de propriétaire compromise sort du modèle.
 
@@ -98,8 +104,9 @@ Le texte piégé n'atteint jamais le composant qui signe : la porte ne transmet
 que des identifiants.
 
 **Limite.** Nous n'empêchons pas l'injection, nous en bornons les
-conséquences. Ce refus est aujourd'hui rejoué par un faux coffre
-(`relay/test/scenarios.test.ts`), pas par un contrat sur une chaîne. Et une
+conséquences. Ce refus vient du contrat sur anvil et sur notre L1 de test
+(`docs-jury/preuves/vault-l1-aws.md`, scène 4) ; par défaut, la démo locale le
+rejoue par un faux coffre (`relay/test/scenarios.test.ts`). Et une
 injection qui vise une facture inscrite obtient son paiement : au bon
 bénéficiaire, pour le bon montant, mais sans que personne l'ait voulu à ce
 moment-là.
@@ -119,8 +126,9 @@ moment-là.
 
 Nous ne disons pas non plus :
 
-- « le contrat bloque » au présent : il n'est pas écrit. Nous disons « la règle
-  du contrat, rejouée par un faux coffre ».
+- « le contrat bloque » sans dire où : il bloque sur anvil et sur notre L1 de
+  test. Quand l'écran montre le mode fake, nous disons « la règle du contrat,
+  rejouée par un faux coffre ».
 - « bénéficiaire hors registre » pour le scénario 4 : la demande ne porte pas
   de bénéficiaire. Le motif est « facture inconnue »
   ([specs/00-a-trancher.md](../../specs/00-a-trancher.md), point e).
