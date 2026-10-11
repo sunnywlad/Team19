@@ -46,23 +46,26 @@ si une valeur ne sort pas d'un fichier de mesure.
 | Temps de calcul du détecteur | moyenne 0,38 ms, maximum 25,573 ms | Règles seules, hors porte d'entrée |
 | Attaques passées la porte d'entrée puis bloquées par le contrat | 2 sur 4 jouées | Coffre utilisé : contrat déployé (anvil, réseau de test local). Scènes scriptées, réseau de test local (anvil), ne vaut pas pour le jeu de test |
 | Attaques ayant abouti à une sortie de fonds | 0 sur 4 jouées | Coffre utilisé : contrat déployé (anvil, réseau de test local). Scènes scriptées, réseau de test local (anvil), ne vaut pas pour le jeu de test |
-| Délai de détection, arrivée → détection | à mesurer | Détection par la porte d'entrée |
-| Délai de réponse, détection → pause | à mesurer | Détection par la porte d'entrée ; pause hors chaîne |
-| Délai de réponse, détection → alerte | à mesurer | Détection par la porte d'entrée |
-| Délai de réponse, détection → pause | à mesurer | Détection par le contrat : part de l'horodatage du bloc |
-| Délai de réponse, détection → alerte | à mesurer | Détection par le contrat : part de l'horodatage du bloc |
+| Délai de détection, arrivée → détection | médiane 226 ms, maximum 226 ms, sur 1 | Détection par la porte d'entrée |
+| Délai de réponse, détection → pause | médiane 24 ms, maximum 24 ms, sur 1 | Détection par la porte d'entrée ; pause hors chaîne |
+| Délai de réponse, détection → alerte | médiane 32 ms, maximum 32 ms, sur 1 | Détection par la porte d'entrée |
+| Délai de réponse, détection → pause | médiane 6474 ms, maximum 6474 ms, sur 1 | Détection par le contrat : part de l'horodatage du bloc |
+| Délai de réponse, détection → alerte | médiane 6482 ms, maximum 6482 ms, sur 1 | Détection par le contrat : part de l'horodatage du bloc |
 
 Fichiers de mesure lus :
 
 - `docs/mesures/bench-test.json` : mesuré le 2026-10-10, commande `cd gateway && npm run bench -- ../data/jeu-factures/test.jsonl --json`, commit 2df8362
 - `docs/mesures/bench-reference.json` : absent
-- `docs/mesures/delais.json` : absent
+- `docs/mesures/delais.json` : mesuré le 2026-10-11, commande `scènes 3 et 4 jouées sur le L1 de test (VAULT_MODE=chain, CHAIN_ID=191919), puis lecture du champ timestamps des deux rapports d'incident produits par le service de réponse`
 - `docs/mesures/demo.json` : mesuré le 2026-10-11, commande `VAULT_MODE=chain make demo, puis VAULT_MODE=chain make scenes, puis node demo/mesure-scenes.mjs`, commit e154d99
 <!-- metriques:fin -->
 
 Les délais d'une détection par le contrat partent de l'horodatage du bloc : ils
 incluent le temps de bloc, l'attente de l'indexeur et l'écoute, et ne se
 comparent pas à ceux de la porte d'entrée ([specs/05-incident.md](../specs/05-incident.md) § 5).
+
+Les délais sont mesurés sur un incident par chemin, L1 de test (scènes 3 et 4) :
+une médiane sur un seul incident n'est qu'une valeur observée, pas une distribution.
 
 ## Cas manqués
 
