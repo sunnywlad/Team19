@@ -8,7 +8,7 @@ import { test } from "node:test";
 import { accounts } from "../viem.mjs";
 import { fundOwner } from "../chain.mjs";
 
-/** Un faux RPC qui enregistre les appels reçus. */
+/** Un faux RPC qui enregistre les appels reçus et répond null, comme anvil. */
 async function withFakeRpc(run) {
   const calls = [];
   const server = createServer((req, res) => {
@@ -18,7 +18,7 @@ async function withFakeRpc(run) {
       const call = JSON.parse(body);
       calls.push(call);
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({ jsonrpc: "2.0", id: call.id, result: true }));
+      res.end(JSON.stringify({ jsonrpc: "2.0", id: call.id, result: null }));
     });
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));

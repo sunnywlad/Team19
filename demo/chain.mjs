@@ -47,7 +47,8 @@ export function anvilService(config) {
 export async function fundOwner(rpcUrl, ownerKey, rpc = postJson) {
   const address = accounts.privateKeyToAccount(ownerKey).address;
   const reply = await rpc(rpcUrl, { jsonrpc: "2.0", id: 1, method: "anvil_setBalance", params: [address, `0x${viem.parseEther("1").toString(16)}`] });
-  if (reply.status !== 200 || reply.body?.error || reply.body?.result !== true) throw new DemoError("financement du propriétaire sur anvil en échec");
+  // anvil répond "result": null à anvil_setBalance : seul un statut ou une erreur RPC vaut échec.
+  if (reply.status !== 200 || reply.body?.error) throw new DemoError("financement du propriétaire sur anvil en échec");
 }
 
 /** Coffres des scènes externes : adresses seules, toutes consommées. */
