@@ -1,0 +1,721 @@
+{
+  "capture_utc": "2026-10-11T10:05:24.919427+00:00",
+  "source_kind": "local persisted verifier states, not independent on-chain proof",
+  "scope": "requests 14 through 29 only",
+  "sources": [
+    {
+      "verifier_index": 1,
+      "path": "/tmp/team19-e2e-ufFMpm/verifier-1/state.json",
+      "sha256": "de1c90034d9e1b35c46d0d8c2b6f1343a9524c01a656ded4a15b7b452c44c6d4",
+      "mtime_utc": "2026-10-11T09:54:47.113771+00:00",
+      "size_bytes": 19364
+    },
+    {
+      "verifier_index": 2,
+      "path": "/tmp/team19-e2e-ufFMpm/verifier-2/state.json",
+      "sha256": "816a063245b27ec3c34581d6ed27f6bbf9cb3d9cf77b4b6eb268a87ab2899239",
+      "mtime_utc": "2026-10-11T09:54:46.728768+00:00",
+      "size_bytes": 17490
+    },
+    {
+      "verifier_index": 3,
+      "path": "/tmp/team19-e2e-ufFMpm/verifier-3/state.json",
+      "sha256": "af5e9060ae1fca27652642f129e3bed3bb7cb7e326b4c23528b783d1478ae562",
+      "mtime_utc": "2026-10-11T09:54:48.919787+00:00",
+      "size_bytes": 18412
+    }
+  ],
+  "counts": {
+    "requests": 16,
+    "votes": 48,
+    "llm_outputs": 45,
+    "deterministic_rule_outputs": 3
+  },
+  "timestamps_scope": "deadline fields copied from local states; no arrival, evaluation or verdict latency measured here",
+  "requests": [
+    {
+      "request_id": 14,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 1,
+          "reasons": [
+            "insufficient_context"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791706775",
+          "reveal_deadline_unix": "1791706795",
+          "contest_deadline_unix": "1791706840"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791706775",
+          "reveal_deadline_unix": "1791706795",
+          "contest_deadline_unix": "1791706840"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 1,
+          "reasons": [
+            "insufficient_context"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791706775",
+          "reveal_deadline_unix": "1791706795",
+          "contest_deadline_unix": "1791706840"
+        }
+      ]
+    },
+    {
+      "request_id": 15,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 1,
+          "reasons": [
+            "insufficient_context"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707156",
+          "reveal_deadline_unix": "1791707176",
+          "contest_deadline_unix": "1791707222"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791707156",
+          "reveal_deadline_unix": "1791707176",
+          "contest_deadline_unix": "1791707222"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 1,
+          "reasons": [
+            "insufficient_context"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707156",
+          "reveal_deadline_unix": "1791707176",
+          "contest_deadline_unix": "1791707222"
+        }
+      ]
+    },
+    {
+      "request_id": 16,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "rule",
+          "model": null,
+          "vote": 0,
+          "reasons": [
+            "amount_above_cap"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707196",
+          "reveal_deadline_unix": "1791707216",
+          "contest_deadline_unix": "1791707261"
+        },
+        {
+          "verifier_index": 2,
+          "source": "rule",
+          "model": null,
+          "vote": 0,
+          "reasons": [
+            "amount_above_cap"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707196",
+          "reveal_deadline_unix": "1791707216",
+          "contest_deadline_unix": "1791707261"
+        },
+        {
+          "verifier_index": 3,
+          "source": "rule",
+          "model": null,
+          "vote": 0,
+          "reasons": [
+            "amount_above_cap"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707196",
+          "reveal_deadline_unix": "1791707216",
+          "contest_deadline_unix": "1791707261"
+        }
+      ]
+    },
+    {
+      "request_id": 17,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707235",
+          "reveal_deadline_unix": "1791707255",
+          "contest_deadline_unix": "1791707301"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707235",
+          "reveal_deadline_unix": "1791707255",
+          "contest_deadline_unix": "1791707301"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707235",
+          "reveal_deadline_unix": "1791707255",
+          "contest_deadline_unix": "1791707301"
+        }
+      ]
+    },
+    {
+      "request_id": 18,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707273",
+          "reveal_deadline_unix": "1791707293",
+          "contest_deadline_unix": "1791707339"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707273",
+          "reveal_deadline_unix": "1791707293",
+          "contest_deadline_unix": "1791707339"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707273",
+          "reveal_deadline_unix": "1791707293",
+          "contest_deadline_unix": "1791707339"
+        }
+      ]
+    },
+    {
+      "request_id": 19,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt",
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707314",
+          "reveal_deadline_unix": "1791707334",
+          "contest_deadline_unix": "1791707380"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707314",
+          "reveal_deadline_unix": "1791707334",
+          "contest_deadline_unix": "1791707380"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707314",
+          "reveal_deadline_unix": "1791707334",
+          "contest_deadline_unix": "1791707380"
+        }
+      ]
+    },
+    {
+      "request_id": 20,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 1,
+          "reasons": [
+            "insufficient_context"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707354",
+          "reveal_deadline_unix": "1791707374",
+          "contest_deadline_unix": "1791707420"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791707354",
+          "reveal_deadline_unix": "1791707374",
+          "contest_deadline_unix": "1791707420"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 1,
+          "reasons": [
+            "insufficient_context"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791707354",
+          "reveal_deadline_unix": "1791707374",
+          "contest_deadline_unix": "1791707420"
+        }
+      ]
+    },
+    {
+      "request_id": 21,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708532",
+          "reveal_deadline_unix": "1791708552",
+          "contest_deadline_unix": "1791708597"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708532",
+          "reveal_deadline_unix": "1791708552",
+          "contest_deadline_unix": "1791708597"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708532",
+          "reveal_deadline_unix": "1791708552",
+          "contest_deadline_unix": "1791708597"
+        }
+      ]
+    },
+    {
+      "request_id": 22,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708570",
+          "reveal_deadline_unix": "1791708590",
+          "contest_deadline_unix": "1791708636"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708570",
+          "reveal_deadline_unix": "1791708590",
+          "contest_deadline_unix": "1791708636"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708570",
+          "reveal_deadline_unix": "1791708590",
+          "contest_deadline_unix": "1791708636"
+        }
+      ]
+    },
+    {
+      "request_id": 23,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708611",
+          "reveal_deadline_unix": "1791708631",
+          "contest_deadline_unix": "1791708677"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708611",
+          "reveal_deadline_unix": "1791708631",
+          "contest_deadline_unix": "1791708677"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 2,
+          "reasons": [],
+          "step": "closed",
+          "commit_deadline_unix": "1791708611",
+          "reveal_deadline_unix": "1791708631",
+          "contest_deadline_unix": "1791708677"
+        }
+      ]
+    },
+    {
+      "request_id": 24,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708651",
+          "reveal_deadline_unix": "1791708671",
+          "contest_deadline_unix": "1791708716"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708651",
+          "reveal_deadline_unix": "1791708671",
+          "contest_deadline_unix": "1791708716"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt",
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708651",
+          "reveal_deadline_unix": "1791708671",
+          "contest_deadline_unix": "1791708716"
+        }
+      ]
+    },
+    {
+      "request_id": 25,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708691",
+          "reveal_deadline_unix": "1791708711",
+          "contest_deadline_unix": "1791708758"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt",
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708691",
+          "reveal_deadline_unix": "1791708711",
+          "contest_deadline_unix": "1791708758"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "decision_inconsistent_with_prompt",
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708691",
+          "reveal_deadline_unix": "1791708711",
+          "contest_deadline_unix": "1791708758"
+        }
+      ]
+    },
+    {
+      "request_id": 26,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708730",
+          "reveal_deadline_unix": "1791708750",
+          "contest_deadline_unix": "1791708795"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708730",
+          "reveal_deadline_unix": "1791708750",
+          "contest_deadline_unix": "1791708795"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708730",
+          "reveal_deadline_unix": "1791708750",
+          "contest_deadline_unix": "1791708795"
+        }
+      ]
+    },
+    {
+      "request_id": 27,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708768",
+          "reveal_deadline_unix": "1791708788",
+          "contest_deadline_unix": "1791708834"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708768",
+          "reveal_deadline_unix": "1791708788",
+          "contest_deadline_unix": "1791708834"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708768",
+          "reveal_deadline_unix": "1791708788",
+          "contest_deadline_unix": "1791708834"
+        }
+      ]
+    },
+    {
+      "request_id": 28,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708808",
+          "reveal_deadline_unix": "1791708828",
+          "contest_deadline_unix": "1791708874"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708808",
+          "reveal_deadline_unix": "1791708828",
+          "contest_deadline_unix": "1791708874"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "suspected_injection"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708808",
+          "reveal_deadline_unix": "1791708828",
+          "contest_deadline_unix": "1791708874"
+        }
+      ]
+    },
+    {
+      "request_id": 29,
+      "verifiers": [
+        {
+          "verifier_index": 1,
+          "source": "llm",
+          "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          "vote": 0,
+          "reasons": [
+            "duplicate_payment"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708848",
+          "reveal_deadline_unix": "1791708868",
+          "contest_deadline_unix": "1791708914"
+        },
+        {
+          "verifier_index": 2,
+          "source": "llm",
+          "model": "us.mistral.pixtral-large-2502-v1:0",
+          "vote": 0,
+          "reasons": [
+            "duplicate_payment"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708848",
+          "reveal_deadline_unix": "1791708868",
+          "contest_deadline_unix": "1791708914"
+        },
+        {
+          "verifier_index": 3,
+          "source": "llm",
+          "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+          "vote": 0,
+          "reasons": [
+            "duplicate_payment"
+          ],
+          "step": "closed",
+          "commit_deadline_unix": "1791708848",
+          "reveal_deadline_unix": "1791708868",
+          "contest_deadline_unix": "1791708914"
+        }
+      ]
+    }
+  ]
+}
