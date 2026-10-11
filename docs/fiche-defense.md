@@ -14,7 +14,7 @@ l'attaquant. Sans contrôle de la chaîne d'autorité, l'agent financier exécut
 | Fonction | Ce que fait le projet | Où |
 |---|---|---|
 | Identify | Registre des agents et de leur mandat, tenu par la porte d'entrée : un jeton court par agent. Le registre sur la chaîne prévu par la spec n'est pas implémenté | `gateway/src/tokens.ts`, [specs/02-contrat.md](../specs/02-contrat.md) § 3 |
-| Detect | Détecteur à règles, trois signaux, à chaque demande. Décisions du contrat : interface gelée, rejouée par un faux coffre | `gateway/src/detector.ts`, `relay/src/fake-vault.ts` |
+| Detect | Détecteur à règles, trois signaux, à chaque demande. Décisions du contrat : implémenté et déployé sur un réseau de test local (anvil), Fuji non testé ; rejouées par un faux coffre en mode par défaut | `gateway/src/detector.ts`, `src/ArgentVault.sol`, `relay/src/fake-vault.ts` |
 | Respond | Quarantaine, pause de l'agent hors chaîne, alerte affichée et journalisée, rapport d'incident, playbook | `response/src/engine.ts`, [playbook.md](playbook.md) |
 
 ## Risques visés
@@ -44,8 +44,8 @@ si une valeur ne sort pas d'un fichier de mesure.
 | Faux positifs | 4 sur 100 (4,0 %) | Nombre et taux, sur le jeu de test |
 | Mêmes mesures pour les règles fixes | à mesurer | Référence de comparaison |
 | Temps de calcul du détecteur | moyenne 0,38 ms, maximum 25,573 ms | Règles seules, hors porte d'entrée |
-| Attaques passées la porte d'entrée puis bloquées par le contrat | à mesurer | Demande un contrat déployé |
-| Attaques ayant abouti à une sortie de fonds | à mesurer | Demande un contrat déployé |
+| Attaques passées la porte d'entrée puis bloquées par le contrat | 2 sur 4 jouées | Coffre utilisé : contrat déployé (anvil, réseau de test local). Scènes scriptées, réseau de test local (anvil), ne vaut pas pour le jeu de test |
+| Attaques ayant abouti à une sortie de fonds | 0 sur 4 jouées | Coffre utilisé : contrat déployé (anvil, réseau de test local). Scènes scriptées, réseau de test local (anvil), ne vaut pas pour le jeu de test |
 | Délai de détection, arrivée → détection | à mesurer | Détection par la porte d'entrée |
 | Délai de réponse, détection → pause | à mesurer | Détection par la porte d'entrée ; pause hors chaîne |
 | Délai de réponse, détection → alerte | à mesurer | Détection par la porte d'entrée |
@@ -57,7 +57,7 @@ Fichiers de mesure lus :
 - `docs/mesures/bench-test.json` : mesuré le 2026-10-10, commande `cd gateway && npm run bench -- ../data/jeu-factures/test.jsonl --json`, commit 2df8362
 - `docs/mesures/bench-reference.json` : absent
 - `docs/mesures/delais.json` : absent
-- `docs/mesures/demo.json` : absent
+- `docs/mesures/demo.json` : mesuré le 2026-10-11, commande `VAULT_MODE=chain make demo, puis VAULT_MODE=chain make scenes, puis node demo/mesure-scenes.mjs`, commit e154d99
 <!-- metriques:fin -->
 
 Les délais d'une détection par le contrat partent de l'horodatage du bloc : ils
@@ -105,7 +105,7 @@ Du kit :
 
 Du dépôt :
 
-- Le contrat de [specs/contract/IArgentVault.sol](../specs/contract/IArgentVault.sol) n'a pas d'implémentation : le relais tourne sur un faux coffre en mémoire, qui ne détient aucun fonds.
+- Le contrat de [specs/contract/IArgentVault.sol](../specs/contract/IArgentVault.sol) est implémenté (`src/ArgentVault.sol`) et se déploie sur un réseau de test local (anvil). Fuji n'est pas testé. Par défaut (`VAULT_MODE=fake`), le relais tourne sur un faux coffre en mémoire, qui ne détient aucun fonds.
 - La pause d'un agent est appliquée hors chaîne, par la porte d'entrée et par le relais. Aucune pause n'est posée sur la chaîne (`response/README.md`, « Garanties et limites »).
 - Le jeu de mesure est synthétique et écrit par un modèle de langage, par un seul auteur (`data/jeu-factures/README.md`).
 <!-- limite-jeu:debut -->
