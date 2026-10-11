@@ -2,6 +2,7 @@
 // identifiant abrégé, montant ou « non disponible », texte non fiable inerte.
 import type { ReactNode } from "react";
 import type { TagSource } from "../api/types.ts";
+import { TONE_WORDS, type Tone } from "../domain/flow.ts";
 import { DECISION_WORDS, type DecisionKind } from "../domain/reasons.ts";
 import { UNIT_LABEL, abbreviateId, formatWei } from "../lib/format.ts";
 import { EXCERPT_MAX, neutralize } from "../lib/safeText.ts";
@@ -43,13 +44,15 @@ export function Amount({ wei, missing = "non disponible" }: { wei: string | null
   );
 }
 
-const ICONS: Record<DecisionKind, ReactNode> = {
+const ICONS: Record<Tone, ReactNode> = {
   // Croix : refusé.
   refuse: <path d="M5 5l10 10M15 5L5 15" />,
   // Sablier : en attente d'un humain.
   humain: <path d="M6 3h8M6 17h8M7 3c0 4 6 4 6 7s-6 3-6 7M13 3c0 4-6 4-6 7s6 3 6 7" />,
   // Coche : accepté.
   accepte: <path d="M4 10.5l4 4 8-9" />,
+  // Sens interdit : arrêté à la porte d'entrée.
+  bloque: <path d="M10 3a7 7 0 1 0 0 14a7 7 0 1 0 0-14M5.5 10h9" />,
 };
 
 /** La décision en mots, avec une icône : la couleur ne porte jamais seule l'information. */
@@ -60,6 +63,18 @@ export function DecisionBadge({ kind }: { kind: DecisionKind }) {
         {ICONS[kind]}
       </svg>
       {DECISION_WORDS[kind]}
+    </span>
+  );
+}
+
+/** Issue d'une demande, y compris l'arrêt à la porte : icône et mot, comme DecisionBadge. */
+export function ToneBadge({ tone }: { tone: Tone }) {
+  return (
+    <span className={`decision decision-${tone}`}>
+      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">
+        {ICONS[tone]}
+      </svg>
+      {TONE_WORDS[tone]}
     </span>
   );
 }

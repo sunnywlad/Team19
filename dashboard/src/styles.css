@@ -764,6 +764,193 @@ tbody th {
   font-size: 1.1rem;
 }
 
+/* --- Diagramme du flux --- */
+.flux {
+  margin: 0;
+}
+
+.flux-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+}
+
+.noeud rect {
+  fill: var(--surface-2);
+  stroke: var(--trait);
+  stroke-width: 1.5;
+  transition: fill 0.4s ease, stroke 0.4s ease;
+}
+
+.noeud-nom {
+  fill: var(--texte);
+  font: 650 14px var(--sans);
+}
+
+.noeud-sous {
+  fill: var(--discret);
+  font: 11px var(--sans);
+}
+
+.noeud-passe rect {
+  stroke-width: 2.5;
+}
+
+/* Nœud d'arrivée : trait double, l'issue se lit sans la couleur. */
+.noeud-fin rect {
+  stroke-width: 4;
+}
+
+.arete {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.arete-repos {
+  stroke: var(--trait);
+  stroke-width: 2;
+  stroke-dasharray: 4 5;
+}
+
+.arete-active {
+  stroke-width: 4.5;
+}
+
+.ton-accepte {
+  --ton: var(--accepte);
+  --ton-fond: var(--accepte-fond);
+}
+
+.ton-humain {
+  --ton: var(--humain);
+  --ton-fond: var(--humain-fond);
+}
+
+.ton-refuse {
+  --ton: var(--refuse);
+  --ton-fond: var(--refuse-fond);
+}
+
+.ton-bloque {
+  --ton: var(--bloque);
+  --ton-fond: var(--bloque-fond);
+}
+
+.ton-repos {
+  --ton: var(--trait);
+}
+
+.arete-active,
+.noeud[data-etat="actif"] rect {
+  stroke: var(--ton);
+}
+
+.noeud[data-etat="actif"] rect {
+  fill: var(--ton-fond);
+}
+
+.fleche path {
+  fill: var(--ton);
+}
+
+.flux-legende {
+  margin-top: 8px;
+  line-height: 1.9;
+}
+
+.flux-titre {
+  font-weight: 650;
+}
+
+.flux-note {
+  font-size: 0.84rem;
+}
+
+/* --- Frise d'étapes --- */
+.frise {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 14px 0 6px;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+}
+
+.etape {
+  position: relative;
+  flex: 1 1 110px;
+  min-width: 110px;
+  padding: 0 8px 6px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+
+/* Trait entre deux étapes. */
+.etape + .etape::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  right: calc(50% + 16px);
+  width: calc(100% - 32px);
+  height: 2px;
+  background: var(--trait);
+}
+
+.etape-fait + .etape::before {
+  background: var(--accent);
+}
+
+.etape-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--trait);
+  background: var(--surface);
+  color: var(--discret);
+}
+
+.etape-icone svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.etape-fait .etape-icone {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.etape-echec .etape-icone {
+  border-color: var(--refuse);
+  background: var(--refuse-fond);
+  color: var(--refuse);
+}
+
+.etape-attente .etape-icone {
+  border-color: var(--humain);
+  background: var(--humain-fond);
+  color: var(--humain);
+}
+
+.etape-nom {
+  display: block;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.etape-etat {
+  display: block;
+  color: var(--discret);
+  font-size: 0.76rem;
+}
+
 /* --- Clavier --- */
 :focus-visible {
   outline: 3px solid var(--accent);

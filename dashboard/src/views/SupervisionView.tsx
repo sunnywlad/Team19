@@ -1,3 +1,4 @@
+import { FlowPanel } from "../components/FlowPanel.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { PlaceableValues } from "../components/PlaceablePanel.tsx";
 import { latestIncidents, offContractLines, pendingCases } from "../domain/activity.ts";
@@ -14,6 +15,7 @@ export function SupervisionView({ view }: { view: ViewProps }) {
   const relayTag = vaultFed(sources.relay, vaultOrigin);
   return (
     <>
+      <FlowPanel view={view} />
       <div className="grille-haut">
         <Panel title="Contrat" id="titre-sup-contrat" source={relayTag} snapshot={relay} now={now}>
           {(data) => {
