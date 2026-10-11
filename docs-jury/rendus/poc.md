@@ -151,9 +151,10 @@ même L1, indépendant du coffre.
 - **Détection.** Un comité de trois vérificateurs, tiré au sort par demande,
   juge une décision prévue par engagement puis révélation. Les trois
   vérificateurs des preuves initiales utilisent Haiku 4.5, Pixtral Large et
-  Sonnet 4.5, soit trois modèles de deux fournisseurs. La campagne distincte
-  de 16 demandes du [rapport](pitch-chiffres.html) utilise trois vérificateurs
-  Haiku. Des règles dures, plafond et palier, décident avant tout modèle.
+  Sonnet 4.5, soit trois modèles de deux fournisseurs. Les 16 demandes du
+  [rapport](pitch-chiffres.html) utilisent le même comité :
+  [états locaux](../preuves/llm-campagne-16-etats.md), 45 sorties LLM et trois
+  refus déterministes. Des règles dures, plafond et palier, décident avant tout modèle.
 - **Réponse.** La chaîne agrège les votes en un code 0, 1 ou 2. Un vérificateur
   absent perd 1 % de sa caution, un vote contredit par un prédicat en perd 20 %.
   Une adresse non admise est refusée par le nœud avant tout contrat.

@@ -54,15 +54,16 @@ lit lui-même. Autres variables : `LLM_CAP_MINOR` (plafond, 1 000 000 par défau
 Sur les piles L1 testées, `LLM_CAP_MINOR` vaut 500, valeur lue sur la chaîne (voir
 « Lecture du plafond sur la chaîne »). La commande la pose ; le code ne la fixe pas.
 
-## Campagnes distinctes
+## Échantillons distincts, même comité
 
 Ce document détaille les premiers bancs et passages sur chaîne : comité
 Haiku 4.5, Pixtral Large et Sonnet 4.5, trois modèles de deux fournisseurs.
-Le [rapport ultérieur](rendus/pitch-chiffres.html) décrit une autre campagne
-sur AWS : 16 demandes et trois vérificateurs Haiku. Ses chiffres ne sont
-pas ceux des preuves initiales ci-dessous. Les journaux bruts de ces
-16 demandes ne sont pas versionnés ici. Aucun de ces comités n'est relié
-à la décision du coffre.
+Le [rapport ultérieur](rendus/pitch-chiffres.html) décrit 16 demandes
+sur AWS avec le même comité. L'[extraction des états locaux](preuves/llm-campagne-16-etats.md)
+porte 48 votes : 45 sorties LLM et trois refus par règle, sur la demande 16.
+L'ancienne mention de trois Haiku était erronée. Ces états ne sont pas une
+preuve indépendante sur chaîne. Aucun vote du marché ne pilote le coffre.
+
 
 ## Comité des preuves initiales
 
