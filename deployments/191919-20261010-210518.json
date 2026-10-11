@@ -1,0 +1,42 @@
+{
+  "chainId": 191919,
+  "rpc": "http://127.0.0.1:9654/ext/bc/bM7X3ju78mCF3i2dKcF9LKvkFCiHmcxzpm71xzpUQKemrQqvW/rpc",
+  "admin": "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC",
+  "startBlock": 28,
+  "timestamp": "20261010-210518",
+  "phase1": {
+    "VerificationMarket": "0x1cf29efd16400f9f4995a0a2261c9c891a556af9"
+  },
+  "phase2": {
+    "VerifierRegistry": "0xe742a4b5f98453027fa3a9b0de106e237b6746b1",
+    "Slashing": "0x9cbe4e4d620cd504f0490b6bd46752d9a1ccc752",
+    "Rewards": "0xb91b7959e715c059ce10ebebe3288da9d8012961",
+    "StakedVerificationMarket": "0x64babfe676d2c2441ba1f6e8d4b286f5e10f8545"
+  },
+  "phase3": {
+    "VerifierRegistry": "0xcad00692aa206527f64fc683db0f711dc49cb176",
+    "Slashing": "0x68ade62397958e78a728313d27d3b1227abf93d3",
+    "Rewards": "0x0d6f31d23704631417d8c55360af2d493a578bf2",
+    "DrawnVerificationMarket": "0x5e000bda2743b2c91469599b91e75646a50e9f57",
+    "AgentIdentityRegistry": "0xa28c19a3ef0202bee05a5fd090248655f28fc24a",
+    "AgentReputationRegistry": "0x7db136a47edb435e005934c89c3baa5f5e1e9d69",
+    "AgentValidationRegistry": "0xb5f5a23bbd1bee9ed105aba8ac9ecd19f50bb378"
+  },
+  "verifiers": {
+    "1": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "2": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "3": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    "4": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+  },
+  "params": {
+    "FEE": "1000000000000000000",
+    "COMMIT_WINDOW": 180,
+    "REVEAL_WINDOW": 60,
+    "CONTEST_WINDOW": 600,
+    "MIN_STAKE": "100000000000000000000",
+    "LOCK_BPS": 2000,
+    "STRIKE_LIMIT": 3,
+    "EXCLUSION_REQUESTS": 10,
+    "BONUS": "1000000000000000000"
+  }
+}

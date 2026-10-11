@@ -58,7 +58,8 @@ contract Phase3Test is Test {
         registry = new VerifierRegistry(MIN_STAKE, LOCK_BPS, TREASURY);
         slashing = new Slashing(registry, STRIKE_LIMIT, EXCLUSION);
         rewards = new Rewards(TREASURY, BONUS);
-        market = new DrawnVerificationMarket(FEE, COMMIT_WINDOW, REVEAL_WINDOW, CONTEST_WINDOW, registry, slashing, rewards);
+        market =
+            new DrawnVerificationMarket(FEE, COMMIT_WINDOW, REVEAL_WINDOW, CONTEST_WINDOW, registry, slashing, rewards);
 
         registry.setMarket(address(market));
         registry.setSlashing(address(slashing));

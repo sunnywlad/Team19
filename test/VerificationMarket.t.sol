@@ -38,7 +38,11 @@ contract VerificationMarketTest is Test {
     event CommitteeDrawn(uint256 indexed requestId, address[] committee);
     event VerdictCommitted(uint256 indexed requestId, address indexed verifier, bytes32 commitment);
     event VerdictRevealed(
-        uint256 indexed requestId, address indexed verifier, IVerificationMarket.Code vote, uint16 reasons, bytes32 detailHash
+        uint256 indexed requestId,
+        address indexed verifier,
+        IVerificationMarket.Code vote,
+        uint16 reasons,
+        bytes32 detailHash
     );
     event VerifierMissed(uint256 indexed requestId, address indexed verifier, bool committed);
     event RequestFinalized(
@@ -363,8 +367,7 @@ contract VerificationMarketTest is Test {
         bytes32 salt = keccak256("salt");
         uint16 reasons = 5;
         bytes32 detailHash = keccak256("detail");
-        bytes32 commitment =
-            market.commitmentOf(id, C0, IVerificationMarket.Code.Refuse, reasons, detailHash, salt);
+        bytes32 commitment = market.commitmentOf(id, C0, IVerificationMarket.Code.Refuse, reasons, detailHash, salt);
         _commit(id, C0, commitment);
         _toReveal(id);
 
@@ -453,8 +456,7 @@ contract VerificationMarketTest is Test {
     function test_reveal_mismatchDetailHashReverts() public {
         uint256 id = _create();
         bytes32 salt = keccak256("s");
-        bytes32 commitment =
-            market.commitmentOf(id, C0, IVerificationMarket.Code.Accept, 0, keccak256("a"), salt);
+        bytes32 commitment = market.commitmentOf(id, C0, IVerificationMarket.Code.Accept, 0, keccak256("a"), salt);
         _commit(id, C0, commitment);
         _toReveal(id);
         vm.prank(C0);
@@ -477,8 +479,7 @@ contract VerificationMarketTest is Test {
         // C0 commite un commitment calcule pour C1 : au reveal, commitmentOf(C0,...) differe.
         uint256 id = _create();
         bytes32 salt = keccak256("s");
-        bytes32 commitmentForC1 =
-            market.commitmentOf(id, C1, IVerificationMarket.Code.Accept, 0, bytes32(0), salt);
+        bytes32 commitmentForC1 = market.commitmentOf(id, C1, IVerificationMarket.Code.Accept, 0, bytes32(0), salt);
         _commit(id, C0, commitmentForC1);
         _toReveal(id);
         vm.prank(C0);
@@ -633,7 +634,6 @@ contract VerificationMarketTest is Test {
         }
         require(finalizedSeen, "RequestFinalized absent");
     }
-
 
     function test_finalize_unknownRequestReverts() public {
         vm.expectRevert(abi.encodeWithSelector(IVerificationMarket.UnknownRequest.selector, uint256(99)));
@@ -872,10 +872,7 @@ contract VerificationMarketTest is Test {
 
     function test_hashOf_matchesLocal() public view {
         IVerificationMarket.Facts memory facts = IVerificationMarket.Facts({
-            amount: 12345,
-            currency: bytes3("EUR"),
-            beneficiaryId: keccak256("ben"),
-            referenceId: keccak256("ref")
+            amount: 12345, currency: bytes3("EUR"), beneficiaryId: keccak256("ben"), referenceId: keccak256("ref")
         });
         bytes32 contentHash = keccak256("content");
         bytes32 expected = keccak256(abi.encode(facts, contentHash));
@@ -896,9 +893,7 @@ contract VerificationMarketTest is Test {
                 salt
             )
         );
-        assertEq(
-            market.commitmentOf(1, C0, IVerificationMarket.Code.Accept, 7, keccak256("d"), salt), expected
-        );
+        assertEq(market.commitmentOf(1, C0, IVerificationMarket.Code.Accept, 7, keccak256("d"), salt), expected);
     }
 
     function test_requests_independent() public {

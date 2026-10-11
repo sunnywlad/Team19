@@ -1,0 +1,2 @@
+# Faux positif : étiquette de test « permutation-v0 » prise pour une clé (règle generic-api-key).
+f63d74bbb2bad7bdb428a0cdf7bd073347403361:offchain/test/phase3-offchain.test.ts:generic-api-key:490
