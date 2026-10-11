@@ -40,7 +40,7 @@ Facture piégée, rejeu et clé volée : le coffre borne montants, références 
 | Contrat : détection → réponse | Pause +6,474 s ; alerte +6,482 s | À partir du bloc, indexeur compris ; hors chaîne ; `docs/mesures/delais.json` |
 | Confinement des scènes | 0 sortie de fonds sur 4 attaques | 2 refus du contrat après passage de la porte ; anvil puis L1 AWS, `docs/mesures/demo.json` |
 
-**Simulation reproductible séparée.** [500 attaques, dix familles](../../demo/campagne/README.md), coffre en mémoire : nominal, 100 blocs filtre + 400 refus coffre ; filtre aveugle, 450 refus + 50 paiements aux bons montant et bénéficiaire. Zéro unité détournée, zéro doublon. Ce run ne reproduit pas le trimestre historique. **Comité séparé :** médiane rapportée 39,8 s sur 16 demandes, trois Haiku, [rapport](pitch-chiffres.pdf). Preuves initiales : Haiku / Pixtral / Sonnet. Aucun vote ne pilote le coffre.
+**Simulation reproductible séparée.** [500 attaques, dix familles](../../demo/campagne/README.md), coffre en mémoire : nominal, 100 blocs filtre + 400 refus coffre ; filtre aveugle, 450 refus + 50 paiements aux bons montant et bénéficiaire. Zéro unité détournée, zéro doublon. Ce run ne reproduit pas le trimestre historique. **Comité séparé :** médiane rapportée 39,8 s sur 16 demandes, Haiku / Pixtral / Sonnet comme les preuves initiales. [États locaux](../preuves/llm-campagne-16-etats.md) : 45 sorties LLM + 3 refus par règle. Aucun vote ne pilote le coffre.
 
 ## Limites connues
 

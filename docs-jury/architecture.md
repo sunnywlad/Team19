@@ -49,9 +49,10 @@ La passerelle, le cache, les services vérificateurs et le marché sont reliés.
 Le parcours de bout en bout atteint la clôture sur le L1 local et le L1 AWS.
 Les premiers passages utilisaient l'évaluateur à règles fixes. L'évaluateur
 LLM Bedrock est désormais branché sans changer le contrat : preuves initiales
-avec Haiku 4.5, Pixtral Large et Sonnet 4.5, puis campagne distincte de
-16 demandes avec trois vérificateurs Haiku, rapportée dans
-[rendus/pitch-chiffres.html](rendus/pitch-chiffres.html).
+avec Haiku 4.5, Pixtral Large et Sonnet 4.5, puis un échantillon de
+16 demandes avec le même comité. Les [états locaux nettoyés](preuves/llm-campagne-16-etats.md)
+portent 45 sorties LLM et trois refus par règle ; les autres chiffres
+sont rapportés dans [rendus/pitch-chiffres.html](rendus/pitch-chiffres.html).
 
 Le flux agent, relais, coffre et dashboard décrit l'interface de l'équipe.
 Le coffre a été déployé et répété sur un L1 local identique (20 transactions,
