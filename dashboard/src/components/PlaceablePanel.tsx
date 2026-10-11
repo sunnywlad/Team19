@@ -7,7 +7,7 @@ import { Amount } from "./atoms.tsx";
  * Aucun calcul ici : si « placeable » manque, la page dit « non disponible »
  * plutôt que de le déduire des autres termes.
  */
-export function PlaceableValues({ vault }: { vault: VaultState }) {
+export function PlaceableValues({ vault, simulated = false }: { vault: VaultState; simulated?: boolean }) {
   return (
     <>
       <p className="placable" data-testid="placable">
@@ -46,9 +46,11 @@ export function PlaceableValues({ vault }: { vault: VaultState }) {
           </dd>
         </div>
       </dl>
-      <p className="discret">
-        Valeurs lues dans le contrat au bloc {vault.block_number} ({formatTime(vault.block_timestamp * 1000)}, horloge du bloc). Aucun
-        recalcul dans l'interface. Une facture bloquée reste une dette admise : elle n'est pas déduite deux fois. {UNIT_LEGEND}.
+      <p className="discret" data-testid="placable-origine">
+        {simulated
+          ? `Valeurs d'un faux coffre en mémoire dans le relais (bloc simulé ${vault.block_number}, ${formatTime(vault.block_timestamp * 1000)}) : aucun fonds, aucune chaîne.`
+          : `Valeurs lues dans le contrat au bloc ${vault.block_number} (${formatTime(vault.block_timestamp * 1000)}, horloge du bloc).`}{" "}
+        Aucun recalcul dans l'interface. Une facture bloquée reste une dette admise : elle n'est pas déduite deux fois. {UNIT_LEGEND}.
       </p>
       {vault.vault_paused === true && (
         <p className="alerte-ligne" role="status">

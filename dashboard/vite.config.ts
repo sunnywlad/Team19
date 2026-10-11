@@ -3,7 +3,10 @@
 //   1. servir la page sur 127.0.0.1 uniquement ;
 //   2. relayer /api/* vers les API (le navigateur ne connaît ni leurs URLs ni
 //      un éventuel jeton, et l'API du relais n'a pas d'en-têtes CORS) ;
-//   3. poser la politique CSP et refuser toute méthode autre que GET.
+//   3. poser la politique CSP et refuser toute méthode autre que GET ;
+//   4. dire à la page, par GET /api/local/mode, ce que le relais a derrière
+//      lui : un contrat ou un faux coffre. Lu ici dans RELAY_VAULT_MODE, à
+//      chaque lancement : la valeur n'est pas écrite dans le bundle.
 import { randomBytes } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { dirname } from "node:path";
@@ -63,14 +66,34 @@ function readOnly(req: IncomingMessage, res: ServerResponse, next: Next): void {
   res.end(JSON.stringify({ error: "method_not_allowed" }));
 }
 
-function hardening(): Plugin {
+export type VaultMode = "fake" | "chain" | "unknown";
+export const LOCAL_MODE_PATH = "/api/local/mode";
+
+/** RELAY_VAULT_MODE : « fake » ou « chain ». Toute autre valeur, ou rien : inconnu, jamais « chain » par défaut. */
+export function vaultModeFrom(raw: string | undefined): VaultMode {
+  const value = (raw ?? "").trim();
+  return value === "fake" || value === "chain" ? value : "unknown";
+}
+
+/** Sert le mode du coffre à la page. Ce n'est pas une réponse du relais : son API n'a aucun champ de plus. */
+export function localMode(vault: VaultMode): (req: IncomingMessage, res: ServerResponse, next: Next) => void {
+  return (req, res, next) => {
+    if ((req.url ?? "").split("?")[0] !== LOCAL_MODE_PATH) return next();
+    res.writeHead(200, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" });
+    res.end(JSON.stringify({ vault }));
+  };
+}
+
+function hardening(vault: VaultMode): Plugin {
   return {
     name: "argent-intelligent:lecture-seule-et-csp",
     configureServer(server) {
       server.middlewares.use(readOnly);
+      server.middlewares.use(localMode(vault));
     },
     configurePreviewServer(server) {
       server.middlewares.use(readOnly);
+      server.middlewares.use(localMode(vault));
     },
     // La page construite porte aussi la politique : elle reste en place quel que soit le serveur.
     transformIndexHtml: {
@@ -111,7 +134,7 @@ export default defineConfig(({ mode, command, isPreview }) => {
 
   return {
     root,
-    plugins: [hardening()],
+    plugins: [hardening(vaultModeFrom(env.RELAY_VAULT_MODE))],
     // Aucune variable d'environnement n'entre dans le bundle : ce préfixe n'est porté par aucune.
     envPrefix: "DASHBOARD_PUBLIC_",
     define: {

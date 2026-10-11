@@ -10,6 +10,9 @@
 keystore/
 broadcast/
 
+# --- Données locales de la démo (make demo) : clé générée, pid, logs, bases ---
+/var/
+
 # --- Outils locaux installés par scripts/ (binaires épinglés, venv) ---
 .tools/
 # --- Dépendances installées ---

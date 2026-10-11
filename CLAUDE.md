@@ -47,8 +47,14 @@ Chaque dossier applicatif est un paquet Node autonome, avec son `package.json`.
 
 ## État du flux
 
-- Le contrat de `specs/02` (`IArgentVault`) n'existe pas encore : le relais tourne contre un faux coffre.
-- Le relais écrit dans un journal en mémoire et ses scènes passent par un faux portier : le branchement sur `response/` et `gateway/` reste à faire.
+- `make demo` lance response, gateway, client-ia, relais et dashboard sur 127.0.0.1 ; `make scenes` joue les scénarios par la vraie porte et compare à la spec ; `make demo-stop` arrête. Code dans `demo/`, données sous `var/demo/` (jamais versionné).
+- Le contrat de `specs/02` (`IArgentVault`) n'existe pas encore. Par défaut `VAULT_MODE=fake` : faux coffre en mémoire dans le relais, aucun fonds, aucune chaîne. `VAULT_MODE=chain` s'arrête tant que `script/DeployArgentVault.s.sol` manque, sans repli sur le faux coffre.
+- En démo, le relais écrit dans le journal de `response/` et les scènes passent par `gateway/`. Lancé seul sans `JOURNAL_URL`, il garde un journal en mémoire ; ses tests passent par un faux portier.
+- `make scenes` sort en code 0 avec deux écarts connus, listés dans `demo/ecarts-connus.json` et réaffichés à chaque passage : E1, `FORWARDED_TO_CLIENT_AI` est écrit après `REQUEST_SIGNED` et `ENQUEUED` (la spec dit avant, `gateway/`) ; E2, relais arrêté, l'alerte de disponibilité ne part pas avant sa relance (`response/`). Un écart hors liste fait échouer, un écart listé qui disparaît aussi : retire-le alors de la liste. Ne masque pas un écart : il se liste.
+- `QUEUE_EXPIRED` s'écrit à l'échéance même relais arrêté : l'IA du client balaie aussi la file. `AGENT_PAUSED (ONCHAIN)` n'est jamais écrit : aucune pause n'est posée sur la chaîne.
+- Les ports de la démo sont fixes (`demo/lib.mjs`, `PORTS`) : ni `.env` ni l'environnement ne les déplacent, `GATEWAY_PORT` servant aussi à `offchain/`.
+- En mode fake, le dashboard affiche « COFFRE SIMULÉ : aucun fonds, aucune chaîne » : le mode lui vient de `RELAY_VAULT_MODE`, lu par son proxy local, jamais du bundle ni d'un champ de l'API du relais.
+- Les scènes remettent la démo à zéro : n'en lance pas pendant qu'une autre session utilise les mêmes ports.
 - Ne présente jamais un chiffre de détection sans sa réserve : voir `gateway/bench/README.md`.
 
 ## Règles de sécurité

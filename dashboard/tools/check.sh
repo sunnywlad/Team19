@@ -34,14 +34,15 @@ npm test --silent
 echo "==> dashboard : build et contrôle du bundle"
 CANARY_TOKEN="temoin-jeton-ne-doit-pas-sortir"
 CANARY_HOST="temoin-hote-interne.invalid"
+CANARY_MODE="temoin-mode-du-coffre"
 RESPONSE_API_TOKEN="$CANARY_TOKEN" RESPONSE_API_URL="http://$CANARY_HOST:9000" \
-  RELAY_API_URL="http://$CANARY_HOST:8787" npm run --silent build > /dev/null
+  RELAY_API_URL="http://$CANARY_HOST:8787" RELAY_VAULT_MODE="$CANARY_MODE" npm run --silent build > /dev/null
 
 fail() {
   echo "ECHEC dashboard : $*" >&2
   exit 1
 }
-if grep -rqF -e "$CANARY_TOKEN" -e "$CANARY_HOST" dist; then
+if grep -rqF -e "$CANARY_TOKEN" -e "$CANARY_HOST" -e "$CANARY_MODE" dist; then
   fail "une valeur d'environnement du proxy est dans le bundle"
 fi
 grep -q 'http-equiv="Content-Security-Policy"' dist/index.html || fail "CSP absente de dist/index.html"
