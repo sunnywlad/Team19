@@ -70,6 +70,7 @@ Précisions :
 
 - Les étapes 9 et 10 sont des événements du contrat, pas des entrées de journal (PROPOSITION § 3). `DECISION_OBSERVED` est leur copie, écrite par le service de réponse quand il lit l'événement dans l'indexeur. Elle est nécessaire : le rapport d'incident, « prérempli depuis le journal », doit porter la décision et le motif du contrat. La source de vérité reste la chaîne.
 - Les étapes 5, 11 et 12 n'écrivent rien. FAIT (§ 3).
+- `FORWARDED_TO_CLIENT_AI` est inscrit avant l'appel à l'IA du client ; un 502 sans `REQUEST_SIGNED` derrière montre une transmission qui n'a pas abouti.
 - `AUTH_REJECTED` : `agent_id` vaut `null`, puisque personne n'est authentifié. L'identifiant déclaré va dans `data.claimed_agent_id`. Aucune réaction ne vise un agent sur la foi d'un identifiant déclaré.
 - `AGENT_PAUSED` est écrite une fois par niveau : `scope` vaut `OFFCHAIN` (porte d'entrée et relais, immédiat) puis `ONCHAIN` (transaction du gardien confirmée, `tx_hash` renseigné). Point b.
 - `ALERT_SENT.kind` : `SECURITY`, `REPETITION`, `AVAILABILITY`, `APPROVAL_REQUESTED`. `recipients` : des rôles (`ANALYST`, `TREASURER`, `APPROVER`, `OPERATIONS`), jamais une adresse ou un nom.

@@ -29,6 +29,8 @@ let outputs: OutputLog;
 let forwarded: Forwarded[];
 let gateway: Gateway;
 let forwardFails: boolean;
+// Ce que le journal contenait pour la demande au moment où forward a été appelé.
+let journalAtForward: string[][];
 
 function token(label: string, ttlS = 900): string {
   return tokens.issue({ agent_id: ID(label), client_id: ID("C-DEMO"), mandate: mandateOf(label) }, ttlS);
@@ -62,6 +64,7 @@ beforeEach(() => {
   outputs = new OutputLog();
   forwarded = [];
   forwardFails = false;
+  journalAtForward = [];
   gateway = new Gateway({
     policy: DEFAULT_POLICY,
     clock: () => (now += 3),
@@ -70,6 +73,7 @@ beforeEach(() => {
     journal,
     quarantine,
     forward: async (request) => {
+      journalAtForward.push(journal.types(request.request_id));
       if (forwardFails) throw new Error("IA du client injoignable");
       forwarded.push(request);
     },
@@ -90,6 +94,8 @@ describe("scénarios de specs/acceptance", () => {
       "REQUEST_PARSED",
       "FORWARDED_TO_CLIENT_AI",
     ]);
+    // Journal avant action : la transmission est inscrite avant l'appel à l'IA du client.
+    assert.deepEqual(journalAtForward, [["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED", "FORWARDED_TO_CLIENT_AI"]]);
     // L'IA du client reçoit des identifiants seulement.
     assert.deepEqual(forwarded, [
       { request_id: result.response.request_id, agent_id: ID("A-DEM-1"), client_id: ID("C-DEMO"), action: "PAY_INVOICE", ref_id: ID("F-001") },
@@ -331,12 +337,32 @@ describe("échec fermé", () => {
     assert.equal(outputs.count, 0);
   });
 
-  it("IA du client injoignable : la demande est rejetée et n'est pas notée comme transmise", async () => {
+  it("journal en panne à l'étape 4 : l'IA du client n'est jamais appelée", async () => {
+    const append = journal.append.bind(journal);
+    journal.append = async (entry) => {
+      if (entry.type === "FORWARDED_TO_CLIENT_AI") journal.down = true;
+      return append(entry);
+    };
+    const result = await send("A-DEM-1");
+    assert.equal(result.httpStatus, 503);
+    assert.equal(result.response.status, "rejected");
+    assert.equal(result.output, null);
+    assert.equal(journalAtForward.length, 0);
+    assert.equal(forwarded.length, 0);
+    assert.deepEqual(journal.types(result.response.request_id), ["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED"]);
+  });
+
+  it("IA du client injoignable : 502, la transmission tentée reste au journal, rien d'autre n'est écrit", async () => {
     forwardFails = true;
     const result = await send("A-DEM-1");
     assert.equal(result.httpStatus, 502);
     assert.equal(result.response.status, "rejected");
-    assert.equal(journal.types().includes("FORWARDED_TO_CLIENT_AI"), false);
+    assert.equal(result.output, null);
+    assert.equal(forwarded.length, 0);
+    // FORWARDED_TO_CLIENT_AI était écrit avant l'appel, et reste la dernière entrée.
+    assert.deepEqual(journalAtForward, [["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED", "FORWARDED_TO_CLIENT_AI"]]);
+    assert.deepEqual(journal.types(), ["REQUEST_RECEIVED", "DETECTION", "REQUEST_PARSED", "FORWARDED_TO_CLIENT_AI"]);
+    assert.equal(outputs.count, 0);
   });
 });
 
