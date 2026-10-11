@@ -20,7 +20,7 @@
 // toujours lieu. Code de sortie non nul au moindre échec, y compris un écart
 // entre une scène et la spec.
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { bringUpChain } from "./chain.mjs";
 import { checkEnvExamples, checkVarDemo, demoTexts, knownSecrets, scanSecrets } from "./hygiene.mjs";
@@ -141,6 +141,9 @@ function hygiene() {
   const exact = Object.fromEntries(Object.entries(secrets).map(([what, values]) => [what, [...values]]));
   const texts = { ...demoTexts(), "sortie de make scenes": scenesOutput };
   const found = scanSecrets(texts, exact);
+  // Lu par le job CI : des logs où un secret a été trouvé ne sont pas recopiés.
+  if (found.length > 0) writeFileSync(join(VAR, "secret-trouve"), "", { mode: 0o600 });
+  else rmSync(join(VAR, "secret-trouve"), { force: true });
   step("aucun jeton, aucune clé, aucune signature complète dans les logs et la sortie des scènes", found.length === 0 && exact["jeton d'agent"].length > 0 && exact["clé de var/demo/"].length > 0, found.length === 0 ? `${Object.keys(texts).length} textes lus, ${exact["jeton d'agent"].length} jetons et ${exact["clé de var/demo/"].length} clé cherchés` : found.join(" ; "));
   const defects = checkVarDemo();
   step("var/demo/ : clé et logs en 600, dossier en 700, ignoré par git", defects.length === 0, defects.join(" ; "));
