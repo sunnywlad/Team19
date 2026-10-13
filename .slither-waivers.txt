@@ -16,5 +16,5 @@
 # Une ligne mal formée fait aussi échouer le contrôle. Une ligne qui ne
 # correspond plus à aucune alerte est signalée : la retirer.
 # Aucune dérogation sans date : viser quelques jours.
-weak-prng | src/DrawnVerificationMarket.sol:drawCommittee | VerificationMarket hors chemin de démo, propriétaire Wladimir | 2026-10-11
-arbitrary-send-eth | src/VerifierRegistry.sol:_seize | VerificationMarket hors chemin de démo, propriétaire Wladimir | 2026-10-11
+weak-prng | src/DrawnVerificationMarket.sol:drawCommittee | VerificationMarket hors chemin de démo, propriétaire Wladimir ; extension hors chemin de paiement ; aléa prévisible sur un L1 à validateur unique, à remplacer par un aléa vérifiable avant tout usage en production | 2026-11-15
+arbitrary-send-eth | src/VerifierRegistry.sol:_seize | VerificationMarket hors chemin de démo, propriétaire Wladimir ; extension hors chemin de paiement | 2026-11-15
