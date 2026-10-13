@@ -2435,3 +2435,489 @@ main:focus {
   font-size: 1.2rem;
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   Composants partagés du système Veto (src/components/veto/), d'après
+   veto-design-A/design/components/bundle.css. Préfixe « veto- » là où un nom
+   existait déjà dans cette feuille.
+   ========================================================================== */
+.veto-icone {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+.veto-icone-sm {
+  width: 20px;
+  height: 20px;
+}
+
+.veto-etiquette {
+  font: 600 12px/16px var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--discret);
+}
+
+/* --- Étiquette de source : la forme porte le sens autant que la couleur --- */
+.veto-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--pilule);
+  border: 1.5px solid transparent;
+  font: 500 12px/16px var(--font-sans);
+  white-space: nowrap;
+}
+
+.veto-source::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.veto-source-reel {
+  background: var(--texte);
+  color: var(--surface);
+  border-color: var(--texte);
+}
+
+.veto-source-reel::before,
+.veto-source-lecture::before {
+  background: var(--accepte-signal);
+}
+
+.veto-source-lecture {
+  color: var(--discret);
+  border-color: var(--trait-fort);
+}
+
+.veto-source-simulation {
+  color: var(--simulation);
+  border: 1.5px dashed var(--simulation);
+  background: repeating-linear-gradient(135deg, var(--simulation-fond) 0 5px, transparent 5px 10px);
+}
+
+.veto-source-simulation::before {
+  border: 1.5px solid var(--simulation);
+}
+
+.veto-source-incertain {
+  color: var(--simulation);
+  border: 1.5px dotted var(--simulation);
+}
+
+.veto-source-nonmesure {
+  color: var(--discret);
+  border: 1.5px dotted var(--discret);
+}
+
+.veto-source-incertain::before,
+.veto-source-nonmesure::before {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  font-weight: 600;
+}
+
+.veto-source-incertain::before {
+  content: "?";
+}
+
+.veto-source-nonmesure::before {
+  content: "—";
+}
+
+/* --- Pastille de décision : chiffre, glyphe, mot --- */
+.veto-decision {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 2px 12px 2px 3px;
+  border-radius: var(--pilule);
+  font: 500 13px/18px var(--font-sans);
+  white-space: nowrap;
+}
+
+.veto-decision-signe {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--sur-signal);
+  flex: none;
+}
+
+.veto-decision-signe svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.veto-decision-num {
+  font: 500 13px/18px var(--font-mono);
+}
+
+.veto-decision-refuse {
+  background: var(--refuse-fond);
+  color: var(--refuse);
+}
+
+.veto-decision-refuse .veto-decision-signe {
+  background: var(--refuse-signal);
+}
+
+.veto-decision-humain {
+  background: var(--humain-fond);
+  color: var(--humain);
+}
+
+.veto-decision-humain .veto-decision-signe {
+  background: var(--humain-signal);
+}
+
+.veto-decision-accepte {
+  background: var(--accepte-fond);
+  color: var(--accepte);
+}
+
+.veto-decision-accepte .veto-decision-signe {
+  background: var(--accepte-signal);
+}
+
+.veto-decision-bloque {
+  background: var(--bloque-fond);
+  color: var(--bloque);
+}
+
+.veto-decision-bloque .veto-decision-signe {
+  background: var(--siege);
+  color: var(--surface);
+}
+
+.veto-decision-grand {
+  min-height: 44px;
+  padding-right: 18px;
+  font-size: 18px;
+  line-height: 24px;
+  gap: 12px;
+}
+
+.veto-decision-grand .veto-decision-signe {
+  width: 36px;
+  height: 36px;
+}
+
+.veto-decision-grand .veto-decision-signe svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* --- Table ronde : cinq sièges, cinq couches --- */
+.table-ronde-bloc {
+  margin: 0;
+  max-width: 440px;
+}
+
+.table-ronde {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tr-table {
+  fill: var(--table);
+}
+
+.tr-v {
+  fill: var(--table-v);
+}
+
+.siege-corps,
+.siege-bras {
+  transition: fill var(--duree-base) var(--courbe-sortie);
+}
+
+.siege-repos .siege-corps,
+.siege-repos .siege-bras {
+  fill: var(--siege);
+}
+
+.siege-passe .siege-corps,
+.siege-passe .siege-bras {
+  fill: var(--accepte-signal);
+}
+
+.siege-veto .siege-corps,
+.siege-veto .siege-bras {
+  fill: var(--refuse-signal);
+}
+
+.siege-attente .siege-corps {
+  fill: var(--humain-fond);
+  stroke: var(--humain-signal);
+  stroke-width: 3;
+}
+
+.siege-attente .siege-bras {
+  fill: var(--humain-signal);
+}
+
+.siege-attente {
+  filter: drop-shadow(0 0 7px var(--lueur-couleur));
+}
+
+.siege-non-atteint .siege-corps,
+.siege-non-atteint .siege-bras {
+  fill: none;
+  stroke: var(--trait-fort);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+
+.siege-glyphe {
+  fill: none;
+  stroke: var(--sur-signal);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.siege-attente .siege-glyphe {
+  stroke: var(--humain);
+}
+
+/* Un siège en veto est levé : la forme dit le refus, sans la couleur. */
+.siege-mouv {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.siege-veto .siege-mouv {
+  transform: translateY(-9px) rotate(-5deg);
+}
+
+.table-legende {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: siege;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.table-legende li {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+  counter-increment: siege;
+}
+
+.table-legende li::before {
+  content: counter(siege);
+  color: var(--discret);
+  font-family: var(--font-mono);
+}
+
+.table-legende strong {
+  font-weight: 600;
+}
+
+.table-legende code {
+  overflow-wrap: anywhere;
+}
+
+.etat-mot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.t-passe {
+  color: var(--accepte);
+}
+
+.t-veto {
+  color: var(--refuse);
+}
+
+.t-attente {
+  color: var(--humain);
+}
+
+.t-repos,
+.t-non-atteint {
+  color: var(--discret);
+}
+
+/* --- Bandeau de trésorerie : quatre cellules, des filets, ni carte ni ombre --- */
+.bandeau-tresor {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 2px solid var(--texte);
+  border-bottom: 1px solid var(--trait);
+  margin-bottom: 20px;
+}
+
+.bandeau-tresor > div {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 16px 20px;
+  border-left: 1px solid var(--trait);
+  min-width: 0;
+}
+
+.bandeau-tresor > div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.veto-chiffre {
+  font: 500 40px/44px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.veto-chiffre small {
+  font: 400 15px/22px var(--font-mono);
+  color: var(--discret);
+  margin-left: 4px;
+}
+
+.veto-chiffre .indisponible {
+  font: 500 18px/44px var(--font-sans);
+}
+
+.veto-statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.veto-statut-sain {
+  color: var(--accepte);
+}
+
+.veto-statut-attention {
+  color: var(--humain);
+}
+
+.veto-statut-alerte {
+  color: var(--refuse);
+}
+
+.veto-statut-neutre {
+  color: var(--discret);
+}
+
+.bandeau-tresor.perime {
+  opacity: 0.55;
+}
+
+/* --- « À signer hors dashboard » : un rappel, ni champ ni bouton --- */
+.a-signer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1.5px dashed var(--trait-fort);
+  border-radius: var(--rayon-sm);
+  color: var(--texte);
+}
+
+.a-signer .veto-icone {
+  color: var(--accent);
+}
+
+.a-signer > div {
+  flex: 1;
+  display: grid;
+  gap: 10px;
+}
+
+.a-signer p {
+  margin: 0;
+}
+
+.ligne-signature {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: 12px;
+  color: var(--discret);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ligne-signature i {
+  border-bottom: 2px dotted var(--texte);
+  height: 18px;
+}
+
+@media (max-width: 900px) {
+  .bandeau-tresor {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bandeau-tresor > div {
+    border-top: 1px solid var(--trait);
+  }
+
+  .bandeau-tresor > div:nth-child(odd) {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .table-legende {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .siege-veto.siege-nouveau .siege-mouv {
+    animation: siege-leve var(--duree-veto) var(--courbe-sortie) both;
+  }
+
+  .siege-passe.siege-nouveau .siege-corps {
+    animation: siege-passe var(--duree-base) var(--courbe-sortie) both;
+  }
+}
+
+@keyframes siege-leve {
+  from {
+    transform: none;
+  }
+
+  to {
+    transform: translateY(-9px) rotate(-5deg);
+  }
+}
+
+@keyframes siege-passe {
+  from {
+    fill: var(--siege);
+  }
+}
