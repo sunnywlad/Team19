@@ -1,87 +1,240 @@
-/* Aucune ressource externe : polices du système, icônes en SVG en ligne.
+/* Système de design Veto, direction A « Table ronde » : jetons repris de
+   veto-design-A/design/tokens.css, sous les noms que cette feuille employait déjà.
+   Aucune ressource externe : polices Jost et IBM Plex Mono servies depuis
+   src/fonts/ (SIL OFL 1.1, licences à côté des fichiers), icônes en SVG en ligne.
    Aucun style en attribut : la CSP n'autorise que cette feuille.
-   Jetons de couleur : mêmes noms en clair et en sombre, contraste AA vérifié
-   pour le texte sur --surface et --fond, et sur --entete-fond pour l'en-tête. */
+   Jetons de couleur : mêmes noms en clair et en sombre. Contrastes du texte et
+   des marques : veto-design-A/design/Fondations-visuelles.md, recalculés par
+   test/tokens.test.ts. */
+@font-face {
+  font-family: "Jost";
+  src: url("./fonts/Jost-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Jost";
+  src: url("./fonts/Jost-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Jost";
+  src: url("./fonts/Jost-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Jost";
+  src: url("./fonts/Jost-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./fonts/IBMPlexMono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./fonts/IBMPlexMono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./fonts/IBMPlexMono-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light dark;
-  --fond: #f5f5f9;
-  --surface: #ffffff;
-  --surface-2: #f6f5fb;
-  --texte: #1b1d2b;
-  --discret: #585c6e;
-  --trait: #e3e2ec;
-  --accent: #5b41c8;
-  --accent-fond: #eeeafc;
-  --refuse: #b3202e;
-  --refuse-fond: #fdeced;
-  --humain: #875000;
-  --humain-fond: #fff2d6;
-  --accepte: #0f6b57;
-  --accepte-fond: #e1f4ef;
-  --bloque: #4c5363;
-  --bloque-fond: #eceef3;
-  --simulation: #0b5b6a;
-  --simulation-fond: #dff2f5;
-  --entete-fond: #1d2230;
-  --entete-texte: #f3f4f8;
-  --entete-discret: #bcc0cf;
-  --entete-accent: #bcaaff;
-  --entete-trait: #343a4c;
-  --ombre: 0 1px 2px rgb(27 29 43 / 5%), 0 8px 24px -12px rgb(27 29 43 / 14%);
+  --fond: #eeebf3;
+  --surface: #faf8fc;
+  --surface-2: #e7e3ee;
+  --papier: #f3ead7;
+  --texte: #1e1730;
+  --discret: #554f6b;
+  --trait: #d2cddd;
+  --trait-fort: #7d7595;
+  --accent: #2e1a6b;
+  --accent-fond: #e3dcf5;
+  --on-accent: #f3ead7;
+  --siege: #3a3a3a;
+  --accepte: #146158;
+  --accepte-signal: #218576;
+  --accepte-fond: #dcf0ec;
+  --humain: #714500;
+  --humain-signal: #a97100;
+  --humain-fond: #faefd0;
+  --refuse: #a02f12;
+  --refuse-signal: #d9592b;
+  --refuse-fond: #fbe2d8;
+  --bloque: #4a4564;
+  --bloque-fond: #e4e1ed;
+  --simulation: #2f4690;
+  --simulation-fond: #e2e7f7;
+  --sur-signal: #130e1f;
+  --table: #2e1a6b;
+  --table-v: #f3ead7;
+  --focus: #2e1a6b;
+  --entete-fond: #1e1730;
+  --entete-texte: #f3ead7;
+  --entete-discret: #c4bbd8;
+  --entete-accent: #c3b1ff;
+  --entete-trait: #3d3259;
+  --lueur-couleur: #a97100b3;
+  --viz-cat-1: #5a44b8;
+  --viz-cat-2: #b0307f;
+  --viz-cat-3: #2f6fb5;
+  --viz-cat-4: #6a7a14;
+  --viz-seq-1: #e3dcf5;
+  --viz-seq-2: #bfb1ea;
+  --viz-seq-3: #8f7bd6;
+  --viz-seq-4: #5a44b8;
+  --viz-seq-5: #2e1a6b;
+  --relief: 0 2px 0 rgb(30 23 48 / 16%);
+  --lueur: 0 0 0 4px rgb(169 113 0 / 30%);
+  --espace-1: 4px;
+  --espace-2: 8px;
+  --espace-3: 12px;
+  --espace-4: 16px;
+  --espace-5: 24px;
+  --espace-6: 32px;
+  --espace-7: 48px;
+  --espace-8: 64px;
+  --rayon-xs: 4px;
+  --rayon-sm: 8px;
   --rayon: 16px;
-  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
-  --sans: "Inter", "InterVariable", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --rayon-lg: 24px;
+  --pilule: 999px;
+  --ovale: 50%;
+  --duree-instant: 90ms;
+  --duree-rapide: 160ms;
+  --duree-base: 240ms;
+  --duree-veto: 320ms;
+  --courbe-sortie: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --cible-min: 24px;
+  --cible-confort: 32px;
+  --cadre-max: 1440px;
+  --cadre-min: 1024px;
+  --gouttiere: 24px;
+  --font-sans: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Anciens noms, gardés pour le code existant. */
+  --ombre: var(--relief);
+  --mono: var(--font-mono);
+  --sans: var(--font-sans);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --fond: #111219;
-    --surface: #1a1c26;
-    --surface-2: #212330;
-    --texte: #ecedf3;
-    --discret: #a9adbf;
-    --trait: #33364a;
-    --accent: #b4a2ff;
-    --accent-fond: #2a2547;
-    --refuse: #ff939d;
-    --refuse-fond: #3c1a20;
-    --humain: #f4c262;
-    --humain-fond: #3a2c10;
-    --accepte: #6fd8bd;
-    --accepte-fond: #12342d;
-    --bloque: #b5bbc8;
-    --bloque-fond: #2a2d36;
-    --simulation: #7fd6e4;
-    --simulation-fond: #11343b;
-    --entete-fond: #0b0c12;
-    --entete-trait: #272a38;
-    --ombre: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px -14px rgb(0 0 0 / 60%);
+    --fond: #1e1730;
+    --surface: #271e3b;
+    --surface-2: #32284a;
+    --papier: #3a2f52;
+    --texte: #f3ead7;
+    --discret: #bdb4d0;
+    --trait: #3d3259;
+    --trait-fort: #8a80a8;
+    --accent: #c3b1ff;
+    --accent-fond: #352a5c;
+    --on-accent: #1e1730;
+    --siege: #9a95a8;
+    --accepte: #6fd6c6;
+    --accepte-signal: #2a9d8f;
+    --accepte-fond: #123a38;
+    --humain: #f2c55c;
+    --humain-signal: #e0a526;
+    --humain-fond: #3d2f12;
+    --refuse: #ff9d7c;
+    --refuse-signal: #e8643a;
+    --refuse-fond: #43201a;
+    --bloque: #bfb8d2;
+    --bloque-fond: #2f2a42;
+    --simulation: #a9bcff;
+    --simulation-fond: #222b52;
+    --sur-signal: #130e1f;
+    --table: #7059d6;
+    --table-v: #f3ead7;
+    --focus: #d6c9ff;
+    --entete-fond: #150f20;
+    --entete-texte: #f3ead7;
+    --entete-discret: #bdb4d0;
+    --entete-accent: #c3b1ff;
+    --entete-trait: #2f2548;
+    --lueur-couleur: #e0a526b3;
+    --viz-cat-1: #8c7aea;
+    --viz-cat-2: #d0589f;
+    --viz-cat-3: #5489d6;
+    --viz-cat-4: #8d9c26;
+    --viz-seq-1: #352a5c;
+    --viz-seq-2: #55418f;
+    --viz-seq-3: #7a64cf;
+    --viz-seq-4: #a995f3;
+    --viz-seq-5: #d6cbff;
+    --relief: 0 2px 0 rgb(0 0 0 / 40%);
+    --lueur: 0 0 0 4px rgb(224 165 38 / 38%);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --fond: #111219;
-  --surface: #1a1c26;
-  --surface-2: #212330;
-  --texte: #ecedf3;
-  --discret: #a9adbf;
-  --trait: #33364a;
-  --accent: #b4a2ff;
-  --accent-fond: #2a2547;
-  --refuse: #ff939d;
-  --refuse-fond: #3c1a20;
-  --humain: #f4c262;
-  --humain-fond: #3a2c10;
-  --accepte: #6fd8bd;
-  --accepte-fond: #12342d;
-  --bloque: #b5bbc8;
-  --bloque-fond: #2a2d36;
-  --simulation: #7fd6e4;
-  --simulation-fond: #11343b;
-  --entete-fond: #0b0c12;
-  --entete-trait: #272a38;
-  --ombre: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px -14px rgb(0 0 0 / 60%);
+  --fond: #1e1730;
+  --surface: #271e3b;
+  --surface-2: #32284a;
+  --papier: #3a2f52;
+  --texte: #f3ead7;
+  --discret: #bdb4d0;
+  --trait: #3d3259;
+  --trait-fort: #8a80a8;
+  --accent: #c3b1ff;
+  --accent-fond: #352a5c;
+  --on-accent: #1e1730;
+  --siege: #9a95a8;
+  --accepte: #6fd6c6;
+  --accepte-signal: #2a9d8f;
+  --accepte-fond: #123a38;
+  --humain: #f2c55c;
+  --humain-signal: #e0a526;
+  --humain-fond: #3d2f12;
+  --refuse: #ff9d7c;
+  --refuse-signal: #e8643a;
+  --refuse-fond: #43201a;
+  --bloque: #bfb8d2;
+  --bloque-fond: #2f2a42;
+  --simulation: #a9bcff;
+  --simulation-fond: #222b52;
+  --sur-signal: #130e1f;
+  --table: #7059d6;
+  --table-v: #f3ead7;
+  --focus: #d6c9ff;
+  --entete-fond: #150f20;
+  --entete-texte: #f3ead7;
+  --entete-discret: #bdb4d0;
+  --entete-accent: #c3b1ff;
+  --entete-trait: #2f2548;
+  --lueur-couleur: #e0a526b3;
+  --viz-cat-1: #8c7aea;
+  --viz-cat-2: #d0589f;
+  --viz-cat-3: #5489d6;
+  --viz-cat-4: #8d9c26;
+  --viz-seq-1: #352a5c;
+  --viz-seq-2: #55418f;
+  --viz-seq-3: #7a64cf;
+  --viz-seq-4: #a995f3;
+  --viz-seq-5: #d6cbff;
+  --relief: 0 2px 0 rgb(0 0 0 / 40%);
+  --lueur: 0 0 0 4px rgb(224 165 38 / 38%);
 }
 
 :root[data-theme="light"] {
@@ -2219,8 +2372,8 @@ main:focus {
 }
 
 .etape-contrat {
-  fill: var(--entete-fond);
-  background: var(--entete-fond);
+  fill: var(--siege);
+  background: var(--siege);
   stroke: var(--trait);
 }
 
@@ -2279,6 +2432,6 @@ main:focus {
 }
 
 .campagne-tete .compteurs dd {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   white-space: nowrap;
 }
