@@ -1,0 +1,14 @@
+{
+  "name": "veto-site",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Site public statique de Veto. Aucune dépendance : ces scripts ne servent qu'à vérifier et prévisualiser.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "node tools/check.mjs",
+    "serve": "node tools/serve.mjs"
+  }
+}
