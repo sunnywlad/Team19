@@ -1,0 +1,253 @@
+/* Polices Geist 1.7.2 (SIL OFL 1.1, voir /fonts/LICENSE.txt), servies depuis le site : aucune ressource externe. */
+@font-face { font-family: "Geist"; src: url("/fonts/Geist-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist"; src: url("/fonts/Geist-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist"; src: url("/fonts/Geist-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist Mono"; src: url("/fonts/GeistMono-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist Mono"; src: url("/fonts/GeistMono-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap }
+
+/* Site public de Veto, direction D : pages éditoriales sobres, une colonne de 1200 px, sections espacées,
+   le produit montré tel qu'il est (console, pastilles 0/1/2). Une seule couleur d'accent, violet Veto. */
+:root {
+  --bg: #ffffff; --bg-2: #f6f5f8; --surface: #ffffff; --surface-2: #f2f0f6;
+  --line: #e6e3ec; --line-strong: #cfcad9;
+  --text: #17151e; --text-2: #5b5768; --text-3: #6f6b7d;
+  --accent: #2e1a6b; --accent-hover: #3d2690; --accent-soft: #efebfb; --on-accent: #ffffff;
+  --ok: #11714f; --ok-soft: #e3f3ec; --warn: #845400; --warn-soft: #fbf0d9; --danger: #b3341a; --danger-soft: #fbe8e2;
+  --nuit: #1e1730; --nuit-texte: #f3ead7; --nuit-2: #c4bbd8;
+  --shadow: 0 24px 60px rgb(23 21 30 / 14%);
+  --sans: "Geist", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121017; --bg-2: #17141e; --surface: #1a1722; --surface-2: #221e2c;
+  --line: #2c2838; --line-strong: #3d3850;
+  --text: #eeebf5; --text-2: #aba6ba; --text-3: #8f8aa0;
+  --accent: #a99bf2; --accent-hover: #bdb2f6; --accent-soft: #2a2342; --on-accent: #17121f;
+  --ok: #5cc9a0; --ok-soft: #13302a; --warn: #e8b44e; --warn-soft: #33280f; --danger: #f08c6e; --danger-soft: #3a1d16;
+  --nuit: #0d0b12; --nuit-texte: #f3ead7; --nuit-2: #bdb4d0;
+  --shadow: 0 24px 60px rgb(0 0 0 / 50%); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121017; --bg-2: #17141e; --surface: #1a1722; --surface-2: #221e2c;
+  --line: #2c2838; --line-strong: #3d3850;
+  --text: #eeebf5; --text-2: #aba6ba; --text-3: #8f8aa0;
+  --accent: #a99bf2; --accent-hover: #bdb2f6; --accent-soft: #2a2342; --on-accent: #17121f;
+  --ok: #5cc9a0; --ok-soft: #13302a; --warn: #e8b44e; --warn-soft: #33280f; --danger: #f08c6e; --danger-soft: #3a1d16;
+  --nuit: #0d0b12; --nuit-texte: #f3ead7; --nuit-2: #bdb4d0;
+  --shadow: 0 24px 60px rgb(0 0 0 / 50%); color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--text); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased }
+a { color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.ic { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0 }
+.cadre { max-width: 1200px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)) }
+h1, h2, h3 { margin: 0; text-wrap: balance; letter-spacing: -.02em }
+p { margin: 0 }
+.mono { font-family: var(--mono); font-size: 13px }
+.num { font-variant-numeric: tabular-nums }
+.sourcil { font-size: 13px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--accent) }
+
+/* En-tête */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+.entete { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line) }
+.entete .cadre { display: flex; align-items: center; gap: 28px; height: 64px }
+.marque { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; color: var(--text); text-decoration: none }
+.nav { display: flex; gap: 24px; font-size: 14.5px }
+.nav a { color: var(--text-2); text-decoration: none } .nav a:hover { color: var(--text) }
+.entete .actions { margin-left: auto; display: flex; gap: 10px; align-items: center }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9px; padding: 9px 16px; font: 500 14.5px var(--sans); text-decoration: none; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); cursor: pointer; min-height: 40px; white-space: nowrap }
+.btn:hover { background: var(--surface-2) }
+.btn.primaire { background: var(--accent); border-color: var(--accent); color: var(--on-accent) }
+.btn.primaire:hover { background: var(--accent-hover) }
+.btn.grand { padding: 12px 20px; font-size: 15.5px; min-height: 48px; border-radius: 10px }
+.btn.fantome { border-color: transparent; background: none } .btn.fantome:hover { background: var(--surface-2) }
+
+/* Héros */
+.heros { padding-block: 72px 56px; border-bottom: 1px solid var(--line); background: linear-gradient(var(--bg), var(--bg-2)) }
+.heros .cadre { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; align-items: center }
+.heros h1 { font-size: clamp(38px, 5.2vw, 60px); line-height: 1.04; font-weight: 600; margin-top: 16px }
+.heros h1 span { color: var(--accent) }
+.heros .chapo { font-size: 19px; color: var(--text-2); margin-top: 20px; max-width: 34em }
+.heros .cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px }
+.heros .note { margin-top: 18px; font-size: 13.5px; color: var(--text-3); display: flex; gap: 8px; align-items: center }
+
+/* Aperçu de la console (reconstitué en HTML) */
+.apercu { position: relative; border-radius: 14px; border: 1px solid var(--line); background: var(--bg-2); box-shadow: var(--shadow); overflow: hidden; font-size: 13px }
+.apercu .barre { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface) }
+.apercu .barre i { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong) }
+.apercu .barre span { margin-left: 8px; color: var(--text-3); font-size: 12px }
+.apercu .corps { display: grid; grid-template-columns: minmax(0, 1fr) 230px }
+.apercu .liste { padding: 14px; display: grid; gap: 10px; align-content: start }
+.apercu .liste h4 { margin: 0 0 4px; font-size: 14px; font-weight: 600 }
+.ligne-d { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px }
+.ligne-d.sel { border-color: var(--accent); background: var(--accent-soft) }
+.ligne-d b { font-weight: 500 } .ligne-d span { color: var(--text-3); font-size: 12px }
+.apercu .tiroir { border-left: 1px solid var(--line); background: var(--surface); padding: 14px; display: grid; gap: 10px; align-content: start }
+.apercu .montant { font-size: 24px; font-weight: 600; letter-spacing: -.02em }
+.encadre { background: var(--warn-soft); border-radius: 8px; padding: 9px 10px; font-size: 12px; color: var(--text) }
+.ctrl { display: flex; align-items: center; gap: 8px; font-size: 12px }
+.ctrl .e { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; background: var(--ok-soft); color: var(--ok) }
+.ctrl .e.d { background: var(--warn-soft); color: var(--warn) }
+.ctrl .e .ic { width: 10px; height: 10px; stroke-width: 2.6 }
+.apercu .barre .legende { margin-left: auto; font-size: 11px; color: var(--text-3); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; white-space: nowrap }
+
+.pastille { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12.5px; font-weight: 500; white-space: nowrap }
+.pastille .ic { width: 13px; height: 13px; stroke-width: 2.2 }
+.p-ok { background: var(--ok-soft); color: var(--ok) } .p-att { background: var(--warn-soft); color: var(--warn) } .p-refus { background: var(--danger-soft); color: var(--danger) }
+
+/* Sections */
+section.bloc { padding-block: 96px }
+section.bloc.gris { background: var(--bg-2); border-block: 1px solid var(--line) }
+.tete { display: grid; gap: 14px; max-width: 760px; margin-bottom: 48px }
+.tete h2 { font-size: clamp(30px, 3.6vw, 42px); line-height: 1.1; font-weight: 600 }
+.tete p { font-size: 18px; color: var(--text-2) }
+.grille3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px }
+.grille4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px }
+.carte { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px; display: grid; gap: 12px; align-content: start }
+.carte h3 { font-size: 19px; font-weight: 600; letter-spacing: -.01em }
+.carte p { color: var(--text-2); font-size: 15.5px }
+.carte .icone { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent) }
+.carte .icone.r { background: var(--danger-soft); color: var(--danger) }
+.extrait { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; line-height: 1.5; color: var(--text-2) }
+.extrait mark { background: var(--danger-soft); color: var(--danger); border-radius: 3px; padding: 0 2px }
+
+/* Étapes */
+.etapes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface) }
+.etape { padding: 30px 28px; display: grid; gap: 14px; align-content: start; border-right: 1px solid var(--line) }
+.etape:last-child { border-right: 0 }
+.etape .n { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500 }
+.etape h3 { font-size: 21px; font-weight: 600 }
+.etape p { color: var(--text-2); font-size: 15.5px }
+.issues { display: grid; gap: 8px; margin-top: 4px }
+.issues div { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-2) }
+
+/* Produit */
+.produit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center }
+.puces { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px }
+.puces li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px }
+.puces li .ic { color: var(--accent); margin-top: 3px; width: 20px; height: 20px }
+.puces b { display: block; font-weight: 600; margin-bottom: 2px }
+.puces span { color: var(--text-2); font-size: 15.5px }
+
+/* Preuves (bande sombre) */
+.preuves { background: var(--nuit); color: var(--nuit-texte); padding-block: 96px }
+.preuves .tete p { color: var(--nuit-2) }
+.preuves .sourcil { color: #c3b1ff }
+.chiffres { display: grid; grid-template-columns: 0.8fr 1.1fr 0.8fr 1.4fr; gap: 0; border-top: 1px solid rgb(255 255 255 / 14%); border-bottom: 1px solid rgb(255 255 255 / 14%) }
+.chiffre { padding: 28px 24px 28px 0; display: grid; gap: 6px }
+.chiffre + .chiffre { padding-left: 24px; border-left: 1px solid rgb(255 255 255 / 14%) }
+.chiffre b { font-size: clamp(32px, 3.6vw, 46px); font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap }
+.chiffre span { color: var(--nuit-2); font-size: 15px }
+.preuves .conditions { margin-top: 22px; color: var(--nuit-2); font-size: 14px; display: grid; gap: 6px; max-width: 900px }
+.delais { margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap }
+.delais div { border: 1px solid rgb(255 255 255 / 18%); border-radius: 10px; padding: 12px 16px; display: grid; gap: 2px }
+.delais b { font-family: var(--mono); font-size: 18px; font-weight: 500 }
+.delais span { color: var(--nuit-2); font-size: 13px }
+
+/* Avancement */
+.avancement { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px }
+.avancement .carte ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+.avancement li { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); font-size: 15.5px }
+.avancement li .ic { margin-top: 3px }
+.fait .ic { color: var(--ok) } .encours .ic { color: var(--warn) }
+
+/* CTA final + pied */
+.final { padding-block: 88px; text-align: center }
+.final h2 { font-size: clamp(30px, 3.6vw, 42px); font-weight: 600; line-height: 1.1 }
+.final p { color: var(--text-2); font-size: 18px; margin: 14px auto 28px; max-width: 34em }
+.pied { border-top: 1px solid var(--line); padding-block: 36px; color: var(--text-3); font-size: 14px }
+.pied .cadre { display: flex; gap: 20px; justify-content: space-between; flex-wrap: wrap; align-items: center }
+
+/* Page « Demander une démo » */
+.demo { padding-block: 64px 96px; background: var(--bg-2); min-height: calc(100vh - 64px) }
+.demo .cadre { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 56px; align-items: start }
+.demo h1 { font-size: clamp(34px, 4.4vw, 48px); line-height: 1.06; font-weight: 600; margin-top: 14px }
+.demo .chapo { color: var(--text-2); font-size: 18px; margin-top: 16px }
+.suite { list-style: none; margin: 36px 0 0; padding: 0; display: grid; gap: 22px }
+.suite li { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 14px }
+.suite .n { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--accent); background: var(--surface) }
+.suite b { display: block; font-weight: 600 } .suite span { color: var(--text-2); font-size: 15px }
+.formulaire { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 32px; display: grid; gap: 18px; box-shadow: 0 1px 2px rgb(0 0 0 / 4%) }
+.formulaire h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em }
+.formulaire .btn.grand { justify-self: start }
+.demander { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+.demander li { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); font-size: 15px }
+.demander li .ic { color: var(--accent); margin-top: 3px }
+.demander b { color: var(--text); font-weight: 500 }
+.contact { display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+.contact .adresse { font-family: var(--mono); font-size: 15px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; user-select: all; overflow-wrap: anywhere; min-width: 0 }
+.contact .etat-copie { font-size: 13.5px; color: var(--ok); min-height: 1.4em }
+.mention { font-size: 13px; color: var(--text-3); border-top: 1px solid var(--line); padding-top: 14px }
+
+@media (max-width: 980px) {
+  .heros .cadre, .produit, .demo .cadre, .avancement { grid-template-columns: 1fr }
+  .grille4, .chiffres { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .chiffre:nth-child(3) { padding-left: 0; border-left: 0 }
+  .grille3, .etapes { grid-template-columns: 1fr }
+  .etape { border-right: 0; border-bottom: 1px solid var(--line) } .etape:last-child { border-bottom: 0 }
+  .nav { display: none }
+}
+@media (max-width: 560px) {
+  .apercu .corps { grid-template-columns: 1fr } .apercu .tiroir { border-left: 0; border-top: 1px solid var(--line) }
+  .grille4, .chiffres { grid-template-columns: 1fr }
+  .chiffre + .chiffre { padding-left: 0; border-left: 0; border-top: 1px solid rgb(255 255 255 / 14%) }
+  .entete .actions .fantome { display: none }
+  section.bloc, .preuves { padding-block: 64px }
+  .formulaire { padding: 22px }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important } }
+
+/* Classes qui remplacent les attributs style="…" de la maquette (la CSP interdit les styles en ligne). */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden }
+.logo .sieges { fill: var(--text-3) } .logo .table { fill: var(--accent) } .logo .v { fill: none; stroke: var(--bg); stroke-width: 18; stroke-linejoin: round }
+.heros .note .ic { width: 15px; height: 15px }
+.apercu { margin: 0 }
+.apercu .par { color: var(--text-3); font-size: 12px } .apercu .par .mono { font-size: 11.5px }
+.apercu .four { font-size: 15px }
+.encadre b { font-weight: 600 }
+.etape p.silence { font-size: 14px }
+.tete.serre { margin-bottom: 32px }
+.pile { display: grid; gap: 16px }
+.delais div.legende-delais { border: 0; padding-left: 4px; align-content: center }
+.final.gris { background: var(--bg-2); border-top: 1px solid var(--line) }
+.retour-lien { text-decoration: none; font-size: 14px }
+
+/* Ancres : le défilement doux n'est servi qu'à qui l'accepte, sous l'en-tête collant. */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth } }
+main section[id] { scroll-margin-top: 72px }
+
+/* Pied de page */
+.pied nav { display: flex; gap: 18px; flex-wrap: wrap }
+.pied a { color: var(--text-2) } .pied a:hover { color: var(--text) }
+.pied .colonne { display: grid; gap: 6px }
+
+/* Pages de texte : mentions légales, confidentialité, 404 */
+.texte { padding-block: 64px 96px; background: var(--bg-2); min-height: calc(100vh - 64px) }
+.texte .cadre { max-width: 760px; display: grid; gap: 28px }
+.texte h1 { font-size: clamp(32px, 4vw, 44px); line-height: 1.08; font-weight: 600; margin-top: 14px }
+.texte h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em }
+.texte section { display: grid; gap: 10px }
+.texte p, .texte li { color: var(--text-2) }
+.texte ul { margin: 0; padding-left: 20px; display: grid; gap: 6px }
+.texte dl { margin: 0; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 8px 16px }
+.texte dt { color: var(--text-3) } .texte dd { margin: 0; color: var(--text); overflow-wrap: anywhere }
+.a-completer { font-family: var(--mono); font-size: 13px; background: var(--warn-soft); color: var(--warn); border-radius: 4px; padding: 1px 6px }
+.introuvable { text-align: center; display: grid; gap: 16px; justify-items: center; padding-block: 120px }
+.introuvable .code { font-family: var(--mono); color: var(--accent); font-size: 14px; letter-spacing: .08em }
+.introuvable h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 600 }
+.introuvable p { color: var(--text-2); max-width: 32em }
+@media (max-width: 560px) { .texte dl { grid-template-columns: 1fr } .texte dd { margin-bottom: 6px } }
+
+/* Lien d'évitement, visible au clavier seulement */
+.evitement { position: absolute; left: 12px; top: -60px; z-index: 20; background: var(--accent); color: var(--on-accent); padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: 500 }
+.evitement:focus { top: 12px }
+
+/* Page « Demander une démo », version en ligne */
+.chapo-rdv { color: var(--text-2); font-size: 15.5px }
+.champ-contact { display: grid; gap: 8px }
+.lib-contact { margin: 0 0 4px; font-size: 14px; font-weight: 500; letter-spacing: 0 }
+
+/* Contraste : dans l'aperçu, « .ligne-d span » écrasait la couleur des pastilles (gris sur fond teinté, sous 4,5:1). */
+.pastille.p-ok { color: var(--ok) } .pastille.p-att { color: var(--warn) } .pastille.p-refus { color: var(--danger) }
+.ligne-d.sel span:not(.pastille) { color: var(--text-2) }
