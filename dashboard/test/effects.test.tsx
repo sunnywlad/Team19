@@ -42,21 +42,21 @@ describe("effet a : flux vivant", () => {
   });
 });
 
-describe("effet b : anneau de compte à rebours", () => {
-  it("se vide depuis l'échéance lue dans HoldPlaced, et passe en urgent dans le dernier quart", async () => {
+describe("effet b : échéance d'un cas en attente", () => {
+  it("le temps restant se lit dans HoldPlaced et décroît à l'horloge locale ; à l'échéance, la demande est dite refusée", async () => {
     vi.useFakeTimers();
     const t0 = Date.now() - 3000;
     live("6", t0);
     open("À valider");
     await advance(100);
-    const part = (): number => Number(screen.getByTestId("anneau").getAttribute("data-part"));
-    const first = part();
-    expect(first).toBeGreaterThan(80);
-    expect(first).toBeLessThanOrEqual(100);
+    const seconds = (): number => Number(/dans (\d+) s/.exec(screen.getByTestId("cas-delai").textContent ?? "")?.[1]);
+    const first = seconds();
+    expect(first).toBeGreaterThan(20);
+    expect(first).toBeLessThanOrEqual(30);
     await advance(10_000);
-    expect(part()).toBeLessThan(first);
-    await advance(14_000);
-    expect(screen.getByTestId("anneau").className).toContain("anneau-urgent");
+    expect(seconds()).toBeLessThan(first);
+    await advance(30_000);
+    expect(screen.getByTestId("cas-delai").textContent).toContain("échéance dépassée");
   });
 });
 

@@ -167,7 +167,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                         <span className="cellule">
                           <b>
                             <Nom id={c.beneficiaryId} genre="beneficiaire" missing="bénéficiaire non lu" />
-                          </b>
+                          </b>{" "}
                           <span>
                             <Nom id={c.refId} /> · au-dessus du seuil
                           </span>
@@ -175,7 +175,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                         <span className="cellule droite">
                           <b>
                             <Amount wei={c.amountWei} />
-                          </b>
+                          </b>{" "}
                           <span>{c.deadline === null ? "échéance non lue" : `avant ${formatTime(c.deadline * 1000)}`}</span>
                         </span>
                       </li>
@@ -203,7 +203,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                     {incidents.map(({ report }) => (
                       <li key={report.incident_id} data-testid="sup-incident">
                         <span className="cellule">
-                          <b>{TRIGGER_LABELS[report.trigger]}</b>
+                          <b>{TRIGGER_LABELS[report.trigger]}</b>{" "}
                           <span>
                             <Nom id={report.authority_chain.agent_id} genre="agent" /> · {formatTime(report.generated_at_ms)}
                           </span>

@@ -1,5 +1,5 @@
 // Écrans Incident, Journal et En attente, sur les scénarios qui les concernent.
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { renderScenario, text } from "./helpers.tsx";
 import { open } from "./tour.ts";
@@ -130,24 +130,77 @@ describe("écran Journal", () => {
   });
 });
 
-describe("écran En attente", () => {
-  it("scénario 6 : facture, montant, bénéficiaire et délai restant ; rien d'autre", async () => {
+describe("écran À valider", () => {
+  it("scénario 6 : bénéficiaire, référence, montant et échéance ; libellés du référentiel ; rien d'autre", async () => {
     renderScenario("6");
     open("À valider");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
-    // F-002 et B-002, abrégés.
-    expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
+    // F-002 et B-002, par leur libellé synthétique.
+    expect(await value("cas-reference")).toBe("Facture F-002 · paiement de facture");
     expect(await value("cas-montant")).toBe("30 u");
-    expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
-    expect(await value("cas-delai")).toMatch(/^2\d s$/);
+    expect(await value("cas-beneficiaire")).toBe("Fournisseur fictif B");
+    expect(await value("cas-delai")).toMatch(/^dans 2\d s avant \d{2}:\d{2}:\d{2}, estimé$/);
     expect(await screen.findByText(/La justification rédigée par un agent n'est jamais affichée/)).toBeTruthy();
   });
 
-  it("scénario 6 a (approuvé) et 6 b (délai dépassé) : plus aucun cas en attente", async () => {
-    for (const name of ["6a", "6b"] as const) {
+  it("sans référentiel de libellés : identifiants abrégés", async () => {
+    renderScenario("6", { local: { libelles: { version: 1, libelles: [] } } });
+    open("À valider");
+    expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
+    expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
+  });
+
+  it("tiroir : contrôles dérivés, historique, pied de l'option A ; aucune clé, aucun bouton actif vers l'approbation", async () => {
+    renderScenario("6");
+    open("À valider");
+    fireEvent.click(within((await screen.findAllByTestId("cas-en-attente"))[0]!).getByRole("button"));
+    const drawer = await screen.findByRole("dialog");
+    expect(text(within(drawer).getByTestId("tiroir-montant"))).toBe("30 u");
+    expect([...within(drawer).getByTestId("controles").querySelectorAll("li")].map((li) => li.getAttribute("data-controle"))).toEqual([
+      "reference",
+      "beneficiaire",
+      "agent",
+      "seuil",
+      "entree",
+    ]);
+    expect(text(within(drawer).getByTestId("tiroir-pourquoi"))).toContain("30 u au-dessus du seuil de 25 u");
+    expect(text(within(drawer).getByTestId("historique"))).toContain("Demande reçue à la porte d'entrée");
+    expect(text(within(drawer).getByTestId("tiroir-echeance"))).toMatch(/^Sans réponse avant \d{2}:\d{2}:\d{2} \(dans 2\d s, estimé\), le paiement est refusé\.$/);
+    expect(text(within(drawer).getByTestId("sans-cle"))).toBe(
+      "Cette console ne détient aucune clé : la décision se signe dans l'app d'approbation, avec la clé de l'approbateur",
+    );
+    const signer = within(drawer).getByRole("button", { name: "Ouvrir dans l'app d'approbation" });
+    expect((signer as HTMLButtonElement).disabled).toBe(true);
+    expect(signer.closest("[title]")?.getAttribute("title")).toBe("À venir");
+    expect(signer.getAttribute("aria-describedby")).toBeTruthy();
+    // VISION : ces contrôles ne sont pas calculés, ils n'apparaissent pas comme des contrôles.
+    expect(within(drawer).queryByText("Écart à l'habitude")).toBeNull();
+    expect(drawer.querySelector("form, input, textarea, select")).toBeNull();
+    fireEvent.keyDown(drawer, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("J et K ouvrent le cas suivant et le précédent", async () => {
+    renderScenario("6");
+    open("À valider");
+    await screen.findAllByTestId("cas-en-attente");
+    fireEvent.keyDown(window, { key: "j" });
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(screen.getByTestId("cas-en-attente").getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(window, { key: "k" });
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    // Le mode présentation ne s'ouvre pas sous le tiroir.
+    fireEvent.keyDown(window, { key: "p" });
+    expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("non");
+  });
+
+  it("scénario 6 a (approuvé) et 6 b (délai dépassé) : plus aucun cas en attente, le cas passe dans son onglet", async () => {
+    for (const [name, tab] of [["6a", "Validé"], ["6b", "Expiré"]] as const) {
       const view = renderScenario(name);
       open("À valider");
       expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
+      fireEvent.click(screen.getByRole("tab", { name: new RegExp(`^${tab} 1$`) }));
+      expect(text(await screen.findByTestId("cas-clos"))).toContain(tab);
       view.unmount();
     }
     renderScenario("6b");

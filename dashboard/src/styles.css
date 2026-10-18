@@ -1944,3 +1944,364 @@ caption {
     transition: none !important;
   }
 }
+
+/* --- Listes à onglets (À valider) --- */
+.carte-liste > .valeurs {
+  padding: 0;
+  gap: 0;
+}
+
+.carte-liste .carte-note {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.carte-vide {
+  padding: 14px 16px;
+}
+
+.onglets {
+  display: flex;
+  gap: 2px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.onglets button {
+  margin-bottom: -1px;
+  padding: 11px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.onglets button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.onglets .n {
+  margin-left: 6px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr.clic {
+  cursor: pointer;
+}
+
+tbody tr.clic:hover td {
+  background: var(--surface-2);
+}
+
+tbody tr[aria-selected="true"] td {
+  background: var(--accent-soft);
+}
+
+.ligne-bouton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.echeance-proche,
+.echeance-depassee {
+  color: var(--warn);
+}
+
+/* --- Tiroir de détail --- */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--voile);
+}
+
+.tiroir {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--tiroir), 100vw);
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-flottant);
+  animation: glisse 0.2s ease-out both;
+}
+
+@keyframes glisse {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+.tiroir-entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tiroir-titre {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.tiroir-titre h2 {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.gros-montant {
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gros-montant .montant {
+  font-weight: 600;
+}
+
+.fermer {
+  display: grid;
+  place-items: center;
+  width: var(--controle);
+  height: var(--controle);
+  border: 0;
+  border-radius: var(--rayon-sm);
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.fermer:hover {
+  background: var(--surface-2);
+}
+
+.tiroir-corps {
+  flex: 1;
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: 18px 20px;
+  overflow-y: auto;
+}
+
+.tiroir-pied {
+  display: grid;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.tiroir-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Le bouton désactivé laisse passer le survol à son conteneur, qui porte l'infobulle « À venir ». */
+.infobulle-conteneur {
+  display: inline-flex;
+  cursor: not-allowed;
+}
+
+.infobulle-conteneur .btn:disabled {
+  pointer-events: none;
+}
+
+.encadre {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
+}
+
+.encadre h3 {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.encadre-attente {
+  border-color: transparent;
+  background: var(--warn-soft);
+}
+
+.encadre-refus {
+  border-color: transparent;
+  background: var(--danger-soft);
+}
+
+.controles {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.controles li {
+  display: grid;
+  grid-template-columns: 20px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.controle-nom {
+  white-space: nowrap;
+}
+
+.controle-etat {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.controle-etat .ic {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.4;
+}
+
+.controle-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.controle-attention {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.controle-inconnu {
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+
+.controle-valeur {
+  color: var(--text-3);
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.controle-code {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.chrono {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chrono li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.chrono li::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+
+.chrono li:last-child::before {
+  display: none;
+}
+
+.pt {
+  width: 13px;
+  height: 13px;
+  margin-top: 3px;
+  border: 2px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.pt-ok {
+  border-color: var(--ok);
+}
+
+.pt-refus {
+  border-color: var(--danger);
+}
+
+.pt-attente {
+  border-color: var(--warn);
+}
+
+.chrono time {
+  color: var(--text-3);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.echeance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--warn);
+  font-size: 13px;
+}
+
+.sans-cle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.sans-cle .ic {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .controles li {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .controle-nom {
+    white-space: normal;
+  }
+
+  .controle-valeur {
+    grid-column: 2;
+    text-align: left;
+  }
+}
