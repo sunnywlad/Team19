@@ -16,6 +16,7 @@ import { CampagneView } from "./views/CampagneView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
 import { JournalView } from "./views/JournalView.tsx";
 import { PendingView } from "./views/PendingView.tsx";
+import { AgentsView, FournisseursView, ReglesView } from "./views/ReferentielsView.tsx";
 import type { ViewProps } from "./views/shared.ts";
 
 type Screen = { key: string; label: string; icon: IconName; title: string; lead: string };
@@ -31,8 +32,16 @@ const GROUPS = [
     ],
   },
   {
+    title: "Référentiels",
+    screens: [
+      { key: "fournisseurs", label: "Fournisseurs", icon: "batiment", title: "Fournisseurs", lead: "Bénéficiaires inscrits au contrat, avec les factures et les paiements qui les citent." },
+      { key: "agents", label: "Agents", icon: "agent", title: "Agents", lead: "Agents inscrits au contrat, leur mandat, ce qu'ils ont fait payer ou fait bloquer." },
+    ],
+  },
+  {
     title: "Contrôle",
     screens: [
+      { key: "regles", label: "Règles", icon: "regles", title: "Règles", lead: "Ce que le contrat applique à chaque demande, écrit en clair. Les agents ne peuvent pas modifier ces règles." },
       { key: "journal", label: "Piste d'audit", icon: "journal", title: "Piste d'audit", lead: "Journal chaîné du service de réponse : chaque entrée porte l'empreinte de la précédente." },
     ],
   },
@@ -273,6 +282,9 @@ function Console({ client }: { client: ApiClient }) {
                 {current === "apercu" && <ApercuView view={view} onOpen={show} />}
                 {current === "valider" && <PendingView view={view} />}
                 {current === "incidents" && <IncidentView view={view} />}
+                {current === "fournisseurs" && <FournisseursView view={view} />}
+                {current === "agents" && <AgentsView view={view} />}
+                {current === "regles" && <ReglesView view={view} />}
                 {current === "journal" && <JournalView view={view} />}
                 {current === "campagne" && <CampagneView />}
               </div>

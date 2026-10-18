@@ -2,7 +2,7 @@
 // chaque bouton non pressé qu'il propose.
 import { fireEvent, screen } from "@testing-library/react";
 
-export const SCREENS = ["Vue d'ensemble", "À valider", "Incidents", "Piste d'audit", "Campagne"] as const;
+export const SCREENS = ["Vue d'ensemble", "À valider", "Incidents", "Fournisseurs", "Agents", "Règles", "Piste d'audit", "Campagne"] as const;
 export type ScreenName = (typeof SCREENS)[number];
 
 /** Nom accessible d'un lien de la barre latérale : son libellé, suivi éventuellement du compteur (« À valider, 1 en attente »). */

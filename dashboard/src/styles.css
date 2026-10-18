@@ -2671,3 +2671,90 @@ td.mono {
 .liste-lignes b::first-letter {
   text-transform: uppercase;
 }
+
+/* --- Référentiels et règles : lecture seule --- */
+.bandeau-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon-carte);
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+.bandeau-info .ic {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.regles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.regle:last-child {
+  border-bottom: 0;
+}
+
+.regle b {
+  display: block;
+  font-weight: 500;
+}
+
+.regle p {
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.regle-valeur {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.regle-valeur .montant {
+  font-weight: 600;
+}
+
+.regle-portee {
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* --- Campagne : cartes à corps --- */
+.carte-campagne > .valeurs {
+  padding: 14px 16px;
+}
+
+.carte-campagne > .valeurs > .defilement {
+  margin: 0 -16px;
+}
+
+@media (max-width: 760px) {
+  .regle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .regle-valeur {
+    justify-items: start;
+    text-align: left;
+  }
+}

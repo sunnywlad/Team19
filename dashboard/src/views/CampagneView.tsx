@@ -8,14 +8,14 @@ import { CAMPAGNE, STAGES, type Figure, type Passage } from "../data/campagne.ts
  */
 function Card({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section className="panneau" aria-labelledby={id}>
-      <header className="panneau-entete">
+    <section className="carte carte-campagne" aria-labelledby={id}>
+      <header className="carte-entete">
         <h2 id={id}>{title}</h2>
         <span className="source source-simulation" title={`Chiffres figés du rapport de campagne du ${CAMPAGNE.date}, non lus en direct`}>
           campagne hors ligne
         </span>
       </header>
-      {children}
+      <div className="valeurs">{children}</div>
     </section>
   );
 }
@@ -94,7 +94,7 @@ export function CampagneView() {
 
       <Card id="titre-camp-familles" title="Les 18 familles d'attaque">
         <div className="defilement">
-          <table>
+          <table className="tableau">
             <thead>
               <tr>
                 <th scope="col">Attaque</th>
@@ -157,7 +157,7 @@ export function CampagneView() {
 
       <Card id="titre-camp-pannes" title="Une panne vaut refus, jamais autorisation">
         <div className="defilement">
-          <table>
+          <table className="tableau">
             <thead>
               <tr>
                 <th scope="col">Panne simulée</th>
@@ -187,7 +187,7 @@ export function CampagneView() {
         <p>{c.chain.lead}</p>
         <Figures items={c.chain.figures} />
         <div className="defilement">
-          <table>
+          <table className="tableau">
             <thead>
               <tr>
                 <th scope="col">Demande</th>
