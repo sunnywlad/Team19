@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- À COMPLÉTER : remplacer https://a-completer.invalid par l'URL de production (voir README.md). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://a-completer.invalid/</loc></url>
+  <url><loc>https://a-completer.invalid/demo</loc></url>
+  <url><loc>https://a-completer.invalid/demo-console</loc></url>
+  <url><loc>https://a-completer.invalid/mentions-legales</loc></url>
+  <url><loc>https://a-completer.invalid/confidentialite</loc></url>
+</urlset>
