@@ -225,7 +225,7 @@ describe("écran À valider", () => {
     for (const [name, tab] of [["6a", "Validé"], ["6b", "Expiré"]] as const) {
       const view = renderScenario(name);
       open("À valider");
-      expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
+      expect(await screen.findByText("Aucune demande n'attend votre décision.")).toBeTruthy();
       fireEvent.click(screen.getByRole("tab", { name: new RegExp(`^${tab} 1$`) }));
       expect(text(await screen.findByTestId("cas-clos"))).toContain(tab);
       view.unmount();

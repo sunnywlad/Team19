@@ -106,7 +106,7 @@ export function JournalView({ view }: { view: ViewProps }) {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["key"]>("tout");
   return (
     <>
-      <Panel title="Journal chaîné" id="titre-journal" source={sources.response} snapshot={response} now={now}>
+      <Panel title="Journal chaîné" id="titre-journal" source={sources.response} famille="response" snapshot={response} now={now}>
         {(data) => {
           const { head } = data.verification;
           const byseq = new Map(data.journal.map((e) => [e.seq, e.hash]));
@@ -164,7 +164,7 @@ export function JournalView({ view }: { view: ViewProps }) {
         }}
       </Panel>
 
-      <Panel title="Entrées" id="titre-entrees" source={sources.response} snapshot={response} now={now} className="carte-liste">
+      <Panel title="Entrées" id="titre-entrees" source={sources.response} famille="response" snapshot={response} now={now} className="carte-liste">
         {(data) => {
           const keep = FILTERS.find((f) => f.key === filter)?.keep ?? (() => true);
           const rows = [...data.journal]

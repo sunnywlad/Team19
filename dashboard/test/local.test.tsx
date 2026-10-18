@@ -11,7 +11,7 @@ import type { Libelle } from "../src/api/types.ts";
 import { Nom, indexLibelles, libelleOf, nomTexte } from "../src/components/Affichage.tsx";
 import { Amount } from "../src/components/atoms.tsx";
 import { AFFICHAGE_PAR_DEFAUT, AffichageContext } from "../src/hooks/useAffichage.ts";
-import { formatWei, unitLegend } from "../src/lib/format.ts";
+import { formatAmount, formatWei, unitLegend } from "../src/lib/format.ts";
 import { parse } from "../src/validation/validate.ts";
 import {
   DEFAULT_LIBELLES_FILE,
@@ -84,6 +84,13 @@ describe("proxy local : référentiel de libellés", () => {
     expect(file.libelles.some((row) => row.id === F999)).toBe(false);
   });
 
+  it("fichier de démo par défaut : ni IBAN, ni SIREN (API-NEEDS.md § 7)", () => {
+    for (const row of parse.libelles(FIXTURE_LIBELLES).libelles) {
+      expect(row.iban_masque, row.libelle).toBeUndefined();
+      expect(row.siren, row.libelle).toBeUndefined();
+    }
+  });
+
   it("GET /api/local/libelles relit le fichier ; absent ou illisible : 503, sans le chemin", () => {
     const dir = mkdtempSync(join(tmpdir(), "libelles-"));
     const path = join(dir, "libelles.json");
@@ -94,6 +101,25 @@ describe("proxy local : référentiel de libellés", () => {
     expect(broken.status).toBe(503);
     expect(JSON.stringify(broken.body)).not.toContain(dir);
     expect(call(localLibelles(join(dir, "absent.json")), LOCAL_LIBELLES_PATH).status).toBe(503);
+  });
+
+  it("sous-titre, IBAN masqué et SIREN : facultatifs ; un IBAN en clair ou un SIREN mal formé est refusé", () => {
+    const row = (extra: Record<string, string>) => ({ version: 1, libelles: [{ id: B001, genre: "beneficiaire", libelle: "Fournisseur test", ...extra }] });
+    expect(parse.libelles(row({})).libelles[0]).toEqual({ id: B001, genre: "beneficiaire", libelle: "Fournisseur test" });
+    const full = row({ sous_titre: "Facture FB-2026-1183", iban_masque: "FR76 3000 4012 •••• •••• 4021", siren: "812 447 906" });
+    expect(parse.libelles(full).libelles[0]?.iban_masque).toBe("FR76 3000 4012 •••• •••• 4021");
+    expect(parse.libelles(row({ iban_masque: "FR76 •••• 4021" })).libelles[0]?.iban_masque).toBe("FR76 •••• 4021");
+    const bads: Record<string, string>[] = [
+      { iban_masque: "FR76 3000 4012 3456 7890 1234 021" },
+      { iban_masque: "FR7630004012345678901234021" },
+      { iban_masque: "FR76 •••• 4021<b>" },
+      { siren: "812447905" },
+      { siren: "812 447 90" },
+      { sous_titre: "<script>" },
+    ];
+    for (const bad of bads) {
+      expect(() => parse.libelles(row(bad)), JSON.stringify(bad)).toThrow(/non conforme/);
+    }
   });
 
   it("le schéma refuse un libellé hostile : balise, caractère bidirectionnel ou invisible, texte trop long", () => {
@@ -156,6 +182,18 @@ describe("formatage de l'unité", () => {
     expect(unitLegend({ symbole: "€", decimales: 18 })).toBe("1 € = 10¹⁸ wei");
   });
 
+  it("en euros : format monétaire français, deux décimales au moins, sans arrondi", () => {
+    const euro = { symbole: "€", decimales: 2 };
+    expect(formatAmount("4860000", euro)).toBe("48\u202f600,00");
+    expect(formatAmount("4860050", euro)).toBe("48\u202f600,50");
+    expect(formatAmount("125", { symbole: "€", decimales: 0 })).toBe("125,00");
+    // Plus fin que le centime : affiché tel quel, jamais arrondi.
+    expect(formatAmount("1234", { symbole: "€", decimales: 3 })).toBe("1,234");
+    expect(formatAmount(null, euro)).toBeNull();
+    // Toute autre unité garde le format de formatWei.
+    expect(formatAmount("30000000000000000", { symbole: "u", decimales: 15 })).toBe("30");
+  });
+
   it("montant absent : « non disponible », dans toute unité", () => {
     render(
       <AffichageContext.Provider value={{ ...AFFICHAGE_PAR_DEFAUT, unite: { symbole: "€", decimales: 18 }, uniteEtat: "ok" }}>
@@ -168,12 +206,12 @@ describe("formatage de l'unité", () => {
       </AffichageContext.Provider>,
     );
     expect(text(screen.getByTestId("m"))).toBe("non disponible");
-    expect(text(screen.getByTestId("n"))).toBe("2,5 €");
+    expect(text(screen.getByTestId("n"))).toBe("2,50 €");
   });
 
   it("unité déclarée par le proxy : appliquée partout ; proxy muet : « u », et le pied le dit", async () => {
     const declared = renderScenario("1", { local: { unite: { symbole: "€", decimales: 15 } } });
-    expect(text(await screen.findByTestId("placable"))).toBe("20 €");
+    expect(text(await screen.findByTestId("placable"))).toBe("20,00 €");
     declared.unmount();
 
     renderScenario("1", { local: { unite: { symbole: 12 } } });

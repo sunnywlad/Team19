@@ -114,8 +114,9 @@ describe("effet e : mode présentation", () => {
     expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("oui");
     expect(screen.queryByRole("navigation", { name: "Écrans" })).toBeNull();
     expect(document.querySelector(".panneau-flux-grand")).not.toBeNull();
-    expect(screen.getByTestId("pied-mention").textContent).toBe("Données fictives · réseau de test");
-    expect(screen.getByRole("heading", { name: "Flux d'une demande" }).parentElement?.querySelector(".source")?.textContent).toBe("simulation");
+    expect(screen.getByTestId("pied-mention").textContent).toBe("Démo · données fictives");
+    expect(screen.getByTestId("puce-env").textContent).toContain("Démo · données fictives");
+    expect(screen.getByRole("heading", { name: "Flux d'une demande" }).parentElement?.querySelector(".source")?.getAttribute("title")).toMatch(/^Source : relais, simulation, lu à /);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("non");
     expect(screen.getByRole("button", { name: navName("Vue d'ensemble"), current: "page" })).toBeTruthy();

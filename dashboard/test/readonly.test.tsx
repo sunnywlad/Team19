@@ -65,7 +65,12 @@ describe("lecture seule", () => {
     render(<App client={new SimulatedApiClient(fixtureFetch(() => buildWorld("6", startOfScript())))} />);
     await screen.findAllByTestId("decision");
     await tour();
-    expect(document.querySelectorAll("form, input, textarea, select")).toHaveLength(0);
+    expect(document.querySelectorAll("form, textarea, select")).toHaveLength(0);
+    // Un seul champ : la recherche de la barre haute, un filtre local (test/recherche.test.tsx).
+    const inputs = [...document.querySelectorAll("input")];
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0]?.type).toBe("search");
+    expect(inputs[0]?.closest(".recherche")).not.toBeNull();
     // Les seuls boutons changent ce qu'on regarde : écran, incident, thème.
     const buttons = screen.queryAllByRole("button");
     expect(buttons.length).toBeGreaterThanOrEqual(4);

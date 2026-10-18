@@ -19,13 +19,13 @@ describe("états", () => {
   it("vide : chaque écran dit qu'il n'y a rien, sans tableau fantôme", async () => {
     renderScenario("2");
     expect(await screen.findByText("Aucune décision du contrat pour l'instant.")).toBeTruthy();
-    expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
+    expect(await screen.findByText("Aucune demande n'attend votre décision.")).toBeTruthy();
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
     open("Incidents");
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
     expect(await screen.findByText("Aucun agent en pause sur la chaîne.")).toBeTruthy();
     open("À valider");
-    expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
+    expect(await screen.findByText("Aucune demande n'attend votre décision.")).toBeTruthy();
     open("Piste d'audit");
     expect(await screen.findByText("Aucun rapport : aucune tête de référence.")).toBeTruthy();
   });
@@ -79,8 +79,15 @@ describe("clavier", () => {
     // La barre latérale vient avant les outils d'affichage : une seule étape de tabulation pour elle.
     await user.tab();
     expect(document.activeElement?.textContent).toBe("Vue d'ensemble");
+    // Puis la barre haute : recherche, puce d'environnement, thème.
+    await user.tab();
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Rechercher un fournisseur, une facture ou un agent");
+    await user.tab();
+    expect(document.activeElement?.getAttribute("data-testid")).toBe("puce-env");
     await user.tab();
     expect(document.activeElement?.textContent).toMatch(/^Thème/);
+    await user.tab({ shift: true });
+    await user.tab({ shift: true });
     await user.tab({ shift: true });
     expect(document.activeElement?.textContent).toBe("Vue d'ensemble");
 

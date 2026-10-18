@@ -27,7 +27,7 @@ export function OffContractList({ lines, sources, reactionFor }: Props) {
           <p className="discret">
             Demande <OpaqueId value={line.requestId} /> · agent{" "}
             {line.agentId === null ? "non authentifié" : <Nom id={line.agentId} genre="agent" />} · {formatTime(line.atMs)} ·{" "}
-            {line.origin === "journal" ? "journal" : "file du relais"} <SourceTag source={line.origin === "journal" ? sources.response : sources.relay} />
+            {line.origin === "journal" ? "journal" : "file du relais"} <SourceTag source={line.origin === "journal" ? sources.response : sources.relay} famille={line.origin === "journal" ? "response" : "relay"} />
             {line.requestId !== null && (
               <>
                 {" "}

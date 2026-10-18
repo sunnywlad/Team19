@@ -3,13 +3,15 @@ import type { TagSource } from "../api/types.ts";
 import type { Snapshot } from "../hooks/poller.ts";
 import { isStale } from "../hooks/poller.ts";
 import { formatTime } from "../lib/format.ts";
-import { SourceTag } from "./atoms.tsx";
+import { SourceTag, type Famille } from "./atoms.tsx";
 
 type Props<T> = {
   title: string;
   /** Identifiant du titre, pour aria-labelledby. */
   id: string;
   source: TagSource;
+  /** Famille de données qui alimente le panneau : nommée dans l'infobulle de provenance. */
+  famille: Famille;
   snapshot: Snapshot<T>;
   now: number;
   /** Appelé seulement avec une lecture valide. */
@@ -22,14 +24,14 @@ type Props<T> = {
  * périmées. Périmé : les valeurs restent lisibles mais grisées et étiquetées,
  * jamais présentées comme à jour.
  */
-export function Panel<T>({ title, id, source, snapshot, now, children, className }: Props<T>) {
+export function Panel<T>({ title, id, source, famille, snapshot, now, children, className }: Props<T>) {
   const stale = isStale(snapshot, now);
   const { data, error, lastOkAt } = snapshot;
   return (
     <section className={`carte ${className ?? ""}`} aria-labelledby={id} aria-busy={data === null && error === null}>
       <header className="carte-entete">
         <h2 id={id}>{title}</h2>
-        <SourceTag source={source} />
+        <SourceTag source={source} famille={famille} lu={lastOkAt} />
       </header>
       {error !== null && (
         <p className="erreur" role="alert">

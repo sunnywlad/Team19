@@ -151,6 +151,13 @@ la console a besoin d'un nom lisible pour un fournisseur, un agent, une facture
 - `libelle`, `detail` : 60 caractères au plus, lettres latines, chiffres et
   ponctuation courante ; aucune balise, aucun caractère invisible ou
   bidirectionnel. Aucun IBAN, SIREN ni nom de personne dans le fichier de démo.
+- Facultatifs, même règle de texte : `sous_titre`, affiché sous le nom (par
+  exemple « Facture FB-2026-1183 ») ; pour un fournisseur, `iban_masque`
+  (déjà masqué dans le fichier : code pays, clé, au moins un groupe `••••`, au
+  plus quatre caractères en clair à la fin, par exemple `FR76 •••• 4021` ; un
+  IBAN complet est refusé par le schéma) et `siren` (`812 447 906`). Champ
+  absent : l'affichage garde son repli. Le fichier de démo par défaut n'en a
+  aucun ; un fichier fictif qui en porte doit le dire.
 - Jamais transmis au relais, jamais écrit sur la chaîne ni dans le journal.
 - Fichier absent ou illisible : 503. Réponse non conforme : rejetée. Dans les
   deux cas, ou si un identifiant n'y figure pas, la console affiche
@@ -191,7 +198,7 @@ Servi par le proxy local, comme le § 7. Les montants de l'API sont en wei
 | Variable (proxy local, jamais dans le bundle) | Effet |
 |---|---|
 | `RELAY_HAS_VAULT=1` | `/vault` est lu sur le relais |
-| `RELAY_VAULT_MODE=chain` ou `fake` | servi par le proxy (`/api/local/mode`) : `fake` affiche « COFFRE SIMULÉ » et l'étiquette « simulation » ; absent : « origine non confirmée » |
+| `RELAY_VAULT_MODE=chain` ou `fake` | servi par le proxy (`/api/local/mode`) : `fake` : puce « Coffre simulé : aucun fonds, aucune chaîne » et provenance « simulation » ; absent : « Origine non confirmée » |
 | `RESPONSE_API_URL=http://127.0.0.1:…` | les § 2 à 5 sont lus sur le service de réponse |
 | `RESPONSE_API_TOKEN=…` | jeton ajouté par le proxy, côté serveur |
 | `LIBELLES_FILE=…` | référentiel de libellés servi par `/api/local/libelles` (§ 7) |

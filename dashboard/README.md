@@ -34,6 +34,13 @@ réactivation à deux, plafonds, exports, SSO, rôles) n'apparaît pas ;
 [test/referentiels.test.tsx](test/referentiels.test.tsx) le vérifie sur toute
 la console.
 
+Barre haute : recherche, puce d'environnement, date, thème. La recherche
+filtre en local les fournisseurs, factures et agents déjà lus : aucune requête,
+la saisie ne quitte pas la page. Choisir une trouvaille ouvre Fournisseurs ou
+Agents, filtré, avec « Effacer la recherche ». C'est le seul champ de saisie de
+la console, et il n'est dans aucun formulaire
+([test/recherche.test.tsx](test/recherche.test.tsx)).
+
 Clavier : barre latérale à une étape de tabulation, flèches, Début, Fin ; P
 pour le mode présentation, Échap pour en sortir ; J et K dans « À valider ».
 Sur écran étroit, la barre latérale devient une rangée d'onglets.
@@ -66,12 +73,13 @@ RELAY_HAS_VAULT=1 RELAY_VAULT_MODE=chain RESPONSE_API_URL=http://127.0.0.1:8790 
 `RELAY_VAULT_MODE` dit ce que le relais a derrière lui : `chain` (un contrat) ou
 `fake` (son faux coffre en mémoire, `VAULT_MODE=fake`). Le proxy local le sert à
 la page par `GET /api/local/mode` ; la valeur n'est pas dans le bundle et l'API
-du relais n'a aucun champ de plus. Avec `fake`, un bandeau permanent « COFFRE
-SIMULÉ : aucun fonds, aucune chaîne » s'affiche et les panneaux alimentés par
-le faux coffre (plaçable, décisions, cas en attente, pauses sur la chaîne)
-portent l'étiquette « simulation » ; la file et le journal gardent « réel ».
-Sans la variable, ces panneaux portent « origine non confirmée » : jamais
-« réel » par défaut. `make demo` la pose.
+du relais n'a aucun champ de plus. Avec `fake`, la puce d'environnement affiche
+en permanence « Coffre simulé : aucun fonds, aucune chaîne », en teinte
+d'avertissement, et les panneaux alimentés par le faux coffre (plaçable,
+décisions, cas en attente, pauses sur la chaîne) ont la provenance
+« simulation » ; la file et le journal gardent « réel ». Sans la variable, la
+puce dit « Origine non confirmée » et ces panneaux l'écrivent en toutes lettres :
+jamais « réel » par défaut. `make demo` la pose.
 
 Sans ces deux variables, le coffre et le service de réponse restent simulés :
 lancer alors aussi `npm run dev:fixtures`.
@@ -97,7 +105,33 @@ aucune ressource externe).
 | Montant plaçable et ses termes | `GET /vault` du relais avec `RELAY_HAS_VAULT=1`, simulé sinon |
 | Incidents, délais, journal, agents en pause, demandes arrêtées à la porte | `response/` avec `RESPONSE_API_URL`, simulé sinon |
 
-Chaque panneau porte son étiquette « réel » ou « simulation ».
+### Où se lit la provenance
+
+La provenance est regroupée, jamais retirée :
+
+- **Une puce d'environnement** dans la barre haute : « Démo · données fictives »
+  (fixtures), « Coffre simulé » (faux coffre), « Réseau de test » (contrat sur
+  la chaîne de test), « Origine non confirmée » sinon. « · en partie simulé » s'y
+  ajoute quand un point d'accès reste simulé à côté d'un relais réel. Le pied de
+  page reprend le même texte.
+- **Le panneau « Sources »**, ouvert au clic sur la puce : pour le relais, le
+  coffre et le service de réponse, l'origine, la dernière lecture réussie et la
+  fraîcheur ; l'état des libellés et de l'unité.
+- **Sur chaque panneau, une icône** : le mot (« Source : relais, réel, lu à
+  14:30:13 ») est dans l'infobulle et le texte accessible, et un clic ouvre le
+  panneau « Sources ». Seule « origine non confirmée » reste écrite sur le
+  panneau, en petit et en gris, comme une valeur « non disponible ».
+- **Jamais « réel » par défaut** : une origine que le proxy n'a pas dite reste
+  « non confirmée ».
+- **Notes techniques repliées** : formules, horloges et explications de calcul
+  sont sous « Détails », fermé par défaut, au contenu inchangé. L'horloge d'un
+  horodatage est une icône à infobulle (« horloge : bloc ») ; le tableau des
+  délais l'écrit en toutes lettres.
+
+Les bandeaux « données indisponibles », « relais indisponible » et « coffre en
+pause » restent : ce sont des alertes, pas de la provenance.
+
+[test/vault-origin.test.tsx](test/vault-origin.test.tsx) vérifie ces règles.
 
 ## Libellés et unité d'affichage
 
@@ -107,9 +141,13 @@ chaîne ([API-NEEDS.md](API-NEEDS.md) § 7 et § 8) :
 - `GET /api/local/libelles` : le fichier `LIBELLES_FILE`, par défaut
   [fixtures/libelles.json](fixtures/libelles.json), synthétique, aux
   identifiants de `specs/examples/fixtures.json`. Libellé absent : identifiant
-  abrégé (F-999, volontairement absente, le montre).
+  abrégé (F-999, volontairement absente, le montre). Champs facultatifs :
+  `sous_titre`, et pour un fournisseur `iban_masque` et `siren`, affichés dans
+  Fournisseurs et dans le tiroir de « À valider » ([API-NEEDS.md](API-NEEDS.md) § 7).
 - `GET /api/local/unite` : `UNITE_SYMBOLE` et `UNITE_DECIMALES`, par défaut « u »
-  et 15 (1 u = 10¹⁵ wei, l'unité du monde de test). Jamais « € » par défaut.
+  et 15 (1 u = 10¹⁵ wei, l'unité du monde de test). Jamais « € » par défaut. Avec
+  `UNITE_SYMBOLE=€`, montants au format monétaire français (`48 600,00 €`),
+  deux décimales au moins, jamais arrondis.
 
 Chaque réponse est validée par son schéma
 ([schemas/local-libelles.schema.json](schemas/local-libelles.schema.json),

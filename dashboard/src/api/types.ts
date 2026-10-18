@@ -171,7 +171,18 @@ export type TagSource = Source | "faux-coffre" | "non-confirme";
 
 /** PROPOSÉ, API-NEEDS.md § 7. Référentiel local : un identifiant opaque, un libellé d'affichage. */
 export type LibelleGenre = "beneficiaire" | "agent" | "facture" | "placement" | "client";
-export type Libelle = { id: string; genre: LibelleGenre; libelle: string; detail?: string };
+export type Libelle = {
+  id: string;
+  genre: LibelleGenre;
+  libelle: string;
+  detail?: string;
+  /** Ligne sous le nom, par exemple « Facture FB-2026-1183 ». */
+  sous_titre?: string;
+  /** Fournisseurs : IBAN déjà masqué dans le fichier (FR76 •••• 4021). Jamais un IBAN complet. */
+  iban_masque?: string;
+  /** Fournisseurs : SIREN fictif, « 812 447 905 ». */
+  siren?: string;
+};
 export type Libelles = { version: 1; libelles: Libelle[] };
 
 /** PROPOSÉ, API-NEEDS.md § 8. Unité d'affichage : 1 symbole = 10^decimales wei. */

@@ -32,7 +32,7 @@ export function DelaysTable({ report, chainPause }: { report: IncidentReport; ch
                 formatDurationMs(d.value)
               )}
             </td>
-            <td data-label="Source">{d.clock === null ? <span className="discret">—</span> : <ClockTag clock={d.clock} />}</td>
+            <td data-label="Source">{d.clock === null ? <span className="discret">—</span> : <ClockTag clock={d.clock} visible />}</td>
           </tr>
         ))}
       </tbody>

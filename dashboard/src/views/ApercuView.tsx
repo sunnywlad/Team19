@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PAGE_LIMIT } from "../api/client.ts";
 import { Nom } from "../components/Affichage.tsx";
-import { Amount, ClockTag, SourceTag } from "../components/atoms.tsx";
+import { Amount, ClockTag, Details, SourceTag, Vide } from "../components/atoms.tsx";
 import { DecisionsChart } from "../components/DecisionsChart.tsx";
 import { DecisionsTable } from "../components/DecisionsTable.tsx";
 import { Icon } from "../components/icons.tsx";
@@ -52,7 +52,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
   return (
     <>
       <div className="kpis">
-        <Panel title="Paiements exécutés" id="titre-kpi-payes" source={relayTag} snapshot={relay} now={now} className="carte-kpi">
+        <Panel title="Paiements exécutés" id="titre-kpi-payes" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
             const paid = paidSummary(data.events);
             return (
@@ -61,14 +61,14 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                   {paid.count > 0 && paid.unknown === paid.count ? <span className="indisponible">montant inconnu</span> : <Amount wei={paid.knownWei} />}
                 </p>
                 <p className="kpi-sous">
-                  {plural(paid.count, "paiement", "paiements")} (événements Paid)
+                  {paid.count === 0 ? "Aucun paiement exécuté pour l'instant." : plural(paid.count, "paiement", "paiements")}
                   {paid.unknown > 0 && ` · ${plural(paid.unknown, "montant illisible", "montants illisibles")}, hors total`}
                 </p>
               </>
             );
           }}
         </Panel>
-        <Panel title="Sans intervention" id="titre-kpi-auto" source={relayTag} snapshot={relay} now={now} className="carte-kpi">
+        <Panel title="Sans intervention" id="titre-kpi-auto" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
             const share = interventionShare(data.decisions);
             return (
@@ -78,14 +78,14 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                 </p>
                 <p className="kpi-sous">
                   {share.share === null
-                    ? "aucun paiement lu"
+                    ? "Aucun paiement lu : la part s'affichera au premier."
                     : `${share.auto} sur ${share.auto + share.approved} payés sans validation humaine`}
                 </p>
               </>
             );
           }}
         </Panel>
-        <Panel title="À valider" id="titre-kpi-valider" source={relayTag} snapshot={relay} now={now} className="carte-kpi">
+        <Panel title="À valider" id="titre-kpi-valider" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
             const pending = pendingSummary(openCases(data.decisions, data.events));
             return (
@@ -94,7 +94,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                   <Counter value={pending.count} />
                 </p>
                 <p className="kpi-sous">
-                  <SumLine sum={pending} suffix="en attente de décision" />
+                  {pending.count === 0 ? "Rien n'attend votre décision." : <SumLine sum={pending} suffix="en attente de décision" />}
                 </p>
                 <button type="button" className="lien kpi-lien" data-ui="navigation" onClick={() => onOpen("valider")}>
                   Ouvrir « À valider » <Icon name="chevron" />
@@ -103,7 +103,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
             );
           }}
         </Panel>
-        <Panel title="Bloqués par une règle" id="titre-kpi-bloques" source={relayTag} snapshot={relay} now={now} className="carte-kpi">
+        <Panel title="Bloqués par une règle" id="titre-kpi-bloques" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
             const blocked = blockedRequests(data.decisions, data.events, linked ? (response.data?.journal ?? null) : null, linked);
             const sum = blockedSummary(blocked);
@@ -114,13 +114,15 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                   <Counter value={sum.count} />
                 </p>
                 <p className="kpi-sous">
-                  <SumLine sum={sum} suffix="non sortis" />
+                  {sum.count === 0 ? "Aucune demande bloquée." : <SumLine sum={sum} suffix="non sortis" />}
                 </p>
+                {sum.count > 0 && (
                 <p className="kpi-sous">
                   {linked && response.data
                     ? `dont ${gate} à la porte d'entrée`
                     : "porte d'entrée non comptée : service de réponse non lu ou d'un autre monde"}
                 </p>
+                )}
               </>
             );
           }}
@@ -128,7 +130,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
       </div>
 
       <div className="deux deux-large">
-        <Panel title="Décisions par jour" id="titre-jours" source={relayTag} snapshot={relay} now={now}>
+        <Panel title="Décisions par jour" id="titre-jours" source={relayTag} famille="relay" snapshot={relay} now={now}>
           {(data) => (
             <>
               <div className="carte-outils">
@@ -139,27 +141,29 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                     </button>
                   ))}
                 </div>
+              </div>
+              <DecisionsChart days={decisionsByDay(data.decisions, blockedRequests(data.decisions, data.events, journal, linked), now, days)} />
+              <Details>
                 <p className="discret">
                   Jour local du navigateur · bloc pour le contrat, journal pour la porte <ClockTag clock="locale" />
                 </p>
-              </div>
-              <DecisionsChart days={decisionsByDay(data.decisions, blockedRequests(data.decisions, data.events, journal, linked), now, days)} />
+              </Details>
             </>
           )}
         </Panel>
-        <Panel title="Montant plaçable" id="titre-placable" source={vaultFed(sources.vault, vaultOrigin)} snapshot={vault} now={now}>
+        <Panel title="Montant plaçable" id="titre-placable" source={vaultFed(sources.vault, vaultOrigin)} famille="vault" snapshot={vault} now={now}>
           {(state) => <PlaceableValues vault={state} simulated={vaultFed(sources.vault, vaultOrigin) === "faux-coffre"} />}
         </Panel>
       </div>
 
       <div className="deux">
-        <Panel title="En attente de votre décision" id="titre-sup-attente" source={relayTag} snapshot={relay} now={now}>
+        <Panel title="En attente de votre décision" id="titre-sup-attente" source={relayTag} famille="relay" snapshot={relay} now={now}>
           {(data) => {
             const cases = openCases(data.decisions, data.events).slice(0, 4);
             return (
               <>
                 {cases.length === 0 ? (
-                  <p className="vide">Aucun cas en attente.</p>
+                  <Vide hint="L'approbateur est notifié à chaque nouvelle demande au-dessus du seuil.">Aucune demande n'attend votre décision.</Vide>
                 ) : (
                   <ul className="liste-lignes">
                     {cases.map((c) => (
@@ -191,13 +195,13 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
             );
           }}
         </Panel>
-        <Panel title="Derniers incidents" id="titre-sup-incidents" source={sources.response} snapshot={response} now={now}>
+        <Panel title="Derniers incidents" id="titre-sup-incidents" source={sources.response} famille="response" snapshot={response} now={now}>
           {(data) => {
             const incidents = latestIncidents(data.incidents).slice(0, 4);
             return (
               <>
                 {incidents.length === 0 ? (
-                  <p className="vide">Aucun incident.</p>
+                  <Vide hint="Toute demande arrêtée par la porte d'entrée ou par le contrat apparaîtra ici, avec son rapport.">Aucun incident.</Vide>
                 ) : (
                   <ul className="liste-lignes">
                     {incidents.map(({ report }) => (
@@ -224,10 +228,10 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
         </Panel>
       </div>
 
-      <Panel title="Agents" id="titre-sup-agents" source={relayTag} snapshot={relay} now={now}>
+      <Panel title="Agents" id="titre-sup-agents" source={relayTag} famille="relay" snapshot={relay} now={now}>
         {(data) => {
           const rows = agentRows(data.events, data.decisions, linked ? (response.data?.pausedAgents ?? null) : null, journal);
-          if (rows.length === 0) return <p className="vide">Aucun agent inscrit au contrat.</p>;
+          if (rows.length === 0) return <Vide hint="Un agent apparaît ici dès son inscription au contrat.">Aucun agent inscrit au contrat.</Vide>;
           return (
             <div className="defilement" role="region" aria-label="Agents" tabIndex={0}>
               <table className="tableau">
@@ -269,43 +273,48 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
         }}
       </Panel>
 
-      <Panel title="Décisions du contrat" id="titre-decisions" source={relayTag} snapshot={relay} now={now}>
+      <Panel title="Décisions du contrat" id="titre-decisions" source={relayTag} famille="relay" snapshot={relay} now={now}>
         {(data) => {
           const refused = data.decisions.filter((d) => readDecision(d).kind === "refuse").length;
           return (
             <>
-              {fake && (
-                <p className="alerte-ligne" data-testid="decisions-simulees">
-                  Décisions d'un faux coffre : aucun contrat n'a jugé, aucun fonds n'a bougé.
-                </p>
-              )}
-              <p className="discret carte-note">
-                Lues dans les événements <code>Decision</code> indexés, jamais dans le statut d'un reçu de transaction. {data.decisions.length}{" "}
-                événement{data.decisions.length > 1 ? "s" : ""}, dont {refused} refus.
-              </p>
               {(data.decisions.length >= PAGE_LIMIT || data.events.length >= PAGE_LIMIT) && (
                 <p className="alerte-ligne" role="status">
                   Affichage tronqué : l'API ne renvoie que les {PAGE_LIMIT} premiers événements (voir API-NEEDS.md § 6).
                 </p>
               )}
               <DecisionsTable decisions={data.decisions} events={data.events} reactionFor={reactionFor} />
+              <Details>
+                {fake && (
+                  <p className="alerte-ligne" data-testid="decisions-simulees">
+                    Décisions d'un faux coffre : aucun contrat n'a jugé, aucun fonds n'a bougé.
+                  </p>
+                )}
+                <p className="discret">
+                  Lues dans les événements <code>Decision</code> indexés, jamais dans le statut d'un reçu de transaction. {data.decisions.length}{" "}
+                  événement{data.decisions.length > 1 ? "s" : ""}, dont {refused} refus.
+                </p>
+              </Details>
             </>
           );
         }}
       </Panel>
 
       <div className="deux">
-        <Panel title="Arrêtées à la porte d'entrée" id="titre-porte" source={sources.response} snapshot={response} now={now}>
+        <Panel title="Arrêtées à la porte d'entrée" id="titre-porte" source={sources.response} famille="response" snapshot={response} now={now}>
           {(data) => <OffContractList lines={offContractLines(data.journal, [], [])} sources={sources} reactionFor={reactionFor} />}
         </Panel>
-        <Panel title="File du relais" id="titre-file" source={sources.relay} snapshot={relay} now={now}>
+        <Panel title="File du relais" id="titre-file" source={sources.relay} famille="relay" snapshot={relay} now={now}>
           {(data) => <OffContractList lines={offContractLines([], data.queue, data.decisions)} sources={sources} reactionFor={reactionFor} />}
         </Panel>
       </div>
-      <p className="discret">
-        Chaque carte porte sa source : <SourceTag source="reel" /> lu en direct, <SourceTag source="simulation" /> point d'accès simulé,{" "}
-        <SourceTag source="non-confirme" /> le proxy n'a pas dit ce qui est derrière le relais.
-      </p>
+      <Details testId="apercu-details">
+        <p className="discret">
+          Chaque carte porte sa source en icône, détaillée dans le panneau « Sources » de la barre haute : <SourceTag source="reel" /> lu en direct,{" "}
+          <SourceTag source="simulation" /> point d'accès simulé, <SourceTag source="non-confirme" /> le proxy n'a pas dit ce qui est derrière le
+          relais. Paiements exécutés : événements Paid.
+        </p>
+      </Details>
     </>
   );
 }

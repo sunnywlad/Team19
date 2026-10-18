@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { IncidentItem, IncidentReport } from "../api/types.ts";
 import { Nom } from "../components/Affichage.tsx";
-import { Amount, ClockTag, DecisionBadge, OpaqueId, SourceTag, Untrusted } from "../components/atoms.tsx";
+import { Amount, ClockTag, DecisionBadge, OpaqueId, SourceTag, Untrusted, Vide } from "../components/atoms.tsx";
 import { DelaysNote, DelaysTable } from "../components/DelaysPanel.tsx";
 import { Icon } from "../components/icons.tsx";
 import { Panel } from "../components/Panel.tsx";
@@ -373,7 +373,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
   const arrival = useArrival<{ key: string }>([known ? [...known].reverse().map((i) => ({ key: i.report.incident_id })) : null]);
   return (
     <>
-      <Panel title="Incidents" id="titre-incidents" source={sources.response} snapshot={response} now={now} className="carte-plate">
+      <Panel title="Incidents" id="titre-incidents" source={sources.response} famille="response" snapshot={response} now={now} className="carte-plate">
         {(data) => {
           const incidents = latestIncidents(data.incidents);
           const opened = incidents.filter((i) => i.report.human_decision === null);
@@ -414,7 +414,9 @@ export function IncidentView({ view }: { view: ViewProps }) {
                 )}
               </div>
               {incidents.length === 0 ? (
-                <p className="vide">Aucun incident.</p>
+                <Vide hint="Toute demande arrêtée par la porte d'entrée ou par le contrat apparaîtra ici, avec son rapport et la réponse déclenchée.">
+                  Aucun incident.
+                </Vide>
               ) : asDocument && current ? (
                 <ReportDocument key={current.report.incident_id} item={current} chainPause={pause} />
               ) : (
@@ -433,7 +435,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
                       ))}
                     </div>
                     {shown.length === 0 ? (
-                      <p className="vide carte-vide">{tab === "ouverts" ? "Aucun incident ouvert." : "Aucun incident qualifié par un humain."}</p>
+                      <Vide className="carte-vide">{tab === "ouverts" ? "Aucun incident ouvert." : "Aucun incident qualifié par un humain."}</Vide>
                     ) : (
                       <ul className="liste-inc" aria-label="Choisir un incident">
                         {shown.map((i) => {
@@ -485,7 +487,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
       </Panel>
 
       <div className="deux">
-        <Panel title="Agents en pause, hors chaîne" id="titre-pauses" source={sources.response} snapshot={response} now={now}>
+        <Panel title="Agents en pause, hors chaîne" id="titre-pauses" source={sources.response} famille="response" snapshot={response} now={now}>
           {(data) => {
             const offchain = data.pausedAgents.filter((p) => p.scope === "OFFCHAIN");
             return offchain.length === 0 ? (
@@ -507,7 +509,7 @@ export function IncidentView({ view }: { view: ViewProps }) {
             );
           }}
         </Panel>
-        <Panel title="Agents en pause, sur la chaîne" id="titre-pauses-chaine" source={vaultFed(sources.relay, view.vaultOrigin)} snapshot={relay} now={now}>
+        <Panel title="Agents en pause, sur la chaîne" id="titre-pauses-chaine" source={vaultFed(sources.relay, view.vaultOrigin)} famille="relay" snapshot={relay} now={now}>
           {(data) => {
             const onchain = chainPausedAgents(data.events);
             return onchain.length === 0 ? (
