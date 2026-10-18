@@ -1,12 +1,11 @@
 import { OpaqueId } from "../components/atoms.tsx";
-import { CountdownRing } from "../components/CountdownRing.tsx";
 import { FlowPanel } from "../components/FlowPanel.tsx";
 import { Counter } from "../components/Rolling.tsx";
 import { Panel } from "../components/Panel.tsx";
+import { Echeance } from "../components/veto/Echeance.tsx";
 import { PlaceableValues } from "../components/PlaceablePanel.tsx";
 import { latestIncidents, offContractLines, pendingCases } from "../domain/activity.ts";
 import { readDecision } from "../domain/reasons.ts";
-import { formatRemaining } from "../lib/format.ts";
 import { vaultFed, type ViewProps } from "./shared.ts";
 
 /**
@@ -50,25 +49,12 @@ export function SupervisionView({ view }: { view: ViewProps }) {
                 </dl>
                 {pending.length > 0 && (
                   <ul className="attente-liste" aria-label="Cas en validation humaine">
-                    {pending.map((c) => {
-                      const remaining = c.deadline === null ? null : c.deadline - Math.floor(now / 1000);
-                      return (
-                        <li key={c.requestId} data-testid="sup-cas">
-                          <CountdownRing deadline={c.deadline} decidedAt={c.blockTimestamp} now={now} />
-                          <span>
-                            <OpaqueId value={c.refId} />
-                            <br />
-                            <span className="discret">
-                              {remaining === null
-                                ? "délai non disponible"
-                                : remaining > 0
-                                  ? `${formatRemaining(remaining)} avant refus automatique`
-                                  : "échéance dépassée"}
-                            </span>
-                          </span>
-                        </li>
-                      );
-                    })}
+                    {pending.map((c) => (
+                      <li key={c.requestId} data-testid="sup-cas">
+                        <OpaqueId value={c.refId} />
+                        <Echeance deadline={c.deadline} decidedAt={c.blockTimestamp} now={now} compact />
+                      </li>
+                    ))}
                   </ul>
                 )}
               </>

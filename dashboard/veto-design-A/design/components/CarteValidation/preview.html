@@ -1,0 +1,21 @@
+<!-- @dsCard group="Validation humaine" height=800 subtitle="Une seule question, une échéance réelle" -->
+<div class="veto"><div class="banc">
+<div style="max-width:640px"><article class="carte-validation" aria-labelledby="q-cv">
+<div class="carte-entete"><span class="etiquette">Validation humaine · demande 1 sur 1</span><span class="source source-lecture">coffre · lu 14:12</span></div>
+<h2 class="question" id="q-cv">Payer 30 000 € à B-002 pour la facture F-002 ?</h2>
+<dl class="faits">
+<div><dt>Facture inscrite au registre</dt><dd>F-002</dd></div>
+<div><dt>Bénéficiaire inscrit</dt><dd>B-002</dd></div>
+<div><dt>Montant inscrit</dt><dd>30 000 €</dd></div>
+<div><dt>Seuil de validation</dt><dd>25 000 €</dd></div>
+<div><dt>Motif</dt><dd>ABOVE_THRESHOLD</dd></div>
+</dl>
+<div class="echeance" id="cv-echeance"><div class="echeance-tete"><span class="num echeance-temps">20 h 12</span><span class="echeance-legende"><strong>Échéance mer. 14 oct., 10:24</strong><br>restantes · 1 jour ouvré après la demande</span></div><div class="segments" role="img" aria-label="20 h 12 restantes ; 24 cases, une case vaut 1/24 du délai"><i class="ecoule"></i><i class="ecoule"></i><i class="ecoule"></i><i class="ecoule"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><div class="echeance-bornes" aria-hidden="true"><span>mar. 10:24</span><span>mer. 10:24</span></div><p class="echeance-phrase">Sans signature avant l’échéance : <strong>refusé</strong>.</p><ol class="jalons"><li class="jalon jalon-fait"><svg class="icone icone-sm" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Demande reçue</span><span class="num discret">mar. 13 oct., 10:24</span></li><li class="jalon jalon-fait"><svg class="icone icone-sm" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7"/></svg><span>Notification envoyée : e-mail et mobile</span><span class="num discret">mar. 13 oct., 10:24</span></li><li class="jalon jalon-attente"><svg class="icone icone-sm" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/></svg><span>Rappel prévu</span><span class="num discret">mar. 13 oct., 16:00</span></li><li class="jalon jalon-fin"><svg class="icone icone-sm" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Sans signature : refusé (APPROVAL_TIMEOUT)</span><span class="num discret">mer. 14 oct., 10:24</span></li></ol></div>
+<div class="a-signer"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H20M17 12v3M4 4l16 16"/></svg><div><p><strong>À signer par l'approbateur, hors dashboard.</strong> Ce tableau ne détient aucune clé : il montre la décision, il ne la prend pas.</p><div class="ligne-signature" aria-hidden="true"><span>Signature</span><i></i><span>à apposer hors dashboard</span></div></div></div>
+<div class="issues">
+<div><span class="etiquette">Si l'approbateur signe</span><span class="decision decision-accepte"><span class="decision-signe"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span class="decision-num">2</span>Payé</span><span class="discret">30 000 € à B-002, le montant et le bénéficiaire inscrits.</span></div>
+<div><span class="etiquette">Si refus ou silence</span><span class="decision decision-refuse"><span class="decision-signe"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></span><span class="decision-num">0</span>Refusé</span><span class="discret">APPROVAL_TIMEOUT : rien ne part.</span></div>
+</div>
+<div class="ferme"><svg class="icone" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 21V11a6 6 0 0 1 12 0v10M3 21h18M9 14h6"/></svg><p><strong>Fermé par défaut.</strong> Sans réponse avant l'échéance, la demande est refusée et le montant est libéré.</p></div>
+</article></div>
+</div></div>

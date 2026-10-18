@@ -1234,7 +1234,8 @@ tbody th {
 
 .cas-ligne {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 18px 28px;
   align-items: flex-start;
 }
 
@@ -1243,51 +1244,151 @@ tbody th {
   min-width: 0;
 }
 
-/* --- Effet b : anneau de compte à rebours, redessiné à chaque seconde de l'horloge locale --- */
-.anneau {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
+/* --- Effet b : l'échéance d'un cas en attente. 24 cases, une case pour un
+   vingt-quatrième du délai ; aucune animation, le mouvement est réservé aux faits. --- */
+.echeance {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.echeance-tete {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.echeance-temps {
+  margin: 0;
+  font: 500 32px/36px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.echeance-temps .indisponible {
+  font: 500 16px/24px var(--font-sans);
+}
+
+.echeance-legende {
+  color: var(--discret);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.echeance-legende strong {
+  color: var(--texte);
+  font-weight: 600;
+}
+
+.echeance-legende .echeance-alerte,
+.echeance-echue .echeance-temps {
+  color: var(--refuse);
+}
+
+.segments {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 3px;
+  height: 16px;
+}
+
+.segments i {
+  border-radius: 999px;
+  border: 1px solid var(--trait-fort);
+}
+
+.segments i.ecoule {
+  background: transparent;
+}
+
+.segments i.on {
+  background: var(--humain-signal);
+  border-color: var(--humain-signal);
+}
+
+.echeance-proche .segments i.on {
+  background: var(--refuse-signal);
+  border-color: var(--refuse-signal);
+}
+
+.segments i.echue {
+  background: transparent;
+  border-style: dashed;
+}
+
+.echeance-bornes {
+  display: flex;
+  justify-content: space-between;
+  font: 12px/16px var(--font-mono);
+  color: var(--discret);
+}
+
+.echeance-phrase {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.jalons {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--trait);
+}
+
+.jalon {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--trait);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.jalon-date {
+  font: 13px/18px var(--font-mono);
+  color: var(--discret);
+}
+
+.jalon-fait .veto-icone {
+  color: var(--accepte);
+}
+
+.jalon-attente .veto-icone {
   color: var(--humain);
 }
 
-.anneau-absent {
-  color: var(--discret);
-  font-size: 1.2rem;
-}
-
-.anneau-fond {
-  fill: none;
-  stroke: var(--humain-fond);
-  stroke-width: 7;
-}
-
-.anneau-reste {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 7;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.9s linear;
-}
-
-.anneau-urgent {
+.jalon-fin .veto-icone {
   color: var(--refuse);
 }
 
-.anneau-urgent .anneau-fond {
-  stroke: var(--refuse-fond);
+/* Variante de liste : le temps et la jauge, sans jalons. */
+.echeance-compacte {
+  gap: 6px;
+  min-width: 220px;
 }
 
-.anneau-echu {
-  color: var(--refuse);
+.echeance-compacte .echeance-temps {
+  font-size: 20px;
+  line-height: 24px;
 }
 
-.anneau-texte {
-  fill: var(--texte);
-  font: 700 13px var(--sans);
-  font-variant-numeric: tabular-nums;
+.echeance-compacte .echeance-legende {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.echeance-compacte .segments {
+  height: 10px;
+}
+
+.cas-echeance {
+  flex: 1 1 360px;
+  min-width: 0;
 }
 
 .attente-liste {

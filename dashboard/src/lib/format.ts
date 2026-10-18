@@ -50,6 +50,20 @@ export function formatTime(ms: number): string {
   return TIME.format(new Date(ms));
 }
 
+const DAY_TIME = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const WEEKDAY_TIME = new Intl.DateTimeFormat("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" });
+const WEEKDAY_TIME_SECONDS = new Intl.DateTimeFormat("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+/** Date d'une échéance, en heure locale : « mer. 14 oct., 10:24 ». */
+export function formatDayTime(ms: number): string {
+  return DAY_TIME.format(new Date(ms));
+}
+
+/** Borne d'une jauge : « mar. 10:24 », avec les secondes quand la jauge dure moins d'une heure. */
+export function formatWeekdayTime(ms: number, withSeconds = false): string {
+  return (withSeconds ? WEEKDAY_TIME_SECONDS : WEEKDAY_TIME).format(new Date(ms));
+}
+
 export function formatDateTime(ms: number): string {
   return DATE_TIME.format(new Date(ms));
 }

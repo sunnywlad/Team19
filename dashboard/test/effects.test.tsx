@@ -41,21 +41,63 @@ describe("effet a : flux vivant", () => {
   });
 });
 
-describe("effet b : anneau de compte à rebours", () => {
-  it("se vide depuis l'échéance lue dans HoldPlaced, et passe en urgent dans le dernier quart", async () => {
+describe("effet b : échéance d'un cas en attente", () => {
+  const gauge = (): HTMLElement => screen.getByTestId("cas-delai").querySelector('[data-testid="echeance"]') as HTMLElement;
+  const state = (): string | null => gauge().getAttribute("data-etat");
+  const cases = (): number => Number(gauge().getAttribute("data-cases"));
+  const drawn = (kind: string): number => gauge().querySelectorAll(`.segments i.${kind}`).length;
+  const shown = (testId: string): string => (gauge().querySelector(`[data-testid="${testId}"]`)?.textContent ?? "").replace(/\s+/g, " ").trim();
+
+  it("normal, puis proche dans le dernier quart, puis échue : 24 cases depuis l'échéance lue dans HoldPlaced", async () => {
     vi.useFakeTimers();
-    const t0 = Date.now() - 3000;
-    live("6", t0);
+    live("6", Date.now() - 3000);
     open("En attente");
     await advance(100);
-    const part = (): number => Number(screen.getByTestId("anneau").getAttribute("data-part"));
-    const first = part();
-    expect(first).toBeGreaterThan(80);
-    expect(first).toBeLessThanOrEqual(100);
+
+    // Normal : la jauge est presque pleine, le temps s'écrit sans secondes, la règle est dite.
+    expect(state()).toBe("normal");
+    const first = cases();
+    expect(first).toBeGreaterThan(18);
+    expect(first).toBeLessThanOrEqual(24);
+    expect(drawn("on")).toBe(first);
+    expect(drawn("on") + drawn("ecoule")).toBe(24);
+    expect(shown("echeance-temps")).toBe("moins d'1 min");
+    expect(shown("echeance-phrase")).toBe("Sans signature avant l'échéance : refusé.");
+    expect(gauge().querySelector('[data-testid="echeance-proche"]')).toBeNull();
+    expect(gauge().querySelector(".segments")?.getAttribute("aria-label")).toBe("moins d'1 min restantes ; 24 cases, une case vaut 1/24 du délai");
+
+    // La jauge se vide avec le délai.
     await advance(10_000);
-    expect(part()).toBeLessThan(first);
+    expect(state()).toBe("normal");
+    expect(cases()).toBeLessThan(first);
+
+    // Proche : dernier quart du délai, dit en toutes lettres, pas par la couleur seule.
     await advance(14_000);
-    expect(screen.getByTestId("anneau").className).toContain("anneau-urgent");
+    expect(state()).toBe("proche");
+    expect(cases()).toBeLessThanOrEqual(6);
+    expect(shown("echeance-proche")).toBe("Échéance proche");
+    expect(shown("echeance-phrase")).toBe("Sans signature avant l'échéance : refusé.");
+
+    // Échue : plus aucune case pleine, et ce qui se passe sans signature.
+    await advance(10_000);
+    expect(state()).toBe("echue");
+    expect(cases()).toBe(0);
+    expect(drawn("echue")).toBe(24);
+    expect(shown("echeance-temps")).toBe("Échéance dépassée");
+    expect(shown("echeance-phrase")).toContain("la demande est refusée (APPROVAL_TIMEOUT). Rien n'est parti.");
+    expect(gauge().querySelector('[data-testid="echeance-proche"]')).toBeNull();
+  });
+
+  it("le temps restant ne s'écrit jamais en secondes, et la jauge n'est pas un bouton", async () => {
+    vi.useFakeTimers();
+    live("6", Date.now() - 3000);
+    open("En attente");
+    await advance(100);
+    for (let i = 0; i < 6; i += 1) {
+      expect(shown("echeance-temps")).not.toMatch(/\d\s*s\b|″/);
+      await advance(5000);
+    }
+    expect(gauge().querySelectorAll("button, input, a, [role='button'], [tabindex]")).toHaveLength(0);
   });
 });
 

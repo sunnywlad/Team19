@@ -139,7 +139,8 @@ describe("écran En attente", () => {
     expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
     expect(await value("cas-montant")).toBe("30 u");
     expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
-    expect(await value("cas-delai")).toMatch(/^2\d s$/);
+    // Délai de 30 s dans ce scénario : le temps restant ne s'écrit pas en secondes.
+    expect(await value("cas-delai")).toMatch(/^moins d'1 min/);
     expect(await screen.findByText(/La justification rédigée par un agent n'est jamais affichée/)).toBeTruthy();
   });
 
@@ -160,7 +161,7 @@ describe("écran En attente", () => {
   it("échéance passée sans clôture : le cas reste affiché, marqué dépassé", async () => {
     renderScenario("6", { t0: Date.now() - 120_000 });
     open("En attente");
-    expect(await value("cas-delai")).toContain("échéance dépassée");
+    expect(await value("cas-delai")).toContain("Échéance dépassée");
   });
 
   it("un rejeu de la demande en attente ne ferme pas le cas", async () => {

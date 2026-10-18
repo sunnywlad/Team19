@@ -1,0 +1,1 @@
+Licences des polices incluses dans `fonts/` : Jost et IBM Plex Mono, SIL Open Font License 1.1. Les fichiers viennent des paquets `@fontsource/jost` et `@fontsource/ibm-plex-mono` (sous-ensemble latin).
