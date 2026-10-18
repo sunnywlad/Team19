@@ -1,13 +1,24 @@
 // Mise en forme seulement. Aucune valeur métier n'est calculée ici : un montant
 // reste celui que l'API a renvoyé, exprimé dans une autre unité.
+import type { Unite } from "../api/types.ts";
 
 const OPAQUE_ID = /^(0x)?[0-9a-f]{16,}$/;
 const WEI = /^(0|[1-9][0-9]{0,77})$/;
 
-/** Unité d'affichage : celle du monde de test (specs/examples/fixtures.json, unit_wei). */
-export const UNIT_WEI = 10n ** 15n;
-export const UNIT_LABEL = "u";
-export const UNIT_LEGEND = "1 u = 10¹⁵ wei";
+/**
+ * Unité d'affichage par défaut : celle du monde de test (specs/examples/fixtures.json,
+ * unit_wei = 10¹⁵). Le proxy local peut en déclarer une autre (GET /api/local/unite) ;
+ * sans déclaration, « u », jamais « € ».
+ */
+export const DEFAULT_UNITE: Unite = { symbole: "u", decimales: 15 };
+
+const SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+
+/** « 1 u = 10¹⁵ wei » : ce que vaut l'unité affichée. */
+export function unitLegend(unite: Unite): string {
+  const exponent = [...String(unite.decimales)].map((d) => SUPERSCRIPT[Number(d)]).join("");
+  return `1 ${unite.symbole} = 10${exponent} wei`;
+}
 
 /** 0x1234…abcd. null si la valeur n'a pas la forme d'un identifiant opaque. */
 export function abbreviateId(value: string): string | null {
@@ -21,11 +32,12 @@ function group(digits: string): string {
 }
 
 /** Montant en wei (chaîne décimale) vers l'unité d'affichage. null si absent ou mal formé : jamais 0 par défaut. */
-export function formatWei(wei: string | null | undefined): string | null {
+export function formatWei(wei: string | null | undefined, decimales: number = DEFAULT_UNITE.decimales): string | null {
   if (typeof wei !== "string" || !WEI.test(wei)) return null;
   const value = BigInt(wei);
-  const whole = value / UNIT_WEI;
-  const rest = (value % UNIT_WEI).toString().padStart(15, "0").replace(/0+$/, "");
+  const unit = 10n ** BigInt(decimales);
+  const whole = value / unit;
+  const rest = decimales === 0 ? "" : (value % unit).toString().padStart(decimales, "0").replace(/0+$/, "");
   return rest === "" ? group(whole.toString()) : `${group(whole.toString())},${rest}`;
 }
 

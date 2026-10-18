@@ -8,6 +8,6 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  // L'écran courant vit dans l'ancre de l'adresse : chaque test repart de l'écran Décisions.
+  // L'écran courant vit dans l'ancre de l'adresse : chaque test repart de la vue d'ensemble.
   window.history.replaceState(null, "", "/");
 });

@@ -3,6 +3,7 @@
 import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { renderScenario, startOfScript, text } from "./helpers.tsx";
+import { open } from "./tour.ts";
 
 const decisions = async (): Promise<string[]> => (await screen.findAllByTestId("decision")).map(text);
 const offContract = async (): Promise<string[]> => (await screen.findAllByTestId("hors-contrat")).map(text);
@@ -21,7 +22,7 @@ describe("les huit scénarios", () => {
     expect(await value("placable")).toBe("20 u");
     expect(await value("cash")).toBe("90 u");
     expect(await value("dettes")).toBe("30 u");
-    expect(await screen.findByText("Aucun incident : aucun délai à mesurer.")).toBeTruthy();
+    expect(await screen.findByText("Aucun incident.")).toBeTruthy();
   });
 
   it("2. agent non reconnu : rejetée à l'entrée, contrat non atteint, aucune réponse", async () => {
@@ -43,6 +44,8 @@ describe("les huit scénarios", () => {
     expect(line).toContain("score 93 pour un seuil de 70");
     expect(line).toContain("quarantaine, pause de l'agent (hors chaîne), alerte, pause de l'agent (sur la chaîne), rapport d'incident");
     expect(screen.queryAllByTestId("decision")).toHaveLength(0);
+    // Les délais se lisent dans le rapport d'incident.
+    open("Incidents");
     expect(await cells("delai-arrivee-detection")).toBe("Arrivée → détection | 41 ms | horloge : journal");
     expect(await cells("delai-detection-pause")).toBe("Détection → pause | 11 ms | horloge : journal");
     expect(await cells("delai-detection-alerte")).toBe("Détection → alerte | 20 ms | horloge : journal");
@@ -56,6 +59,7 @@ describe("les huit scénarios", () => {
     expect(row).toContain("aucun montant sorti");
     expect(row).toContain("quarantaine, pause de l'agent (hors chaîne), alerte");
     expect(await value("cash")).toBe("100 u");
+    open("Incidents");
     // Détection par le contrat : l'heure de détection est celle du bloc. On ne la soustrait pas à une heure du journal.
     expect(await value("delai-arrivee-detection")).toContain("non calculé : horloges différentes (journal → bloc)");
     expect(await value("delai-detection-pause")).toContain("non calculé : horloges différentes (bloc → journal)");

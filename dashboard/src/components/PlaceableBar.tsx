@@ -1,5 +1,6 @@
 import type { VaultState } from "../api/types.ts";
-import { formatWei, UNIT_LABEL } from "../lib/format.ts";
+import { useAffichage } from "../hooks/useAffichage.ts";
+import { formatWei } from "../lib/format.ts";
 
 const WEI = /^(0|[1-9][0-9]{0,77})$/;
 const SCALE = 1000n;
@@ -29,6 +30,7 @@ function segments(vault: VaultState): Segment[] | null {
  * une dette admise : « montant bloqué » n'y figure pas, il serait compté deux fois.
  */
 export function PlaceableBar({ vault }: { vault: VaultState }) {
+  const { unite } = useAffichage();
   const parts = segments(vault);
   const cash = vault.cash_wei !== null && WEI.test(vault.cash_wei) ? BigInt(vault.cash_wei) : null;
   if (parts === null || cash === null) {
@@ -54,7 +56,7 @@ export function PlaceableBar({ vault }: { vault: VaultState }) {
     x += width;
     return segment;
   });
-  const summary = drawn.map((p) => `${p.label} ${formatWei(p.wei)} ${UNIT_LABEL}`).join(", ");
+  const summary = drawn.map((p) => `${p.label} ${formatWei(p.wei, unite.decimales)} ${unite.symbole}`).join(", ");
   return (
     <figure className="barre" data-testid="barre-placable" data-etat={sum === cash ? "egal" : "ecart"}>
       <svg className="barre-svg" viewBox="0 0 1000 28" preserveAspectRatio="none" role="img" aria-label={`Répartition du cash : ${summary}`} focusable="false">
@@ -77,7 +79,7 @@ export function PlaceableBar({ vault }: { vault: VaultState }) {
           {drawn.map((p) => (
             <li key={p.key}>
               <span className={`pastille-legende segment-${p.key}`} aria-hidden="true" />
-              {p.label} <strong>{formatWei(p.wei)} {UNIT_LABEL}</strong>
+              {p.label} <strong>{formatWei(p.wei, unite.decimales)} {unite.symbole}</strong>
             </li>
           ))}
         </ul>

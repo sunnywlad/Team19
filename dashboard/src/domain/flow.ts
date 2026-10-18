@@ -8,7 +8,7 @@
 //   Branche latérale : Réponse (quarantaine, pause hors chaîne, alerte, rapport)
 import type { IncidentItem, JournalEntry, RelayDecision } from "../api/types.ts";
 import { latestIncidents } from "./activity.ts";
-import { CLOSING_REASONS, readDecision } from "./reasons.ts";
+import { CLOSING_REASONS, REASONS, readDecision } from "./reasons.ts";
 
 export type FlowNode = "agent" | "porte" | "ia" | "relais" | "contrat" | "humain" | "paiement" | "reponse";
 export type FlowEdge =
@@ -51,6 +51,8 @@ export type Outcome = {
   requestId: string | null;
   /** Ligne de synthèse, au féminin : « la demande est ... ». */
   summary: string;
+  /** Code de ce qui a tranché : nom du motif du contrat, ou type de l'arrêt à la porte. null s'il est inconnu. */
+  code: string | null;
   nodes: FlowNode[];
   edges: FlowEdge[];
   /** Le service de réponse a réagi à cette demande (incident qui la cite). */
@@ -99,6 +101,7 @@ export function contractOutcome(d: RelayDecision, incidents: IncidentItem[] | nu
     tone: read.kind,
     requestId: d.request_id,
     summary: read.summary,
+    code: read.reasonKnown ? (REASONS[d.reason]?.name ?? null) : null,
     nodes,
     edges,
     reacted,
@@ -112,6 +115,15 @@ const GATEWAY_STOPS: Record<string, string> = {
   SCHEMA_REJECTED: "rejetée par le schéma strict",
 };
 
+const CODE = /^[A-Z][A-Z0-9_]{1,40}$/;
+
+/** Premier code de raison du détecteur s'il a la forme d'un code, sinon le type de l'entrée. */
+function gatewayCode(entry: JournalEntry): string {
+  const codes: unknown = entry.data["reason_codes"];
+  const first: unknown = Array.isArray(codes) ? codes[0] : undefined;
+  return typeof first === "string" && CODE.test(first) ? first : entry.type;
+}
+
 /** Arrêt à la porte d'entrée, lu dans le journal. null : l'entrée n'est pas un arrêt. */
 export function gatewayOutcome(entry: JournalEntry, incidents: IncidentItem[] | null): Outcome | null {
   const blocked = entry.type === "DETECTION" && entry.data.verdict === "BLOCK";
@@ -124,6 +136,7 @@ export function gatewayOutcome(entry: JournalEntry, incidents: IncidentItem[] | 
     tone: "bloque",
     requestId: entry.request_id,
     summary,
+    code: gatewayCode(entry),
     nodes: reacted ? ["agent", "porte", "reponse"] : ["agent", "porte"],
     edges: reacted ? ["agent-porte", "porte-reponse"] : ["agent-porte"],
     reacted,

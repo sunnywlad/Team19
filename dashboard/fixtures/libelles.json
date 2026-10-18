@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "libelles": [
+    {
+      "id": "0xce665c932b8b6adb314bf6ba6b5561b528027ce19de675f4c3136d7f91bf23a8",
+      "genre": "client",
+      "libelle": "Client de démonstration"
+    },
+    {
+      "id": "0x4c399b1cfd777c598778cfcdefdea719b040cc331ac368cba4957cb221ab7376",
+      "genre": "agent",
+      "libelle": "Agent factures 1",
+      "detail": "Factures fournisseurs · démo"
+    },
+    {
+      "id": "0x4c7f7a6c35ddcd70f1d7cc6e557315ff29c3a553a253d29016fed3f8234f232c",
+      "genre": "agent",
+      "libelle": "Agent factures 2",
+      "detail": "Factures fournisseurs · démo"
+    },
+    {
+      "id": "0x2105c00130b98ee0802da8f334436b493d7f572044bbc686b71981f3c9ce1a0a",
+      "genre": "agent",
+      "libelle": "Agent factures 3",
+      "detail": "Factures fournisseurs · démo"
+    },
+    {
+      "id": "0x3b012bc1ee917e20bc9fd4e7e96949b845385fe2337c9b7e57ddb78612a22c78",
+      "genre": "agent",
+      "libelle": "Agent trésorerie",
+      "detail": "Placements court terme · démo"
+    },
+    {
+      "id": "0xdff87a23384c280d386171770eb1f5418b4c990511213675d849f1f3136489a0",
+      "genre": "agent",
+      "libelle": "Agent lecture",
+      "detail": "Lecture seule · démo"
+    },
+    {
+      "id": "0x33ffa397770ec2817195fde557898e4c16950c03357f8460e0b908a8679c1f2c",
+      "genre": "beneficiaire",
+      "libelle": "Fournisseur fictif A",
+      "detail": "Fournitures · données synthétiques"
+    },
+    {
+      "id": "0x6fc1b8d6a42511d0f8d5c0e9112f8b6e20a4d31c078762052849957a86850db1",
+      "genre": "beneficiaire",
+      "libelle": "Fournisseur fictif B",
+      "detail": "Transport · données synthétiques"
+    },
+    {
+      "id": "0x70f9c3b43c463e91c42f948809c5587261b4b4bed1efbe91a5edf64cd1c183f6",
+      "genre": "beneficiaire",
+      "libelle": "Compte de placement fictif",
+      "detail": "Placements · données synthétiques"
+    },
+    {
+      "id": "0x0665d8d815dfef587a495604ca870d4b3f510bfaabe41553ad691024b8d4b49c",
+      "genre": "facture",
+      "libelle": "Facture F-001"
+    },
+    {
+      "id": "0x6caf3d2be4cf3cd29da1a2c49da20583230f10e51e083d953fb70778efa0ce3e",
+      "genre": "facture",
+      "libelle": "Facture F-002"
+    },
+    {
+      "id": "0x4253f8c51272c785bd58704a4d22f7205299f6bf601dc39e6e0b8a72c58ca0da",
+      "genre": "placement",
+      "libelle": "Placement P-020"
+    },
+    {
+      "id": "0x19dcbdf4775921fae6fd89ec78a15c1dcdd7863d64f1b97e66e467216474b005",
+      "genre": "placement",
+      "libelle": "Placement P-030"
+    }
+  ]
+}

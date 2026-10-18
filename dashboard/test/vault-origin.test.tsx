@@ -42,13 +42,13 @@ describe("mode faux coffre", () => {
     expect(tagOf("Arrêtées à la porte d'entrée")).toBe("réel");
     expect(text(screen.getByLabelText("Dernière mise à jour par source"))).toMatch(/relais réel .*coffre simulation .*service de réponse réel/);
 
-    for (const [tab, title] of [["En attente", "Cas en attente d'une validation humaine"], ["Incidents", "Agents en pause, sur la chaîne"]] as const) {
+    for (const [tab, title] of [["À valider", "Demandes renvoyées à un humain"], ["Incidents", "Agents en pause, sur la chaîne"]] as const) {
       open(tab);
       await screen.findByRole("heading", { name: title });
       expect(tagOf(title)).toBe("simulation");
       expect(text(screen.getByTestId("bandeau-coffre-simule"))).toContain(NOTICE);
     }
-    open("Journal");
+    open("Piste d'audit");
     await screen.findByRole("heading", { name: "Journal chaîné" });
     expect(tagOf("Journal chaîné")).toBe("réel");
     expect(text(screen.getByTestId("bandeau-coffre-simule"))).toContain(NOTICE);

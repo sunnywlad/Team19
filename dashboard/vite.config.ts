@@ -6,10 +6,15 @@
 //   3. poser la politique CSP et refuser toute méthode autre que GET ;
 //   4. dire à la page, par GET /api/local/mode, ce que le relais a derrière
 //      lui : un contrat ou un faux coffre. Lu ici dans RELAY_VAULT_MODE, à
-//      chaque lancement : la valeur n'est pas écrite dans le bundle.
+//      chaque lancement : la valeur n'est pas écrite dans le bundle ;
+//   5. servir le référentiel de libellés (GET /api/local/libelles, fichier
+//      LIBELLES_FILE) et l'unité d'affichage (GET /api/local/unite,
+//      UNITE_SYMBOLE et UNITE_DECIMALES). Ni l'un ni l'autre ne part au relais
+//      ni sur la chaîne : ils ne servent qu'à l'affichage.
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { dirname } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from "vite";
 
@@ -84,16 +89,77 @@ export function localMode(vault: VaultMode): (req: IncomingMessage, res: ServerR
   };
 }
 
-function hardening(vault: VaultMode): Plugin {
+export const LOCAL_LIBELLES_PATH = "/api/local/libelles";
+export const LOCAL_UNITE_PATH = "/api/local/unite";
+export const DEFAULT_LIBELLES_FILE = "fixtures/libelles.json";
+
+export type Unite = { symbole: string; decimales: number };
+/** Sans déclaration : « u » et 15 décimales, l'unité du monde de test (specs/examples/fixtures.json). Jamais « € » par défaut. */
+export const DEFAULT_UNITE: Unite = { symbole: "u", decimales: 15 };
+
+/** UNITE_SYMBOLE et UNITE_DECIMALES. Une valeur absente ou mal formée retombe sur le défaut, sans message qui la recopie. */
+export function uniteFrom(symbole: string | undefined, decimales: string | undefined): Unite {
+  const s = (symbole ?? "").trim();
+  const d = (decimales ?? "").trim();
+  return {
+    symbole: /^[A-Za-z€]{1,4}$/.test(s) ? s : DEFAULT_UNITE.symbole,
+    decimales: /^\d{1,2}$/.test(d) && Number(d) <= 30 ? Number(d) : DEFAULT_UNITE.decimales,
+  };
+}
+
+/** Chemin du référentiel : LIBELLES_FILE, relatif au dossier du dashboard s'il n'est pas absolu. */
+export function libellesFile(raw: string | undefined): string {
+  const value = (raw ?? "").trim() || DEFAULT_LIBELLES_FILE;
+  return isAbsolute(value) ? value : resolve(root, value);
+}
+
+function sendJson(res: ServerResponse, status: number, body: unknown): void {
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" });
+  res.end(JSON.stringify(body));
+}
+
+/**
+ * Sert le référentiel de libellés tel qu'il est écrit dans le fichier, relu à
+ * chaque demande. La page le valide contre schemas/local-libelles.schema.json
+ * avant d'en afficher quoi que ce soit. Fichier absent ou illisible : 503, et la
+ * page affiche les identifiants abrégés. Le message ne nomme pas le chemin.
+ */
+export function localLibelles(file: string): (req: IncomingMessage, res: ServerResponse, next: Next) => void {
+  return (req, res, next) => {
+    if ((req.url ?? "").split("?")[0] !== LOCAL_LIBELLES_PATH) return next();
+    let body: unknown;
+    try {
+      body = JSON.parse(readFileSync(file, "utf8"));
+    } catch {
+      return sendJson(res, 503, { error: "libelles_indisponibles" });
+    }
+    sendJson(res, 200, body);
+  };
+}
+
+export function localUnite(unite: Unite): (req: IncomingMessage, res: ServerResponse, next: Next) => void {
+  return (req, res, next) => {
+    if ((req.url ?? "").split("?")[0] !== LOCAL_UNITE_PATH) return next();
+    sendJson(res, 200, unite);
+  };
+}
+
+type Local = { vault: VaultMode; libelles: string; unite: Unite };
+
+function hardening(local: Local): Plugin {
+  const use = (server: { middlewares: { use: (handler: (req: IncomingMessage, res: ServerResponse, next: Next) => void) => void } }): void => {
+    server.middlewares.use(readOnly);
+    server.middlewares.use(localMode(local.vault));
+    server.middlewares.use(localLibelles(local.libelles));
+    server.middlewares.use(localUnite(local.unite));
+  };
   return {
     name: "argent-intelligent:lecture-seule-et-csp",
     configureServer(server) {
-      server.middlewares.use(readOnly);
-      server.middlewares.use(localMode(vault));
+      use(server);
     },
     configurePreviewServer(server) {
-      server.middlewares.use(readOnly);
-      server.middlewares.use(localMode(vault));
+      use(server);
     },
     // La page construite porte aussi la politique : elle reste en place quel que soit le serveur.
     transformIndexHtml: {
@@ -134,7 +200,13 @@ export default defineConfig(({ mode, command, isPreview }) => {
 
   return {
     root,
-    plugins: [hardening(vaultModeFrom(env.RELAY_VAULT_MODE))],
+    plugins: [
+      hardening({
+        vault: vaultModeFrom(env.RELAY_VAULT_MODE),
+        libelles: libellesFile(env.LIBELLES_FILE),
+        unite: uniteFrom(env.UNITE_SYMBOLE, env.UNITE_DECIMALES),
+      }),
+    ],
     // Aucune variable d'environnement n'entre dans le bundle : ce préfixe n'est porté par aucune.
     envPrefix: "DASHBOARD_PUBLIC_",
     define: {

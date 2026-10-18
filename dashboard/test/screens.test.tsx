@@ -1,5 +1,5 @@
 // Écrans Incident, Journal et En attente, sur les scénarios qui les concernent.
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { renderScenario, text } from "./helpers.tsx";
 import { open } from "./tour.ts";
@@ -22,9 +22,13 @@ describe("écran Incident", () => {
     expect(await value("sorti")).toBe("0 u");
     expect(await value("actions")).toMatch(/quarantaine.*pause de l'agent \(hors chaîne\).*alerte.*pause de l'agent \(sur la chaîne\).*rapport d'incident/);
     expect(await value("decision-humaine")).toContain("l'incident reste ouvert");
-    // A-DEM-2, abrégé : en pause hors chaîne, puis sur la chaîne.
-    expect(await value("agent-en-pause")).toContain("Agent 0x4c7f…232c en pause");
-    expect(await value("agent-en-pause-chaine")).toContain("Agent 0x4c7f…232c en pause depuis le bloc");
+    // A-DEM-2, par son libellé et son identifiant abrégé : en pause hors chaîne, puis sur la chaîne.
+    expect(await value("agent-en-pause")).toContain("Agent factures 2 0x4c7f…232c en pause");
+    expect(await value("agent-en-pause-chaine")).toContain("Agent factures 2 0x4c7f…232c en pause depuis le bloc");
+    expect(await value("resume")).toBe(
+      "La demande a été arrêtée à la porte d'entrée (score 93 pour un seuil de 70), avant toute signature : le contrat n'a pas été atteint.",
+    );
+    expect(text(within(await screen.findByTestId("rapport")).getByTestId("gravite"))).toBe("Critique");
     expect(await value("delai-arrivee-detection")).toContain("41 ms");
   });
 
@@ -38,6 +42,19 @@ describe("écran Incident", () => {
     expect(await value("expose")).toBe("inconnu du contrat");
     expect(await value("sorti")).toBe("0 u");
     expect(await value("agent-en-pause")).toContain("0x2105…1a0a");
+    expect(await value("resume")).toContain("le contrat l'a refusée : facture inconnue");
+  });
+
+  it("vue rapport : un document lisible, ni signé ni exporté ; aucun bouton de réactivation ni de clôture", async () => {
+    renderScenario("3");
+    open("Incidents");
+    fireEvent.click(await screen.findByRole("button", { name: "Voir le rapport" }));
+    const doc = await screen.findByTestId("rapport-document");
+    expect(text(doc)).toContain("Chaîne d'autorité");
+    expect(text(doc)).toContain("Ni signé, ni exporté");
+    expect(screen.queryByRole("button", { name: /réactiv|clôtur|PDF|export/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Revenir au détail" }));
+    expect(await screen.findByTestId("rapport")).toBeTruthy();
   });
 
   it("scénarios sans incident : 1, 2, 5, 6, 7 et 8", async () => {
@@ -90,7 +107,7 @@ describe("écran Incident", () => {
 describe("écran Journal", () => {
   it("sans vérification rapportée : « non vérifié », jamais « intègre » ni « intact »", async () => {
     renderScenario("2");
-    open("Journal");
+    open("Piste d'audit");
     expect(await value("verdict")).toMatch(/^Non vérifié/);
     expect(await value("tete")).toMatch(/^Entrée 0 · [0-9a-f]{64}$/);
     expect(document.body.textContent).not.toMatch(/intègre|intact/i);
@@ -101,13 +118,23 @@ describe("écran Journal", () => {
 
   it("vérification réussie : résultat, date, limite, et tête des rapports comparée au journal", async () => {
     renderScenario("4");
-    open("Journal");
+    open("Piste d'audit");
     expect(await value("verdict")).toMatch(/^Chaîne intègre sur 14 entrées\. Vérifiée sans tête de référence/);
     expect(await value("verification-date")).toMatch(/^Dernière vérification : \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2} horloge : journal · jusqu'à l'entrée 13$/);
     expect(await value("limite")).toContain("conservée ailleurs");
     expect(await value("tete-rapport")).toContain("concorde avec le journal");
     expect((await screen.findAllByTestId("entree")).length).toBe(14);
     expect(document.body.textContent).not.toMatch(/intact/i);
+  });
+
+  it("filtre par composant : seules les entrées de ce composant ; aucun export", async () => {
+    renderScenario("4");
+    open("Piste d'audit");
+    expect((await screen.findAllByTestId("entree")).length).toBe(14);
+    fireEvent.click(screen.getByRole("button", { name: "File et relais" }));
+    expect(screen.getAllByTestId("entree").length).toBeGreaterThan(0);
+    for (const row of screen.getAllByTestId("entree")) expect(text(row.children[2] as Element)).toMatch(/^(File|Relais)$/);
+    expect(screen.queryByRole("button", { name: /CSV|PDF|export/i })).toBeNull();
   });
 
   it("chaîne rompue, entrées non vérifiées, tête de rapport au-delà du journal", async () => {
@@ -123,35 +150,88 @@ describe("écran Journal", () => {
         return body;
       },
     });
-    open("Journal");
+    open("Piste d'audit");
     expect(await value("verdict")).toBe("Chaîne rompue : empreinte recalculée différente : une entrée a été modifiée à l'entrée 7.");
     expect(await value("non-verifiees")).toBe("4 entrées écrites depuis cette vérification : non vérifiées.");
     expect(await value("tete-rapport")).toContain("le journal est plus court que cette tête : des entrées manquent");
   });
 });
 
-describe("écran En attente", () => {
-  it("scénario 6 : facture, montant, bénéficiaire et délai restant ; rien d'autre", async () => {
+describe("écran À valider", () => {
+  it("scénario 6 : bénéficiaire, référence, montant et échéance ; libellés du référentiel ; rien d'autre", async () => {
     renderScenario("6");
-    open("En attente");
+    open("À valider");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
-    // F-002 et B-002, abrégés.
-    expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
+    // F-002 et B-002, par leur libellé synthétique.
+    expect(await value("cas-reference")).toBe("Facture F-002 · paiement de facture");
     expect(await value("cas-montant")).toBe("30 u");
-    expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
-    expect(await value("cas-delai")).toMatch(/^2\d s$/);
+    expect(await value("cas-beneficiaire")).toBe("Fournisseur fictif B");
+    expect(await value("cas-delai")).toMatch(/^dans 2\d s avant \d{2}:\d{2}:\d{2}, estimé$/);
     expect(await screen.findByText(/La justification rédigée par un agent n'est jamais affichée/)).toBeTruthy();
   });
 
-  it("scénario 6 a (approuvé) et 6 b (délai dépassé) : plus aucun cas en attente", async () => {
-    for (const name of ["6a", "6b"] as const) {
+  it("sans référentiel de libellés : identifiants abrégés", async () => {
+    renderScenario("6", { local: { libelles: { version: 1, libelles: [] } } });
+    open("À valider");
+    expect(await value("cas-reference")).toBe("0x6caf…ce3e · paiement de facture");
+    expect(await value("cas-beneficiaire")).toBe("0x6fc1…0db1");
+  });
+
+  it("tiroir : contrôles dérivés, historique, pied de l'option A ; aucune clé, aucun bouton actif vers l'approbation", async () => {
+    renderScenario("6");
+    open("À valider");
+    fireEvent.click(within((await screen.findAllByTestId("cas-en-attente"))[0]!).getByRole("button"));
+    const drawer = await screen.findByRole("dialog");
+    expect(text(within(drawer).getByTestId("tiroir-montant"))).toBe("30 u");
+    expect([...within(drawer).getByTestId("controles").querySelectorAll("li")].map((li) => li.getAttribute("data-controle"))).toEqual([
+      "reference",
+      "beneficiaire",
+      "agent",
+      "seuil",
+      "entree",
+    ]);
+    expect(text(within(drawer).getByTestId("tiroir-pourquoi"))).toContain("30 u au-dessus du seuil de 25 u");
+    expect(text(within(drawer).getByTestId("historique"))).toContain("Demande reçue à la porte d'entrée");
+    expect(text(within(drawer).getByTestId("tiroir-echeance"))).toMatch(/^Sans réponse avant \d{2}:\d{2}:\d{2} \(dans 2\d s, estimé\), le paiement est refusé\.$/);
+    expect(text(within(drawer).getByTestId("sans-cle"))).toBe(
+      "Cette console ne détient aucune clé : la décision se signe dans l'app d'approbation, avec la clé de l'approbateur",
+    );
+    const signer = within(drawer).getByRole("button", { name: "Ouvrir dans l'app d'approbation" });
+    expect((signer as HTMLButtonElement).disabled).toBe(true);
+    expect(signer.closest("[title]")?.getAttribute("title")).toBe("À venir");
+    expect(signer.getAttribute("aria-describedby")).toBeTruthy();
+    // VISION : ces contrôles ne sont pas calculés, ils n'apparaissent pas comme des contrôles.
+    expect(within(drawer).queryByText("Écart à l'habitude")).toBeNull();
+    expect(drawer.querySelector("form, input, textarea, select")).toBeNull();
+    fireEvent.keyDown(drawer, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("J et K ouvrent le cas suivant et le précédent", async () => {
+    renderScenario("6");
+    open("À valider");
+    await screen.findAllByTestId("cas-en-attente");
+    fireEvent.keyDown(window, { key: "j" });
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+    expect(screen.getByTestId("cas-en-attente").getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(window, { key: "k" });
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    // Le mode présentation ne s'ouvre pas sous le tiroir.
+    fireEvent.keyDown(window, { key: "p" });
+    expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("non");
+  });
+
+  it("scénario 6 a (approuvé) et 6 b (délai dépassé) : plus aucun cas en attente, le cas passe dans son onglet", async () => {
+    for (const [name, tab] of [["6a", "Validé"], ["6b", "Expiré"]] as const) {
       const view = renderScenario(name);
-      open("En attente");
+      open("À valider");
       expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
+      fireEvent.click(screen.getByRole("tab", { name: new RegExp(`^${tab} 1$`) }));
+      expect(text(await screen.findByTestId("cas-clos"))).toContain(tab);
       view.unmount();
     }
     renderScenario("6b");
-    open("Décisions");
+    open("Vue d'ensemble");
     const rows = (await screen.findAllByTestId("decision")).map(text);
     expect(rows[0]).toContain("refusée par le contrat : délai d'approbation dépassé");
     expect(rows[1]).toContain("en attente d'approbation");
@@ -159,7 +239,7 @@ describe("écran En attente", () => {
 
   it("échéance passée sans clôture : le cas reste affiché, marqué dépassé", async () => {
     renderScenario("6", { t0: Date.now() - 120_000 });
-    open("En attente");
+    open("À valider");
     expect(await value("cas-delai")).toContain("échéance dépassée");
   });
 
@@ -172,7 +252,7 @@ describe("écran En attente", () => {
         return [...rows, { ...first, id: 999, decision: 0, reason: 3, reason_name: "REQUEST_REPLAYED", effective_decision: 0, log_index: 0, block_number: Number(first.block_number) + 5, tx_hash: `0x${"ab".repeat(32)}` }];
       },
     });
-    open("En attente");
+    open("À valider");
     expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
   });
 });

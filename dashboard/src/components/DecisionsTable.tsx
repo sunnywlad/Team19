@@ -2,6 +2,7 @@ import type { RelayDecision, RelayEvent } from "../api/types.ts";
 import { amountFor, eventKey, newestFirst } from "../domain/activity.ts";
 import { REASON_SIGNATURE_INVALID, actionLabel, readDecision } from "../domain/reasons.ts";
 import { formatTime } from "../lib/format.ts";
+import { Nom } from "./Affichage.tsx";
 import { Amount, DecisionBadge, OpaqueId } from "./atoms.tsx";
 
 export type Reaction = { available: true; labels: string[] } | { available: false; why: string };
@@ -27,7 +28,7 @@ export function DecisionsTable({ decisions, events, reactionFor }: Props) {
   if (decisions.length === 0) return <p className="vide">Aucune décision du contrat pour l'instant.</p>;
   return (
     <div className="defilement" role="region" aria-label="Décisions du contrat" tabIndex={0}>
-      <table className="decisions">
+      <table className="tableau decisions">
         <thead>
           <tr>
             <th scope="col">Décision</th>
@@ -67,11 +68,11 @@ export function DecisionsTable({ decisions, events, reactionFor }: Props) {
                     // specs/02 § 8 : l'agent d'une demande non authentifiée n'est pas un fait.
                     <span className="discret">non authentifié</span>
                   ) : (
-                    <OpaqueId value={d.agent_id} />
+                    <Nom id={d.agent_id} genre="agent" />
                   )}
                 </td>
                 <td data-label="Référence">
-                  <OpaqueId value={d.ref_id} />
+                  <Nom id={d.ref_id} />
                 </td>
                 <td data-label="Bloc">
                   {d.block_number} <span className="discret">· {formatTime(d.block_timestamp * 1000)}</span>

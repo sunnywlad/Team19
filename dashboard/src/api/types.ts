@@ -168,3 +168,11 @@ export type Sources = { relay: Source; vault: Source; response: Source };
 export type VaultOrigin = "chaine" | "faux-coffre" | "non-confirme" | "lecture" | "sans-objet";
 /** Étiquette de provenance d'un panneau. */
 export type TagSource = Source | "faux-coffre" | "non-confirme";
+
+/** PROPOSÉ, API-NEEDS.md § 7. Référentiel local : un identifiant opaque, un libellé d'affichage. */
+export type LibelleGenre = "beneficiaire" | "agent" | "facture" | "placement" | "client";
+export type Libelle = { id: string; genre: LibelleGenre; libelle: string; detail?: string };
+export type Libelles = { version: 1; libelles: Libelle[] };
+
+/** PROPOSÉ, API-NEEDS.md § 8. Unité d'affichage : 1 symbole = 10^decimales wei. */
+export type Unite = { symbole: string; decimales: number };

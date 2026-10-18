@@ -158,6 +158,16 @@ export type PendingCase = {
 };
 
 /**
+ * Heure d'écriture au journal de l'alerte adressée à l'approbateur pour cette
+ * demande (ALERT_SENT, APPROVAL_REQUESTED), en millisecondes. null : le journal
+ * n'en porte pas. C'est une écriture au journal, pas la preuve d'une remise.
+ */
+export function approverAlertAt(requestId: string, journal: JournalEntry[]): number | null {
+  const alert = journal.find((e) => e.type === "ALERT_SENT" && e.request_id === requestId && e.data["kind"] === "APPROVAL_REQUESTED");
+  return alert === undefined ? null : alert.ts_ms;
+}
+
+/**
  * Cas 1 ouverts : une décision 1 que n'a suivie aucune clôture (approbation,
  * refus, délai dépassé). Un rejeu de la même demande ne ferme pas le cas.
  */

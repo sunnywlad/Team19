@@ -11,12 +11,14 @@ import type {
   IncidentItem,
   JournalEntry,
   JournalVerification,
+  Libelles,
   PausedAgent,
   QueueRow,
   RelayDecision,
   RelayEvent,
   RelayStatus,
   Sources,
+  Unite,
   VaultOrigin,
   VaultState,
 } from "./types.ts";
@@ -34,6 +36,10 @@ export interface ApiClient {
   getPausedAgents(signal?: AbortSignal): Promise<PausedAgent[]>;
   /** Contrat ou faux coffre derrière le relais : dit par le proxy local, pas par le relais. */
   getVaultOrigin(signal?: AbortSignal): Promise<VaultOrigin>;
+  /** Référentiel de libellés du proxy local (API-NEEDS.md § 7). */
+  getLibelles(signal?: AbortSignal): Promise<Libelles>;
+  /** Unité d'affichage déclarée par le proxy local (API-NEEDS.md § 8). */
+  getUnite(signal?: AbortSignal): Promise<Unite>;
 }
 
 /** Taille de page demandée au relais : son maximum (relay/src/api.ts, MAX_LIMIT). */
@@ -43,6 +49,8 @@ const RELAY = "/api/relay";
 const RESPONSE = "/api/reponse";
 const SIMULATION = "/api/simulation";
 const LOCAL_MODE = "/api/local/mode";
+const LOCAL_LIBELLES = "/api/local/libelles";
+const LOCAL_UNITE = "/api/local/unite";
 
 /** Réponse du proxy local : un seul champ, trois valeurs. Tout le reste est refusé. */
 function parseVaultOrigin(data: unknown): VaultOrigin {
@@ -72,6 +80,14 @@ abstract class GetOnlyClient implements ApiClient {
 
   protected readLocalMode(signal?: AbortSignal): Promise<VaultOrigin> {
     return getJson(this.#fetch, LOCAL_MODE, parseVaultOrigin, signal);
+  }
+
+  // Libellés et unité : servis par le proxy local dans les deux modes, jamais par le relais.
+  getLibelles(signal?: AbortSignal): Promise<Libelles> {
+    return getJson(this.#fetch, LOCAL_LIBELLES, parse.libelles, signal);
+  }
+  getUnite(signal?: AbortSignal): Promise<Unite> {
+    return getJson(this.#fetch, LOCAL_UNITE, parse.unite, signal);
   }
 
   getRelayStatus(signal?: AbortSignal): Promise<RelayStatus> {

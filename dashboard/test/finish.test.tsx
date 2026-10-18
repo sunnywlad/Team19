@@ -4,14 +4,14 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { SimulatedApiClient } from "../src/api/client.ts";
 import { App } from "../src/App.tsx";
-import { renderScenario } from "./helpers.tsx";
-import { SCREENS, open } from "./tour.ts";
+import { OVERVIEW_PANELS, renderScenario } from "./helpers.tsx";
+import { SCREENS, navName, open } from "./tour.ts";
 
 describe("états", () => {
   it("chargement : tant que rien n'est lu, aucune valeur n'est affichée", () => {
     render(<App client={new SimulatedApiClient(() => new Promise<Response>(() => undefined))} />);
-    expect(screen.getAllByText("Chargement…")).toHaveLength(5);
-    expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(5);
+    expect(screen.getAllByText("Chargement…")).toHaveLength(OVERVIEW_PANELS);
+    expect(document.querySelectorAll('[aria-busy="true"]')).toHaveLength(OVERVIEW_PANELS);
     expect(screen.queryByTestId("placable")).toBeNull();
     expect(screen.getByTestId("maj-relay").textContent).toBe("jamais lu");
   });
@@ -19,19 +19,20 @@ describe("états", () => {
   it("vide : chaque écran dit qu'il n'y a rien, sans tableau fantôme", async () => {
     renderScenario("2");
     expect(await screen.findByText("Aucune décision du contrat pour l'instant.")).toBeTruthy();
-    expect(await screen.findByText("Aucun incident : aucun délai à mesurer.")).toBeTruthy();
+    expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
+    expect(await screen.findByText("Aucun incident.")).toBeTruthy();
     open("Incidents");
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
     expect(await screen.findByText("Aucun agent en pause sur la chaîne.")).toBeTruthy();
-    open("En attente");
+    open("À valider");
     expect(await screen.findByText("Aucun cas en attente.")).toBeTruthy();
-    open("Journal");
+    open("Piste d'audit");
     expect(await screen.findByText("Aucun rapport : aucune tête de référence.")).toBeTruthy();
   });
 
   it("erreur : un statut HTTP ou un corps illisible donne une erreur explicite sur chaque écran", async () => {
     render(<App client={new SimulatedApiClient(async () => ({ ok: false, status: 503, json: async () => ({}) }) as Response)} />);
-    await waitFor(() => expect(screen.getAllByText(/Lecture en échec : l'API a répondu 503\. Rien n'est affiché\./)).toHaveLength(5));
+    await waitFor(() => expect(screen.getAllByText(/Lecture en échec : l'API a répondu 503\. Rien n'est affiché\./)).toHaveLength(OVERVIEW_PANELS));
     // Campagne : chiffres figés, sans lecture d'API, donc sans erreur de lecture.
     for (const name of SCREENS.filter((screenName) => screenName !== "Campagne")) {
       open(name);
@@ -43,7 +44,7 @@ describe("états", () => {
     const broken = async (): Promise<Response> =>
       ({ ok: true, status: 200, json: async () => Promise.reject(new SyntaxError("Unexpected token <")) }) as unknown as Response;
     render(<App client={new SimulatedApiClient(broken)} />);
-    await waitFor(() => expect(screen.getAllByText(/réponse illisible : ce n'est pas du JSON/)).toHaveLength(5));
+    await waitFor(() => expect(screen.getAllByText(/réponse illisible : ce n'est pas du JSON/)).toHaveLength(OVERVIEW_PANELS));
   });
 });
 
@@ -75,43 +76,46 @@ describe("clavier", () => {
 
     await user.tab();
     expect(document.activeElement?.textContent).toBe("Aller au contenu");
-    // La barre d'écrans vient avant les outils d'affichage : une seule étape de tabulation pour elle.
+    // La barre latérale vient avant les outils d'affichage : une seule étape de tabulation pour elle.
     await user.tab();
-    expect(document.activeElement?.textContent).toBe("Décisions");
+    expect(document.activeElement?.textContent).toBe("Vue d'ensemble");
     await user.tab();
     expect(document.activeElement?.textContent).toMatch(/^Thème/);
     await user.tab({ shift: true });
-    expect(document.activeElement?.textContent).toBe("Décisions");
+    expect(document.activeElement?.textContent).toBe("Vue d'ensemble");
 
+    // Flèche vers le bas comme vers la droite : la barre est verticale sur ordinateur, en onglets sur mobile.
+    await user.keyboard("{ArrowDown}");
+    expect(document.activeElement?.getAttribute("data-ecran")).toBe("valider");
+    expect(screen.getByRole("button", { name: navName("À valider"), current: "page" })).toBeTruthy();
+    expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
     await user.keyboard("{ArrowRight}");
-    expect(document.activeElement?.textContent).toBe("Incidents");
     expect(screen.getByRole("button", { name: "Incidents", current: "page" })).toBeTruthy();
     expect(await screen.findByText("Aucun incident.")).toBeTruthy();
 
     await user.keyboard("{End}");
-    expect(screen.getByRole("button", { name: "Journal", current: "page" })).toBeTruthy();
-    await user.keyboard("{ArrowLeft}{ArrowLeft}");
-    expect(screen.getByRole("button", { name: "En attente", current: "page" })).toBeTruthy();
-    expect(await screen.findAllByTestId("cas-en-attente")).toHaveLength(1);
-    await user.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}");
-    expect(screen.getByRole("button", { name: "Supervision", current: "page" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Campagne", current: "page" })).toBeTruthy();
+    await user.keyboard("{ArrowUp}");
+    expect(screen.getByRole("button", { name: "Piste d'audit", current: "page" })).toBeTruthy();
+    await user.keyboard("{ArrowRight}{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Vue d'ensemble", current: "page" })).toBeTruthy();
     await user.keyboard("{ArrowLeft}{Home}");
-    expect(screen.getByRole("button", { name: "Supervision", current: "page" })).toBeTruthy();
-    expect(window.location.hash).toBe("#supervision");
+    expect(screen.getByRole("button", { name: "Vue d'ensemble", current: "page" })).toBeTruthy();
+    expect(window.location.hash).toBe("#apercu");
   });
 
   it("« Aller au contenu » amène le clavier dans l'écran, et l'écran suit l'ancre de l'adresse", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "#journal");
     renderScenario("4");
-    expect(screen.getByRole("button", { name: "Journal", current: "page" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Piste d'audit", current: "page" })).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Aller au contenu" }));
     expect(document.activeElement?.tagName).toBe("MAIN");
-    expect(document.activeElement?.getAttribute("aria-label")).toBe("Journal");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Piste d'audit");
 
-    // Une ancre inconnue ne choisit rien : retour à l'écran Décisions.
+    // Une ancre inconnue ne choisit rien : retour à la vue d'ensemble.
     window.history.replaceState(null, "", "#<img src=x onerror=1>");
     window.dispatchEvent(new HashChangeEvent("hashchange"));
-    expect(await screen.findByRole("button", { name: "Décisions", current: "page" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Vue d'ensemble", current: "page" })).toBeTruthy();
   });
 });

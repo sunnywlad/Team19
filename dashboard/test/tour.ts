@@ -1,20 +1,24 @@
 // Parcours complet de l'interface, partagé par les tests : chaque écran, puis
-// chaque incident proposé.
+// chaque bouton non pressé qu'il propose.
 import { fireEvent, screen } from "@testing-library/react";
 
-export const SCREENS = ["Supervision", "Décisions", "Incidents", "En attente", "Campagne", "Journal"] as const;
+export const SCREENS = ["Vue d'ensemble", "À valider", "Incidents", "Fournisseurs", "Agents", "Règles", "Piste d'audit", "Campagne"] as const;
+export type ScreenName = (typeof SCREENS)[number];
 
-export function open(name: (typeof SCREENS)[number]): void {
-  fireEvent.click(screen.getByRole("button", { name }));
+/** Nom accessible d'un lien de la barre latérale : son libellé, suivi éventuellement du compteur (« À valider, 1 en attente »). */
+export const navName = (name: ScreenName): RegExp => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(,|$)`);
+
+export function open(name: ScreenName): void {
+  fireEvent.click(screen.getByRole("button", { name: navName(name) }));
 }
 
 export async function tour(): Promise<void> {
   for (const name of SCREENS) {
     open(name);
-    await screen.findByRole("button", { name, current: "page" });
+    await screen.findByRole("button", { name: navName(name), current: "page" });
     for (const button of screen.queryAllByRole("button", { pressed: false })) fireEvent.click(button);
   }
   for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole("button", { name: /^Thème/ }));
   fireEvent.click(screen.getByRole("button", { name: "Aller au contenu" }));
-  open("Décisions");
+  open("Vue d'ensemble");
 }

@@ -1,5 +1,6 @@
 import type { OffContractLine } from "../domain/activity.ts";
 import { formatTime } from "../lib/format.ts";
+import { Nom } from "./Affichage.tsx";
 import { OpaqueId, SourceTag, Untrusted } from "./atoms.tsx";
 import { ReactionCell, type Reaction } from "./DecisionsTable.tsx";
 import type { Sources } from "../api/types.ts";
@@ -25,7 +26,7 @@ export function OffContractList({ lines, sources, reactionFor }: Props) {
           </p>
           <p className="discret">
             Demande <OpaqueId value={line.requestId} /> · agent{" "}
-            {line.agentId === null ? "non authentifié" : <OpaqueId value={line.agentId} />} · {formatTime(line.atMs)} ·{" "}
+            {line.agentId === null ? "non authentifié" : <Nom id={line.agentId} genre="agent" />} · {formatTime(line.atMs)} ·{" "}
             {line.origin === "journal" ? "journal" : "file du relais"} <SourceTag source={line.origin === "journal" ? sources.response : sources.relay} />
             {line.requestId !== null && (
               <>
