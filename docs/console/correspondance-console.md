@@ -15,7 +15,7 @@ Légende de la colonne État :
    - En démo, il est synthétique (`dashboard/fixtures/libelles.json`). En production, il viendrait de l'ERP.
    - Il n'est jamais transmis au relais ni écrit sur la chaîne. Si un libellé manque, la console affiche l'identifiant abrégé.
 2. **Les montants sont en wei.**
-   - Proposition : une unité d'affichage déclarée par le proxy (`GET /api/local/unite` → `{ "symbole": "u" | "€", "decimales": 18 }`).
+   - Proposition : une unité d'affichage déclarée par le proxy (`GET /api/local/unite` → `{ "symbole": "u" | "€", "decimales": 15 }`).
    - Sans déclaration, la console affiche « u », jamais « € » par défaut.
 3. **Pas de signature dans la console.** Le geste humain existe aujourd'hui en ligne de commande (`demo/human.mjs approve|refuse|expire`, clé `APPROVER_PRIVATE_KEY`) et, en démo, par le port de contrôle du faux coffre.
    - L'app d'approbation (mobile, passkey) est un **chantier séparé**. Il demande un choix de compte signataire, par exemple un compte à passkey (P-256) désigné comme `approver` du contrat. Ce choix est à trancher avec Wladimir.
