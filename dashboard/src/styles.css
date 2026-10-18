@@ -2305,3 +2305,369 @@ tbody tr[aria-selected="true"] td {
     text-align: left;
   }
 }
+
+/* --- Incidents : maître-détail --- */
+.carte-plate {
+  border: 0;
+  background: none;
+}
+
+.carte-plate > .carte-entete {
+  padding: 0 0 12px;
+  border-bottom: 0;
+}
+
+.carte-plate > .valeurs {
+  padding: 0;
+  gap: var(--espace-4);
+}
+
+.compteurs-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espace-3);
+}
+
+.compteurs-ligne > div {
+  background: var(--surface);
+}
+
+.md {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: var(--espace-4);
+  align-items: start;
+}
+
+.liste-inc {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inc {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.carte-incident:last-child .inc {
+  border-bottom: 0;
+}
+
+.inc:hover {
+  background: var(--surface-2);
+}
+
+.inc[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+
+.inc .ligne1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.inc b {
+  font-weight: 500;
+}
+
+.inc > span:not(.ligne1):not(.pastille-pause) {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+/* Un incident lu après l'ouverture de la page entre en tête de liste, une fois. */
+.carte-arrivee {
+  animation: arrivee 0.5s ease-out both;
+}
+
+@keyframes arrivee {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.detail {
+  display: grid;
+  gap: 18px;
+  padding: 18px 20px;
+  animation: entree 0.24s ease-out both;
+}
+
+.detail-entete {
+  display: grid;
+  gap: 6px;
+}
+
+.detail-entete h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pastilles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chiffres3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espace-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chiffres3 > div,
+.chiffres3 > li {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
+}
+
+.chiffres3 dt,
+.chiffres3 li > span {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.chiffres3 dd {
+  margin: 0;
+}
+
+.chiffres3 dd,
+.chiffres3 b {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.chiffres3 dd .nom-libelle,
+.chiffres3 dd .identifiant {
+  font-size: 14px;
+}
+
+.sorti .montant {
+  color: var(--ok);
+}
+
+.extrait {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--rayon);
+  background: var(--surface-2);
+}
+
+.extrait figcaption {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.extrait .non-fiable {
+  padding: 0;
+  background: none;
+  line-height: 1.5;
+}
+
+.bloc {
+  display: block;
+  margin-top: 4px;
+}
+
+.replie summary {
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.replie[open] {
+  display: grid;
+  gap: var(--espace-3);
+}
+
+.delais th,
+.delais td {
+  padding: 8px 12px;
+}
+
+/* --- Rapport d'incident en document --- */
+.feuille-doc {
+  display: grid;
+  gap: 22px;
+  justify-self: center;
+  width: min(820px, 100%);
+  padding: clamp(20px, 5vw, 56px);
+  border: 1px solid var(--line);
+  border-radius: var(--rayon-sm);
+  background: var(--surface);
+}
+
+.entete-doc {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--text);
+}
+
+.entete-doc h2 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.feuille-doc h3 {
+  margin: 0 0 8px;
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.feuille-doc p {
+  max-width: 70ch;
+}
+
+.sceau {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
+  font-size: 13px;
+}
+
+@media (max-width: 1100px) {
+  .md {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .chiffres3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Impression par le navigateur : le document seul, sans la navigation. */
+@media print {
+  .laterale,
+  .barre-haute,
+  .evitement,
+  .vue-entete,
+  .carte-outils,
+  .pied {
+    display: none;
+  }
+
+  .console {
+    display: block;
+    background: none;
+  }
+
+  .feuille-doc {
+    border: 0;
+    padding: 0;
+  }
+}
+
+/* --- Piste d'audit --- */
+.verdict {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-weight: 400;
+}
+
+.verdict strong {
+  font-weight: 600;
+}
+
+.verdict-ok {
+  color: var(--ok);
+}
+
+.verdict-ko {
+  color: var(--danger);
+}
+
+.verdict-inconnu {
+  color: var(--warn);
+}
+
+.verification {
+  display: grid;
+  gap: 4px;
+}
+
+.empreinte {
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+}
+
+.limite {
+  padding: 10px 12px;
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  border-radius: 0 var(--rayon) var(--rayon) 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.hors-contrat-encart {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
+}
+
+.carte-outils-bord {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+td.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.cellule code {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.chiffres3 .pastille-pause {
+  white-space: normal;
+  margin-top: 4px;
+}
+
+/* Les libellés des listes fermées sont en minuscules : la majuscule vient d'ici, en titre. */
+.inc b::first-letter,
+.detail-entete h2::first-letter,
+.entete-doc h2::first-letter,
+.liste-lignes b::first-letter {
+  text-transform: uppercase;
+}

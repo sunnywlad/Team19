@@ -22,9 +22,13 @@ describe("écran Incident", () => {
     expect(await value("sorti")).toBe("0 u");
     expect(await value("actions")).toMatch(/quarantaine.*pause de l'agent \(hors chaîne\).*alerte.*pause de l'agent \(sur la chaîne\).*rapport d'incident/);
     expect(await value("decision-humaine")).toContain("l'incident reste ouvert");
-    // A-DEM-2, abrégé : en pause hors chaîne, puis sur la chaîne.
-    expect(await value("agent-en-pause")).toContain("Agent 0x4c7f…232c en pause");
-    expect(await value("agent-en-pause-chaine")).toContain("Agent 0x4c7f…232c en pause depuis le bloc");
+    // A-DEM-2, par son libellé et son identifiant abrégé : en pause hors chaîne, puis sur la chaîne.
+    expect(await value("agent-en-pause")).toContain("Agent factures 2 0x4c7f…232c en pause");
+    expect(await value("agent-en-pause-chaine")).toContain("Agent factures 2 0x4c7f…232c en pause depuis le bloc");
+    expect(await value("resume")).toBe(
+      "La demande a été arrêtée à la porte d'entrée (score 93 pour un seuil de 70), avant toute signature : le contrat n'a pas été atteint.",
+    );
+    expect(text(within(await screen.findByTestId("rapport")).getByTestId("gravite"))).toBe("Critique");
     expect(await value("delai-arrivee-detection")).toContain("41 ms");
   });
 
@@ -38,6 +42,19 @@ describe("écran Incident", () => {
     expect(await value("expose")).toBe("inconnu du contrat");
     expect(await value("sorti")).toBe("0 u");
     expect(await value("agent-en-pause")).toContain("0x2105…1a0a");
+    expect(await value("resume")).toContain("le contrat l'a refusée : facture inconnue");
+  });
+
+  it("vue rapport : un document lisible, ni signé ni exporté ; aucun bouton de réactivation ni de clôture", async () => {
+    renderScenario("3");
+    open("Incidents");
+    fireEvent.click(await screen.findByRole("button", { name: "Voir le rapport" }));
+    const doc = await screen.findByTestId("rapport-document");
+    expect(text(doc)).toContain("Chaîne d'autorité");
+    expect(text(doc)).toContain("Ni signé, ni exporté");
+    expect(screen.queryByRole("button", { name: /réactiv|clôtur|PDF|export/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Revenir au détail" }));
+    expect(await screen.findByTestId("rapport")).toBeTruthy();
   });
 
   it("scénarios sans incident : 1, 2, 5, 6, 7 et 8", async () => {
@@ -108,6 +125,16 @@ describe("écran Journal", () => {
     expect(await value("tete-rapport")).toContain("concorde avec le journal");
     expect((await screen.findAllByTestId("entree")).length).toBe(14);
     expect(document.body.textContent).not.toMatch(/intact/i);
+  });
+
+  it("filtre par composant : seules les entrées de ce composant ; aucun export", async () => {
+    renderScenario("4");
+    open("Piste d'audit");
+    expect((await screen.findAllByTestId("entree")).length).toBe(14);
+    fireEvent.click(screen.getByRole("button", { name: "File et relais" }));
+    expect(screen.getAllByTestId("entree").length).toBeGreaterThan(0);
+    for (const row of screen.getAllByTestId("entree")) expect(text(row.children[2] as Element)).toMatch(/^(File|Relais)$/);
+    expect(screen.queryByRole("button", { name: /CSV|PDF|export/i })).toBeNull();
   });
 
   it("chaîne rompue, entrées non vérifiées, tête de rapport au-delà du journal", async () => {
