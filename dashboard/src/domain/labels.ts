@@ -66,3 +66,20 @@ export const HUMAN_DECISION_LABELS: Record<string, string> = {
 export const ROLE_LABELS: Record<string, string> = { ANALYST: "analyste", OWNER: "propriétaire", APPROVER: "approbateur" };
 
 export const MANDATE_LABELS: Record<string, string> = { PAY_INVOICE: "payer une facture", PLACE: "placer" };
+
+export type Severity = "critique" | "eleve" | "modere";
+
+/**
+ * Gravité indicative d'un incident, dérivée de son seul déclencheur (specs/05) :
+ * le rapport n'a pas de champ « gravité ». Une attaque arrêtée par la porte ou
+ * par le contrat est critique ; une rafale ou un schéma rejeté, modérés.
+ */
+export const TRIGGER_SEVERITY: Record<IncidentTrigger, Severity> = {
+  DETECTOR_SCORE: "critique",
+  CONTRACT_REFUSAL: "critique",
+  REPEATED_REFUSALS: "eleve",
+  RATE_BURST: "modere",
+  SCHEMA_REJECTED: "modere",
+};
+
+export const SEVERITY_WORDS: Record<Severity, string> = { critique: "Critique", eleve: "Élevé", modere: "Modéré" };
