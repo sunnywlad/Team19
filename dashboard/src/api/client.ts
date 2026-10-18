@@ -8,6 +8,7 @@
 import { getJson, type FetchLike } from "./http.ts";
 import { InvalidResponse, parse } from "../validation/validate.ts";
 import type {
+  DailyStats,
   IncidentItem,
   JournalEntry,
   JournalVerification,
@@ -25,6 +26,14 @@ import type {
 
 export interface ApiClient {
   readonly sources: Sources;
+  /**
+   * La source sert les listes récentes (order=desc, API-NEEDS.md § 6) et les
+   * agrégats par jour (GET /stats/daily, § 9). Vrai pour le serveur de fixtures
+   * seulement : le relais ignorerait order=desc sans le dire.
+   */
+  readonly recent: boolean;
+  /** Agrégats des 30 derniers jours (§ 9). Seulement si `recent`. */
+  getDailyStats(signal?: AbortSignal): Promise<DailyStats>;
   getRelayStatus(signal?: AbortSignal): Promise<RelayStatus>;
   getDecisions(signal?: AbortSignal): Promise<RelayDecision[]>;
   getEvents(signal?: AbortSignal): Promise<RelayEvent[]>;
@@ -44,6 +53,33 @@ export interface ApiClient {
 
 /** Taille de page demandée au relais : son maximum (relay/src/api.ts, MAX_LIMIT). */
 export const PAGE_LIMIT = 500;
+
+/**
+ * Événements d'inscription et de réglage, relus à part en mode « listes
+ * récentes » : les 500 derniers événements ne contiennent plus une inscription
+ * vieille d'un mois. Liste fermée : chaque URL est une constante.
+ */
+const REGISTRATION_EVENTS = [
+  "BeneficiaryRegistered",
+  "AgentRegistered",
+  "InvoiceRegistered",
+  "PlacementRegistered",
+  "HoldPlaced",
+  "AgentPaused",
+  "AgentResumed",
+  "VaultPaused",
+  "VaultResumed",
+  "ThresholdChanged",
+  "SafetyReserveChanged",
+  "ApprovalDelayChanged",
+] as const;
+
+/** Réunit des pages d'événements : chaque événement une fois, dans l'ordre de l'indexeur. */
+function mergeById<T extends { id: number }>(pages: T[][]): T[] {
+  const byId = new Map<number, T>();
+  for (const page of pages) for (const row of page) byId.set(row.id, row);
+  return [...byId.values()].sort((a, b) => a.id - b.id);
+}
 
 const RELAY = "/api/relay";
 const RESPONSE = "/api/reponse";
@@ -69,6 +105,7 @@ const defaultFetch: FetchLike = (input, init) => fetch(input, init);
 
 abstract class GetOnlyClient implements ApiClient {
   abstract readonly sources: Sources;
+  abstract readonly recent: boolean;
   abstract getVaultOrigin(signal?: AbortSignal): Promise<VaultOrigin>;
   readonly #fetch: FetchLike;
   readonly #routes: Routes;
@@ -94,10 +131,22 @@ abstract class GetOnlyClient implements ApiClient {
     return getJson(this.#fetch, `${this.#routes.relay}/status`, parse.relayStatus, signal);
   }
   getDecisions(signal?: AbortSignal): Promise<RelayDecision[]> {
-    return getJson(this.#fetch, `${this.#routes.relay}/decisions?limit=${PAGE_LIMIT}`, parse.relayDecisions, signal);
+    if (!this.recent) return getJson(this.#fetch, `${this.#routes.relay}/decisions?limit=${PAGE_LIMIT}`, parse.relayDecisions, signal);
+    return getJson(this.#fetch, `${this.#routes.relay}/decisions?order=desc&limit=${PAGE_LIMIT}`, parse.relayDecisions, signal).then((rows) => mergeById([rows]));
   }
-  getEvents(signal?: AbortSignal): Promise<RelayEvent[]> {
-    return getJson(this.#fetch, `${this.#routes.relay}/events?limit=${PAGE_LIMIT}`, parse.relayEvents, signal);
+  async getEvents(signal?: AbortSignal): Promise<RelayEvent[]> {
+    if (!this.recent) return getJson(this.#fetch, `${this.#routes.relay}/events?limit=${PAGE_LIMIT}`, parse.relayEvents, signal);
+    const pages = await Promise.all([
+      getJson(this.#fetch, `${this.#routes.relay}/events?order=desc&limit=${PAGE_LIMIT}`, parse.relayEvents, signal),
+      ...REGISTRATION_EVENTS.map((name) =>
+        getJson(this.#fetch, `${this.#routes.relay}/events?name=${name}&order=desc&limit=${PAGE_LIMIT}`, parse.relayEvents, signal),
+      ),
+    ]);
+    return mergeById(pages);
+  }
+  getDailyStats(signal?: AbortSignal): Promise<DailyStats> {
+    if (!this.recent) return Promise.reject(new Error("agrégats non servis par cette source (API-NEEDS.md § 9)"));
+    return getJson(this.#fetch, `${this.#routes.relay}/stats/daily`, parse.dailyStats, signal);
   }
   getQueue(signal?: AbortSignal): Promise<QueueRow[]> {
     return getJson(this.#fetch, `${this.#routes.relay}/queue?limit=${PAGE_LIMIT}`, parse.relayQueue, signal);
@@ -128,6 +177,8 @@ export type RealOptions = {
 
 export class RealApiClient extends GetOnlyClient {
   readonly sources: Sources;
+  /** Le relais ne sert encore ni order=desc ni /stats/daily : listes des 500 premiers, agrégats non disponibles. */
+  readonly recent = false;
   constructor(options: RealOptions = {}, fetchFn: FetchLike = defaultFetch) {
     super(
       {
@@ -150,6 +201,7 @@ export class RealApiClient extends GetOnlyClient {
 
 export class SimulatedApiClient extends GetOnlyClient {
   readonly sources: Sources = { relay: "simulation", vault: "simulation", response: "simulation" };
+  readonly recent = true;
   constructor(fetchFn: FetchLike = defaultFetch) {
     super({ relay: SIMULATION, vault: SIMULATION, response: SIMULATION }, fetchFn);
   }

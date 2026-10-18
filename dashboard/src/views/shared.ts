@@ -1,5 +1,7 @@
 import type { Source, Sources, TagSource, VaultOrigin } from "../api/types.ts";
 import type { Reaction } from "../components/DecisionsTable.tsx";
+import { PAGE_LIMIT } from "../api/client.ts";
+import type { QueueRow } from "../api/types.ts";
 import type { RelayData, ResponseData } from "../data/load.ts";
 import { reactionsFor } from "../domain/activity.ts";
 import type { Snapshot } from "../hooks/poller.ts";
@@ -40,4 +42,15 @@ export function makeReactionFor(sources: Sources, response: ResponseData | null)
     if (response === null) return { available: false, why: "non disponible" };
     return { available: true, labels: reactionsFor(requestId, response.incidents, response.journal) };
   };
+}
+
+/**
+ * Lignes de la file que les décisions lues peuvent juger. En listes récentes,
+ * une demande soumise avant la plus ancienne décision lue paraîtrait « non
+ * indexée » à tort : elle est laissée de côté, pas déclarée en attente.
+ */
+export function queueInWindow(data: RelayData): QueueRow[] {
+  if (data.window !== "derniers" || data.decisions.length < PAGE_LIMIT) return data.queue;
+  const oldest = Math.min(...data.decisions.map((d) => d.block_timestamp)) * 1000;
+  return data.queue.filter((row) => row.enqueued_at_ms >= oldest);
 }

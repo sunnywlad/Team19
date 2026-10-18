@@ -31,6 +31,7 @@ const EXPORTS = {
   pausedAgents: "urn:argent-intelligent:dashboard:response-paused-agents:1",
   libelles: "urn:argent-intelligent:dashboard:local-libelles:1",
   unite: "urn:argent-intelligent:dashboard:local-unite:1",
+  dailyStats: "urn:argent-intelligent:dashboard:stats-daily:1",
 };
 
 const ajv = new Ajv2020({ strict: true, allErrors: false, code: { source: true, esm: true } });

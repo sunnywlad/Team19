@@ -11,16 +11,19 @@ import { PlaceableValues } from "../components/PlaceablePanel.tsx";
 import { Counter } from "../components/Rolling.tsx";
 import { AgentStatusPill, SeverityPill } from "../components/pills.tsx";
 import { latestIncidents, offContractLines } from "../domain/activity.ts";
-import { blockedRequests, blockedSummary, decisionsByDay, interventionShare, paidSummary, pendingSummary, type Sum } from "../domain/apercu.ts";
+import { blockedRequests, blockedSummary, decisionsByDay, interventionShare, paidSummary, pendingSummary, statsDays, statsSummary, type Sum } from "../domain/apercu.ts";
 import { TRIGGER_LABELS } from "../domain/labels.ts";
 import { readDecision } from "../domain/reasons.ts";
 import { agentRows, mandateWords } from "../domain/referentiels.ts";
 import { openCases } from "../domain/validation.ts";
 import { formatTime } from "../lib/format.ts";
-import { makeReactionFor, sameWorld, vaultFed, type ViewProps } from "./shared.ts";
+import { makeReactionFor, queueInWindow, sameWorld, vaultFed, type ViewProps } from "./shared.ts";
 
 const PERCENT = new Intl.NumberFormat("fr-FR", { style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
+const COUNT = new Intl.NumberFormat("fr-FR");
+/** Lignes du tableau des décisions dans la vue d'ensemble : les plus récentes. */
+const RECENT_ROWS = 12;
+const plural = (n: number, one: string, many: string): string => `${COUNT.format(n)} ${n === 1 ? one : many}`;
 
 /** Somme connue, et ce qui n'a pas pu y entrer. Tout inconnu : « montant inconnu », jamais 0. */
 function SumLine({ sum, suffix }: { sum: Sum; suffix: string }) {
@@ -30,6 +33,17 @@ function SumLine({ sum, suffix }: { sum: Sum; suffix: string }) {
       <Amount wei={sum.knownWei} /> {suffix}
       {sum.unknown > 0 && <span className="discret"> · {plural(sum.unknown, "montant inconnu", "montants inconnus")}, hors total</span>}
     </>
+  );
+}
+
+/** Comptes par agent ou par fournisseur : sur la fenêtre lue, pas sur la période. */
+export function WindowNote() {
+  return (
+    <Details>
+      <p className="discret" data-testid="note-fenetre">
+        Paiements et bloqués comptés sur les {PAGE_LIMIT} décisions les plus récentes et le journal lus, pas sur toute la période.
+      </p>
+    </Details>
   );
 }
 
@@ -54,7 +68,8 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
       <div className="kpis">
         <Panel title="Paiements exécutés" id="titre-kpi-payes" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
-            const paid = paidSummary(data.events);
+            const period = data.stats ? statsSummary(data.stats) : null;
+            const paid = period ? period.paid : paidSummary(data.events);
             return (
               <>
                 <p className="kpi-valeur" data-testid="kpi-payes">
@@ -62,6 +77,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                 </p>
                 <p className="kpi-sous">
                   {paid.count === 0 ? "Aucun paiement exécuté pour l'instant." : plural(paid.count, "paiement", "paiements")}
+                  {period && paid.count > 0 && ` · ${period.days} derniers jours`}
                   {paid.unknown > 0 && ` · ${plural(paid.unknown, "montant illisible", "montants illisibles")}, hors total`}
                 </p>
               </>
@@ -70,7 +86,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
         </Panel>
         <Panel title="Sans intervention" id="titre-kpi-auto" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
-            const share = interventionShare(data.decisions);
+            const share = data.stats ? statsSummary(data.stats) : interventionShare(data.decisions);
             return (
               <>
                 <p className="kpi-valeur" data-testid="kpi-auto">
@@ -79,7 +95,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                 <p className="kpi-sous">
                   {share.share === null
                     ? "Aucun paiement lu : la part s'affichera au premier."
-                    : `${share.auto} sur ${share.auto + share.approved} payés sans validation humaine`}
+                    : `${COUNT.format(share.auto)} sur ${COUNT.format(share.auto + share.approved)} payés sans validation humaine`}
                 </p>
               </>
             );
@@ -105,9 +121,10 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
         </Panel>
         <Panel title="Bloqués par une règle" id="titre-kpi-bloques" source={relayTag} famille="relay" snapshot={relay} now={now} className="carte-kpi">
           {(data) => {
+            const period = data.stats ? statsSummary(data.stats) : null;
             const blocked = blockedRequests(data.decisions, data.events, linked ? (response.data?.journal ?? null) : null, linked);
-            const sum = blockedSummary(blocked);
-            const gate = blocked.filter((b) => b.origin === "porte").length;
+            const sum = period ? period.blocked : blockedSummary(blocked);
+            const gate = period ? period.gate : blocked.filter((b) => b.origin === "porte").length;
             return (
               <>
                 <p className="kpi-valeur" data-testid="kpi-bloques">
@@ -118,7 +135,9 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                 </p>
                 {sum.count > 0 && (
                 <p className="kpi-sous">
-                  {linked && response.data
+                  {period
+                    ? `dont ${gate} à la porte d'entrée · ${period.days} derniers jours`
+                    : linked && response.data
                     ? `dont ${gate} à la porte d'entrée`
                     : "porte d'entrée non comptée : service de réponse non lu ou d'un autre monde"}
                 </p>
@@ -142,10 +161,21 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                   ))}
                 </div>
               </div>
-              <DecisionsChart days={decisionsByDay(data.decisions, blockedRequests(data.decisions, data.events, journal, linked), now, days)} />
+              <DecisionsChart
+                days={data.stats ? statsDays(data.stats, days) : decisionsByDay(data.decisions, blockedRequests(data.decisions, data.events, journal, linked), now, days)}
+              />
               <Details>
                 <p className="discret">
-                  Jour local du navigateur · bloc pour le contrat, journal pour la porte <ClockTag clock="locale" />
+                  {data.stats ? (
+                    <>
+                      Agrégats servis par la source (GET /stats/daily), comptés sur tous ses événements : jours civils du fuseau{" "}
+                      {data.stats.timezone}, jour du bloc pour le contrat, jour du journal pour la porte.
+                    </>
+                  ) : (
+                    <>
+                      Jour local du navigateur · bloc pour le contrat, journal pour la porte <ClockTag clock="locale" />
+                    </>
+                  )}
                 </p>
               </Details>
             </>
@@ -233,6 +263,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
           const rows = agentRows(data.events, data.decisions, linked ? (response.data?.pausedAgents ?? null) : null, journal);
           if (rows.length === 0) return <Vide hint="Un agent apparaît ici dès son inscription au contrat.">Aucun agent inscrit au contrat.</Vide>;
           return (
+            <>
             <div className="defilement" role="region" aria-label="Agents" tabIndex={0}>
               <table className="tableau">
                 <thead>
@@ -269,6 +300,8 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                 </tbody>
               </table>
             </div>
+            {data.window === "derniers" && <WindowNote />}
+            </>
           );
         }}
       </Panel>
@@ -278,12 +311,17 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
           const refused = data.decisions.filter((d) => readDecision(d).kind === "refuse").length;
           return (
             <>
-              {(data.decisions.length >= PAGE_LIMIT || data.events.length >= PAGE_LIMIT) && (
+              {data.window === "premiers" && (data.decisions.length >= PAGE_LIMIT || data.events.length >= PAGE_LIMIT) && (
                 <p className="alerte-ligne" role="status">
                   Affichage tronqué : l'API ne renvoie que les {PAGE_LIMIT} premiers événements (voir API-NEEDS.md § 6).
                 </p>
               )}
-              <DecisionsTable decisions={data.decisions} events={data.events} reactionFor={reactionFor} />
+              <DecisionsTable decisions={data.decisions} events={data.events} reactionFor={reactionFor} limit={RECENT_ROWS} />
+              {data.decisions.length > RECENT_ROWS && (
+                <p className="discret carte-note" data-testid="decisions-recentes">
+                  Les {RECENT_ROWS} plus récentes sur {COUNT.format(data.decisions.length)} lues.
+                </p>
+              )}
               <Details>
                 {fake && (
                   <p className="alerte-ligne" data-testid="decisions-simulees">
@@ -293,6 +331,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
                 <p className="discret">
                   Lues dans les événements <code>Decision</code> indexés, jamais dans le statut d'un reçu de transaction. {data.decisions.length}{" "}
                   événement{data.decisions.length > 1 ? "s" : ""}, dont {refused} refus.
+                  {data.window === "derniers" && ` Liste limitée aux ${PAGE_LIMIT} décisions les plus récentes ; les chiffres de la période viennent des agrégats.`}
                 </p>
               </Details>
             </>
@@ -305,7 +344,7 @@ export function ApercuView({ view, onOpen }: { view: ViewProps; onOpen: Opens })
           {(data) => <OffContractList lines={offContractLines(data.journal, [], [])} sources={sources} reactionFor={reactionFor} />}
         </Panel>
         <Panel title="File du relais" id="titre-file" source={sources.relay} famille="relay" snapshot={relay} now={now}>
-          {(data) => <OffContractList lines={offContractLines([], data.queue, data.decisions)} sources={sources} reactionFor={reactionFor} />}
+          {(data) => <OffContractList lines={offContractLines([], queueInWindow(data), data.decisions)} sources={sources} reactionFor={reactionFor} />}
         </Panel>
       </div>
       <Details testId="apercu-details">

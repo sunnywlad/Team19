@@ -2,7 +2,7 @@
 // Rien n'est estimé : un montant qu'on ne sait pas lire n'entre dans aucun
 // total, et le nombre de ces montants inconnus est donné à côté. Un total
 // partiel se lirait comme un total.
-import type { JournalEntry, RelayDecision, RelayEvent } from "../api/types.ts";
+import type { DailyStats, JournalEntry, RelayDecision, RelayEvent } from "../api/types.ts";
 import type { PendingCase } from "./activity.ts";
 import { readDecision } from "./reasons.ts";
 
@@ -175,4 +175,57 @@ export function chartMax(days: Day[]): number {
   if (top <= 4) return 4;
   const step = 10 ** Math.floor(Math.log10(top));
   return Math.ceil(top / step) * step;
+}
+
+/**
+ * Chiffres de la période lus dans GET /stats/daily (API-NEEDS.md § 9) : la
+ * source les a comptés sur tous ses événements, pas seulement sur les 500 que
+ * la console a lus. Les mêmes définitions que paidSummary, interventionShare
+ * et blockedRequests.
+ */
+export type StatsSummary = {
+  days: number;
+  paid: Sum;
+  auto: number;
+  approved: number;
+  share: number | null;
+  blocked: Sum;
+  gate: number;
+};
+
+export function statsSummary(stats: DailyStats): StatsSummary {
+  let auto = 0;
+  let approved = 0;
+  let paidWei = 0n;
+  let blocked = 0;
+  let gate = 0;
+  let blockedWei = 0n;
+  let unknown = 0;
+  for (const d of stats.days) {
+    auto += d.paid_auto;
+    approved += d.paid_approved;
+    paidWei += BigInt(d.paid_auto_wei) + BigInt(d.paid_approved_wei);
+    blocked += d.blocked;
+    gate += d.blocked_gate;
+    blockedWei += BigInt(d.blocked_wei);
+    unknown += d.blocked_unknown;
+  }
+  const total = auto + approved;
+  return {
+    days: stats.days.length,
+    paid: { count: total, knownWei: paidWei.toString(), unknown: 0 },
+    auto,
+    approved,
+    share: total === 0 ? null : auto / total,
+    blocked: { count: blocked, knownWei: blockedWei.toString(), unknown },
+    gate,
+  };
+}
+
+/** Les `days` derniers jours des agrégats, pour le graphique. Le jour vient de la source, daté à minuit local pour l'affichage. */
+export function statsDays(stats: DailyStats, days: number): Day[] {
+  return stats.days.slice(-days).map((d) => {
+    const [y, m, day] = d.date.split("-").map(Number) as [number, number, number];
+    return { startMs: new Date(y, m - 1, day).getTime(), auto: d.paid_auto, approved: d.paid_approved, blocked: d.blocked };
+  });
 }

@@ -2,6 +2,7 @@
 // peut répondre quand le service de réponse est coupé, et l'inverse.
 import type { ApiClient } from "../api/client.ts";
 import type {
+  DailyStats,
   IncidentItem,
   JournalEntry,
   JournalVerification,
@@ -12,7 +13,16 @@ import type {
   RelayStatus,
 } from "../api/types.ts";
 
-export type RelayData = { status: RelayStatus; decisions: RelayDecision[]; events: RelayEvent[]; queue: QueueRow[] };
+export type RelayData = {
+  status: RelayStatus;
+  decisions: RelayDecision[];
+  events: RelayEvent[];
+  queue: QueueRow[];
+  /** Agrégats des 30 derniers jours (API-NEEDS.md § 9). null : la source ne les sert pas. */
+  stats: DailyStats | null;
+  /** « derniers » : listes récentes (order=desc) ; « premiers » : les 500 premiers événements. */
+  window: "premiers" | "derniers";
+};
 
 export type ResponseData = {
   incidents: IncidentItem[];
@@ -22,13 +32,14 @@ export type ResponseData = {
 };
 
 export async function loadRelay(client: ApiClient, signal: AbortSignal): Promise<RelayData> {
-  const [status, decisions, events, queue] = await Promise.all([
+  const [status, decisions, events, queue, stats] = await Promise.all([
     client.getRelayStatus(signal),
     client.getDecisions(signal),
     client.getEvents(signal),
     client.getQueue(signal),
+    client.recent ? client.getDailyStats(signal) : Promise.resolve(null),
   ]);
-  return { status, decisions, events, queue };
+  return { status, decisions, events, queue, stats, window: client.recent ? "derniers" : "premiers" };
 }
 
 export async function loadResponse(client: ApiClient, signal: AbortSignal): Promise<ResponseData> {

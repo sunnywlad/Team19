@@ -86,6 +86,8 @@ export type IncidentInput = {
   signed: boolean;
   exposedWei: string | null;
   excerpt: string | null;
+  /** Mandat inscrit de l'agent. Par défaut : payer une facture. */
+  mandate?: ("PAY_INVOICE" | "PLACE")[];
 };
 
 export class Sim {
@@ -96,10 +98,15 @@ export class Sim {
   readonly pausedAgents: PausedAgent[] = [];
   verification: JournalVerification["verification"] = null;
   vault: VaultNumbers = { cash: 0, debts: 0, reserve: 0, held: 0, heldPlacements: 0, placeable: 0 };
+  /** Seuil de validation servi par GET /vault, en unités. */
+  threshold = 25;
   #block = 1000;
   #blockTimestamp = 1;
   #tx = 0;
-  readonly #open = new Map<string, { input: IncidentInput; actions: IncidentReport["automatic_actions"]; pausedAtMs: number; alertedAtMs: number }>();
+  readonly #open = new Map<
+    string,
+    { input: IncidentInput; actions: IncidentReport["automatic_actions"]; pausedAtMs: number; alertedAtMs: number; human: IncidentReport["human_decision"] }
+  >();
 
   /** Une transaction : un bloc, des événements. */
   tx(atMs: number, logs: [string, Record<string, string | number | boolean>][]): Tx {
@@ -232,7 +239,7 @@ export class Sim {
       request_ids: [input.requestId],
       authority_chain: {
         agent_id: input.agentId,
-        agent_mandate: ["PAY_INVOICE"],
+        agent_mandate: input.mandate ?? ["PAY_INVOICE"],
         client_id: id("C-DEMO"),
         client_signer: input.signed ? ADDRESS : null,
         request_digest: input.signed ? fixtureId(`digest/${input.requestId}`) : null,
@@ -249,7 +256,7 @@ export class Sim {
       contract: input.contract,
       amounts: { exposed_wei: input.exposedWei, out_wei: "0" },
       automatic_actions: actions,
-      human_decision: null,
+      human_decision: open.human,
       journal_head: { seq: head.seq, hash: head.hash },
     };
     const who = { request_id: input.requestId, agent_id: input.agentId, client_id: id("C-DEMO") };
@@ -262,13 +269,16 @@ export class Sim {
     this.incidents.push({ report, quarantine_excerpt: input.excerpt });
   }
 
-  /** Réponse complète de specs/05 § 3 : quarantaine, pause hors chaîne, alerte, rapport. */
-  respond(atMs: number, input: IncidentInput): void {
+  /**
+   * Réponse de specs/05 § 3 : quarantaine, pause hors chaîne, alerte, rapport.
+   * Sans quarantaine pour une rafale ou des refus répétés : le contenu n'a pas été lu.
+   */
+  respond(atMs: number, input: IncidentInput, { quarantine: quarantined = true }: { quarantine?: boolean } = {}): void {
     const incidentId = fixtureId(`incident/${input.label}`);
     const who = { request_id: input.requestId, agent_id: input.agentId, client_id: id("C-DEMO") };
-    const quarantine = this.log(atMs + 6, "QUARANTINED", "RESPONSE", who, {
-      incident_id: incidentId, document_sha256: sha256(`doc/${input.requestId}`).toString("hex"),
-    });
+    const quarantine = quarantined
+      ? this.log(atMs + 6, "QUARANTINED", "RESPONSE", who, { incident_id: incidentId, document_sha256: sha256(`doc/${input.requestId}`).toString("hex") })
+      : null;
     const pause = this.log(atMs + 11, "AGENT_PAUSED", "RESPONSE", who, { incident_id: incidentId, scope: "OFFCHAIN", tx_hash: null });
     const alert = this.alert(atMs + 20, who, "SECURITY", ["ANALYST", "TREASURER"], incidentId);
     this.pausedAgents.push({ agent_id: input.agentId, scope: "OFFCHAIN", incident_id: incidentId, paused_at_ms: atMs + 11 });
@@ -276,8 +286,9 @@ export class Sim {
       input,
       pausedAtMs: atMs + 11,
       alertedAtMs: atMs + 20,
+      human: null,
       actions: [
-        { action: "QUARANTINE", at_ms: atMs + 6, journal_seq: quarantine },
+        ...(quarantine === null ? [] : [{ action: "QUARANTINE" as AutomaticAction, at_ms: atMs + 6, journal_seq: quarantine }]),
         { action: "AGENT_PAUSE_OFFCHAIN", at_ms: atMs + 11, journal_seq: pause },
         { action: "ALERT", at_ms: atMs + 20, journal_seq: alert },
       ],
@@ -298,6 +309,29 @@ export class Sim {
     this.pausedAgents.push({ agent_id: input.agentId, scope: "ONCHAIN", incident_id: incidentId, paused_at_ms: atMs + 1500 });
     open.actions = [...open.actions, { action: "AGENT_PAUSE_ONCHAIN", at_ms: atMs + 1500, journal_seq: seq }];
     this.#report(atMs + 1520, label);
+  }
+
+  /**
+   * Un humain qualifie l'incident (HUMAN_DECISION, specs/04 § 3) ; le rapport
+   * est régénéré. AGENT_RESUMED lève la pause hors chaîne de l'agent : seul un
+   * humain la lève.
+   */
+  qualify(atMs: number, label: string, decision: NonNullable<IncidentReport["human_decision"]>["decision"], role: "ANALYST" | "OWNER", authorId: string): void {
+    const open = this.#open.get(label);
+    if (!open) throw new Error("incident inconnu");
+    const { input } = open;
+    const incidentId = fixtureId(`incident/${input.label}`);
+    const seq = this.log(atMs, "HUMAN_DECISION", "HUMAN", { request_id: input.requestId, agent_id: input.agentId, client_id: id("C-DEMO") }, {
+      incident_id: incidentId, decision, author_role: role, author_id: authorId,
+    });
+    open.human = { decision, author_role: role, author_id: authorId, at_ms: atMs, journal_seq: seq };
+    if (decision === "AGENT_RESUMED") {
+      for (let i = this.pausedAgents.length - 1; i >= 0; i--) {
+        const p = this.pausedAgents[i];
+        if (p && p.agent_id === input.agentId && p.scope === "OFFCHAIN") this.pausedAgents.splice(i, 1);
+      }
+    }
+    this.#report(atMs + 20, label);
   }
 
   /** Le script de vérification a tourné sur le journal (specs/04 § 5), sans tête de référence. */
@@ -331,7 +365,7 @@ export class Sim {
         total_held_wei: units(v.held),
         held_placements_wei: units(v.heldPlacements),
         placeable_wei: units(v.placeable),
-        threshold_wei: units(25),
+        threshold_wei: units(this.threshold),
         vault_paused: false,
       },
       incidents: this.incidents,
