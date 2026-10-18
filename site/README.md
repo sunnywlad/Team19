@@ -82,6 +82,16 @@ Il liste aussi les valeurs encore à compléter (lignes `info`), sans échouer.
 
    Retirer ensuite les commentaires `À COMPLÉTER` correspondants, puis lancer `make site`.
 
+## Semgrep : innerHTML de la console de démo
+
+Semgrep signale les `innerHTML` et les gabarits HTML de `assets/console.js`. Ces alertes sont informatives : l'étape semgrep ne bloque ni `make check` ni la CI. Elles ne correspondent pas à une injection possible :
+
+- toutes les données affichées sont des constantes du script (société, factures, incidents fictifs), passées par `esc()` avant insertion ;
+- aucune saisie n'est réinjectée dans la page : le champ de recherche sert seulement à filtrer, et sa valeur n'est jamais affichée ;
+- c'est une page de démonstration, sans compte, sans serveur et sans donnée réelle, sous une CSP qui refuse tout script en ligne.
+
+La réécriture de la console sans `innerHTML` est reportée.
+
 ## Réglages Vercel
 
 | Réglage | Valeur |

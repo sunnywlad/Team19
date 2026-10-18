@@ -389,7 +389,7 @@
   function vueFournisseurs() {
     return `
     <div class="entete"><div><h1>Fournisseurs</h1><p>Le référentiel des bénéficiaires que vos agents ont le droit de payer. Personne d'autre ne peut l'être.</p></div>
-      <span class="pastille p-neutre">${ic("lien")}Synchronisé avec l'ERP · 182 fournisseurs · il y a 6 min</span></div>
+      <div class="rangee" data-construction="fournisseurs-erp"><span class="pastille p-neutre">${ic("lien")}Synchronisé avec l'ERP · 182 fournisseurs · il y a 6 min</span><span class="pastille p-construction">${ic("chantier")}En construction</span></div></div>
     <section class="carte"><div class="defile"><table>
       <thead><tr><th>Fournisseur</th><th>SIREN</th><th>IBAN</th><th>Coordonnées bancaires</th><th class="droite">Paiements (12 mois)</th><th>Catégorie</th></tr></thead>
       <tbody>${FOURNISSEURS.map(([n, s, i, st, dep, p, c]) => `<tr><td><b class="montant">${esc(n)}</b></td><td class="mono">${esc(s)}</td><td class="mono">${esc(i)}</td>

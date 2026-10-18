@@ -166,7 +166,7 @@ else {
   if (!bandeau.includes('href="/"')) err("demo-console.html", "le bandeau n'a pas de lien de retour vers /");
   if (dc.indexOf(bandeau) > dc.indexOf('<div class="app">')) err("demo-console.html", "le bandeau doit précéder la console");
 }
-const EN_CONSTRUCTION = ["nav-acces", "nav-mobile", "ecran-connexion", "ecran-mobile"];
+const EN_CONSTRUCTION = ["nav-acces", "nav-mobile", "ecran-connexion", "ecran-mobile", "fournisseurs-erp"];
 const sources = dc + "\n" + consoleJs;
 const marques = [...sources.matchAll(/data-construction="([^"]+)"[^>]*>([\s\S]*?)<\/(?:a|div)>/g)];
 for (const id of EN_CONSTRUCTION) if (!marques.some((m) => m[1] === id)) err("demo-console", `élément en construction non marqué : ${id}`);
