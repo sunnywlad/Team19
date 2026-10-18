@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Treasury } from "../../domain/tresorerie.ts";
-import { UNIT_LABEL, formatWei } from "../../lib/format.ts";
+import { DEFAULT_UNITE, formatWei } from "../../lib/format.ts";
 import { Icon, type GlyphName } from "./glyphs.tsx";
 
 type Status = "sain" | "attention" | "alerte" | "neutre";
@@ -28,7 +28,7 @@ function amount(wei: string | null): ReactNode {
   return (
     <>
       {text}
-      <small>{UNIT_LABEL}</small>
+      <small>{DEFAULT_UNITE.symbole}</small>
     </>
   );
 }

@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import type { TagSource } from "../api/types.ts";
 import { TONE_WORDS, type Tone } from "../domain/flow.ts";
 import { DECISION_WORDS, type DecisionKind } from "../domain/reasons.ts";
-import { UNIT_LABEL, abbreviateId, formatWei } from "../lib/format.ts";
+import { useAffichage } from "../hooks/useAffichage.ts";
+import { abbreviateId, formatWei } from "../lib/format.ts";
 import { EXCERPT_MAX, neutralize } from "../lib/safeText.ts";
 
 /** Texte venu d'ailleurs : borné, caractères invisibles rendus visibles, monospace, jamais interprété. */
@@ -32,14 +33,15 @@ export function OpaqueId({ value, missing = "—" }: { value: string | null | un
   return <code className="identifiant">{short}</code>;
 }
 
-/** Montant renvoyé par l'API. Absent : « non disponible », jamais 0. */
+/** Montant renvoyé par l'API, dans l'unité déclarée par le proxy local. Absent : « non disponible », jamais 0. */
 export function Amount({ wei, missing = "non disponible" }: { wei: string | null | undefined; missing?: string }) {
-  const text = formatWei(wei);
+  const { unite } = useAffichage();
+  const text = formatWei(wei, unite.decimales);
   if (text === null) return <span className="indisponible">{missing}</span>;
   return (
     <span className="montant">
       {text}
-      <span className="unite"> {UNIT_LABEL}</span>
+      <span className="unite"> {unite.symbole}</span>
     </span>
   );
 }

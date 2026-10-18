@@ -8,11 +8,13 @@ import type {
   IncidentReport,
   JournalEntry,
   JournalVerification,
+  Libelles,
   PausedAgent,
   QueueRow,
   RelayDecision,
   RelayEvent,
   RelayStatus,
+  Unite,
   VaultState,
 } from "../api/types.ts";
 
@@ -47,4 +49,6 @@ export const parse = {
   pausedAgents: parser<PausedAgent[]>("agents en pause", generated.pausedAgents),
   incidentReport: parser<IncidentReport>("rapport d'incident", generated.incidentReport),
   journalEntry: parser<JournalEntry>("entrée de journal", generated.journalEntry),
+  libelles: parser<Libelles>("libellés", generated.libelles),
+  unite: parser<Unite>("unité d'affichage", generated.unite),
 };

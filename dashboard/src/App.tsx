@@ -6,7 +6,9 @@ import { FlowPanel } from "./components/FlowPanel.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
 import { THEME_LABELS, useTheme, type Theme } from "./hooks/useTheme.ts";
-import { UNIT_LEGEND, formatLongDate } from "./lib/format.ts";
+import { AffichageProvider } from "./components/Affichage.tsx";
+import { useAffichage } from "./hooks/useAffichage.ts";
+import { formatLongDate, unitLegend } from "./lib/format.ts";
 import { CampagneView } from "./views/CampagneView.tsx";
 import { DecisionsView } from "./views/DecisionsView.tsx";
 import { IncidentView } from "./views/IncidentView.tsx";
@@ -66,7 +68,17 @@ function BrandMark() {
   );
 }
 
+/** Unité et libellés du proxy local, autour de toute la console. */
 export function App({ client }: { client: ApiClient }) {
+  return (
+    <AffichageProvider client={client}>
+      <Console client={client} />
+    </AffichageProvider>
+  );
+}
+
+function Console({ client }: { client: ApiClient }) {
+  const { unite, uniteEtat } = useAffichage();
   const relay = usePolled(useCallback((signal: AbortSignal) => loadRelay(client, signal), [client]));
   const vault = usePolled(useCallback((signal: AbortSignal) => client.getVaultState(signal), [client]));
   const response = usePolled(useCallback((signal: AbortSignal) => loadResponse(client, signal), [client]));
@@ -247,7 +259,8 @@ export function App({ client }: { client: ApiClient }) {
         </div>
         <p className="cadre pied-texte">
           Cette page n'émet que des lectures (GET) : elle ne peut ni payer, ni mettre en pause, ni approuver. Identifiants opaques abrégés,
-          aucune donnée nominative. {UNIT_LEGEND}.
+          aucune donnée nominative. {unitLegend(unite)}
+          {uniteEtat === "indisponible" ? " (unité non déclarée par le proxy local : valeur par défaut)" : ""}.
         </p>
       </footer>
     </div>

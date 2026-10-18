@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:local-libelles:1",
+  "title": "PROPOSÉ (API-NEEDS.md § 7) : GET /api/local/libelles, référentiel de libellés servi par le proxy local. Affichage seulement : jamais transmis au relais ni écrit sur la chaîne.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "libelles"],
+  "properties": {
+    "version": { "const": 1 },
+    "libelles": {
+      "type": "array",
+      "maxItems": 2000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "genre", "libelle"],
+        "properties": {
+          "id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
+          "genre": { "enum": ["beneficiaire", "agent", "facture", "placement", "client"] },
+          "libelle": { "$ref": "#/$defs/texte" },
+          "detail": { "$ref": "#/$defs/texte" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "texte": {
+      "description": "Lettres latines, chiffres et ponctuation courante : aucun caractère de contrôle, bidirectionnel ou de largeur nulle.",
+      "type": "string",
+      "pattern": "^[0-9A-Za-zÀ-ÖØ-öø-ÿ][0-9A-Za-zÀ-ÖØ-öø-ÿ '’·.,()&/-]{0,59}$"
+    }
+  }
+}

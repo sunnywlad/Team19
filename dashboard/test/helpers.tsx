@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render } from "@testing-library/react";
 import { handleFixtureRequest } from "../fixtures/handler.ts";
 import { buildWorld, type ScenarioName } from "../fixtures/scenarios.ts";
@@ -14,7 +16,12 @@ export type FetchOptions = {
   tamper?: (path: string, body: unknown) => unknown;
   /** true : l'API est coupée. */
   down?: () => boolean;
+  /** Réponses du proxy local (/api/local/libelles, /api/local/unite). Par défaut : le fichier de fixtures et l'unité par défaut. */
+  local?: { libelles?: unknown; unite?: unknown };
 };
+
+export const FIXTURE_LIBELLES: unknown = JSON.parse(readFileSync(join(process.cwd(), "fixtures", "libelles.json"), "utf8"));
+const LOCAL_DEFAULTS: Record<string, unknown> = { "/api/local/libelles": FIXTURE_LIBELLES, "/api/local/unite": { symbole: "u", decimales: 15 } };
 
 /** Un fetch qui sert le monde simulé par les mêmes routes que le serveur de fixtures. */
 export function fixtureFetch(world: () => World, options: FetchOptions = {}): FetchLike {
@@ -22,6 +29,11 @@ export function fixtureFetch(world: () => World, options: FetchOptions = {}): Fe
     const method = init.method ?? "GET";
     options.calls?.push({ method, url: input });
     if (options.down?.()) throw new TypeError("fetch failed");
+    if (input in LOCAL_DEFAULTS) {
+      const overrides: Record<string, unknown> = { "/api/local/libelles": options.local?.libelles, "/api/local/unite": options.local?.unite };
+      const body = overrides[input] ?? LOCAL_DEFAULTS[input];
+      return { ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body)) } as Response;
+    }
     const path = input.replace(/^\/api\/(relay|simulation|reponse)/, "");
     const reply = handleFixtureRequest(world(), method, path);
     const cloned: unknown = JSON.parse(JSON.stringify(reply.body));

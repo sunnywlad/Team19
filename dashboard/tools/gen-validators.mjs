@@ -29,6 +29,8 @@ const EXPORTS = {
   journalEntries: "urn:argent-intelligent:dashboard:response-journal-entries:1",
   journalVerification: "urn:argent-intelligent:dashboard:response-journal-verification:1",
   pausedAgents: "urn:argent-intelligent:dashboard:response-paused-agents:1",
+  libelles: "urn:argent-intelligent:dashboard:local-libelles:1",
+  unite: "urn:argent-intelligent:dashboard:local-unite:1",
 };
 
 const ajv = new Ajv2020({ strict: true, allErrors: false, code: { source: true, esm: true } });

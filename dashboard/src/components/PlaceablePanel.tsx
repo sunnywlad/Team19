@@ -1,5 +1,6 @@
 import type { VaultState } from "../api/types.ts";
-import { UNIT_LEGEND, formatTime } from "../lib/format.ts";
+import { useAffichage } from "../hooks/useAffichage.ts";
+import { formatTime, unitLegend } from "../lib/format.ts";
 import { Amount } from "./atoms.tsx";
 import { PlaceableBar } from "./PlaceableBar.tsx";
 import { Rolling } from "./Rolling.tsx";
@@ -10,6 +11,7 @@ import { Rolling } from "./Rolling.tsx";
  * plutôt que de le déduire des autres termes.
  */
 export function PlaceableValues({ vault, simulated = false }: { vault: VaultState; simulated?: boolean }) {
+  const { unite } = useAffichage();
   return (
     <>
       <p className="placable" data-testid="placable">
@@ -65,7 +67,7 @@ export function PlaceableValues({ vault, simulated = false }: { vault: VaultStat
         {simulated
           ? `Valeurs d'un faux coffre en mémoire dans le relais (bloc simulé ${vault.block_number}, ${formatTime(vault.block_timestamp * 1000)}) : aucun fonds, aucune chaîne.`
           : `Valeurs lues dans le contrat au bloc ${vault.block_number} (${formatTime(vault.block_timestamp * 1000)}, horloge du bloc).`}{" "}
-        Aucun recalcul dans l'interface. Une facture bloquée reste une dette admise : elle n'est pas déduite deux fois. {UNIT_LEGEND}.
+        Aucun recalcul dans l'interface. Une facture bloquée reste une dette admise : elle n'est pas déduite deux fois. {unitLegend(unite)}.
       </p>
       {vault.vault_paused === true && (
         <p className="alerte-ligne" role="status">

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:local-unite:1",
+  "title": "PROPOSÉ (API-NEEDS.md § 8) : GET /api/local/unite, unité d'affichage des montants déclarée par le proxy local",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["symbole", "decimales"],
+  "properties": {
+    "symbole": { "type": "string", "pattern": "^[A-Za-z€]{1,4}$" },
+    "decimales": { "type": "integer", "minimum": 0, "maximum": 30 }
+  }
+}
