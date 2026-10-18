@@ -1,0 +1,5 @@
+# À COMPLÉTER : remplacer https://a-completer.invalid par l'URL de production (voir README.md).
+User-agent: *
+Allow: /
+
+Sitemap: https://a-completer.invalid/sitemap.xml

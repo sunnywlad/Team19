@@ -1,5 +1,5 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
-.PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final \
+.PHONY: setup check secrets contrat dependances specs relay gateway response dashboard site docs offchain semgrep lint-ci scan-final \
 	demo demo-stop demo-status demo-reset demo-peupler scenes scene demo-smoke demo-chain-check demo-test pitch
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
@@ -8,7 +8,7 @@ setup:
 	scripts/setup-dev.sh
 
 # Bloquants d'abord, informatifs ensuite (préfixe « - » : n'arrête pas make).
-check: secrets contrat dependances specs relay gateway response dashboard demo-test docs lint-ci offchain semgrep
+check: secrets contrat dependances specs relay gateway response dashboard site demo-test docs lint-ci offchain semgrep
 
 secrets:
 	$(PRE_COMMIT) run --all-files
@@ -40,6 +40,12 @@ response:
 # Lint de sécurité, types, tests et contrôle du bundle de dashboard/.
 dashboard:
 	dashboard/tools/check.sh
+
+# Site public statique (site/, déployé sur Vercel) : liens internes, URL
+# externes, rien en ligne sous la CSP, formulations interdites, métadonnées,
+# bandeau et pastilles « En construction » de la console de démo.
+site:
+	node site/tools/check.mjs
 
 # Démo investisseurs : fixtures du scénario « pitch » et dashboard, sur
 # 127.0.0.1:5174. Données fictives uniquement ; refuse un démarrage mixte.
