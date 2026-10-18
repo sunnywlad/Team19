@@ -37,11 +37,11 @@ Légende de la colonne État :
 | · contrôles « écart à l'habitude », « doublon possible » | — | VISION | Retirer de l'écran réel, ou les étiqueter « à venir » |
 | · IBAN, SIREN, ancienneté au référentiel | — | MANQUE | Référentiel de libellés (écart 1) |
 | · Ouvrir dans l'app d'approbation | — | MANQUE | Écart 3 : bouton désactivé + « à signer par l'approbateur » |
-| **Incidents** · liste, gravité, extrait, chronologie | `GET /incidents` (rapport `specs/05` + `quarantine_excerpt`) | OK | Gravité dérivée du déclencheur du rapport |
+| **Incidents** · liste, gravité, extrait, chronologie | `GET /incidents` (rapport `specs/05-incident.md` + `quarantine_excerpt`) | OK | Gravité dérivée du déclencheur du rapport |
 | · délais +226 ms / +24 ms / +32 ms | horodatages du rapport (`_ms`, même horloge) | OK | Règle existante : une durée seulement entre deux horodatages de la même horloge |
 | · agent suspendu | `/agents/paused` + `AgentPaused` | OK | — |
 | · réactivation à 2 administrateurs, clôture | — | VISION | Bouton absent en mode réel |
-| · rapport (page document) | rapport `specs/05` + entrée de journal | DÉRIVER | Vue imprimable ; PDF signé = VISION |
+| · rapport (page document) | rapport `specs/05-incident.md` + entrée de journal | DÉRIVER | Vue imprimable ; PDF signé = VISION |
 | **Fournisseurs** | `BeneficiaryRegistered` (id, compte) | DÉRIVER | Libellés via référentiel ; « changement d'IBAN 72 h » = VISION |
 | **Agents** | `AgentRegistered` (mandat), pauses | DÉRIVER | Permissions affichées depuis le mandat (0 lecture, 1 paiement, 2 trésorerie) |
 | **Règles** · seuil de validation, réserve de sécurité | `GET /vault` (`threshold_wei`, `safety_reserve_wei`) | OK | Lecture seule, sans bouton Modifier |
