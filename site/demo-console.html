@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Démo interactive de la console · Veto</title>
+<meta name="description" content="Console de démonstration de Veto, cliquable : société fictive Aubert Industrie, données fictives. Certaines fonctions présentées sont en construction.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/console.css">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Veto">
+<meta property="og:title" content="Démo interactive de la console · Veto">
+<meta property="og:description" content="Console de démonstration de Veto, cliquable : société fictive Aubert Industrie, données fictives. Certaines fonctions présentées sont en construction.">
+<!-- À COMPLÉTER : remplacer https://a-completer.invalid par l'URL de production (voir README.md). -->
+<meta property="og:image" content="https://a-completer.invalid/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Veto : vos agents IA paient les factures, Veto décide si l'argent part.">
+<meta name="twitter:card" content="summary_large_image">
+<script src="/assets/console.js" defer></script>
+</head>
+<body>
+<div class="bandeau-demo" id="bandeau-demo" role="note" aria-label="Avertissement de démonstration">
+  <a class="retour-site" href="/">← Retour au site</a>
+  <p data-bandeau-demo>Démo interactive du produit cible · société et données fictives · certaines fonctions sont en construction</p>
+  <a class="lien-avancement" href="/#avancement">Voir l'avancement</a>
+</div>
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-apercu" viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></symbol>
+  <symbol id="i-valider" viewBox="0 0 16 16"><path d="M2 9.5V13h12V9.5M2 9.5l2-6.5h8l2 6.5M2 9.5h3.5l1 1.5h3l1-1.5H14"/></symbol>
+  <symbol id="i-incident" viewBox="0 0 16 16"><path d="M8 2 1.8 13h12.4z"/><path d="M8 6.5v3M8 11.5v.1"/></symbol>
+  <symbol id="i-regles" viewBox="0 0 16 16"><path d="M2 4h7M12 4h2M2 12h3M8 12h6"/><circle cx="10.5" cy="4" r="1.5"/><circle cx="6.5" cy="12" r="1.5"/></symbol>
+  <symbol id="i-journal" viewBox="0 0 16 16"><path d="M4 2h8v12H4z"/><path d="M6 5h4M6 8h4M6 11h2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="m3 8.5 3 3 7-7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
+  <symbol id="i-horloge" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M6.5 5.8v4.4M9.5 5.8v4.4"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 16 16"><path d="m6 4 4 4-4 4"/></symbol>
+  <symbol id="i-haut-bas" viewBox="0 0 16 16"><path d="m5 6 3-3 3 3M5 10l3 3 3-3"/></symbol>
+  <symbol id="i-loupe" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></symbol>
+  <symbol id="i-telecharger" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"/></symbol>
+  <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 7.2V11M8 5v.1"/></symbol>
+  <symbol id="i-lien" viewBox="0 0 16 16"><path d="M7 9a3 3 0 0 0 4.2 0l2-2A3 3 0 0 0 9 2.8L8 3.8M9 7a3 3 0 0 0-4.2 0l-2 2A3 3 0 0 0 7 13.2l1-1"/></symbol>
+  <symbol id="i-batiment" viewBox="0 0 16 16"><path d="M2.5 14V3.5h7V14M9.5 7h4v7M1.5 14h13M5 6h2M5 9h2M5 12h2M11.5 10h.1"/></symbol>
+  <symbol id="i-utilisateurs" viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13.5a4.5 4.5 0 0 1 9 0M10.5 3.2a2.5 2.5 0 0 1 0 4.6M12 9.3a4.5 4.5 0 0 1 2.5 4.2"/></symbol>
+  <symbol id="i-mobile" viewBox="0 0 16 16"><rect x="4" y="1.5" width="8" height="13" rx="1.8"/><path d="M7 12.5h2"/></symbol>
+  <symbol id="i-cle" viewBox="0 0 16 16"><circle cx="5" cy="8" r="2.8"/><path d="M7.8 8h6.7M12 8v2.2M14.5 8v1.5"/></symbol>
+  <symbol id="i-cle-barree" viewBox="0 0 16 16"><circle cx="5" cy="8" r="2.8"/><path d="M7.8 8h6.7M12 8v2.2M2 2l12 12"/></symbol>
+  <symbol id="i-visage" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M9 9.5v1M15 9.5v1M12 9.5v3.5h-1M9.5 16a4 4 0 0 0 5 0"/></symbol>
+  <symbol id="i-chantier" viewBox="0 0 16 16"><path d="M2 13.5h12M3.5 13.5 7 3.5h2l3.5 10M5 9h6"/></symbol>
+  <symbol id="i-agent" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M6.5 1.5V4M9.5 1.5V4M6.5 12v2.5M9.5 12v2.5M1.5 6.5H4M1.5 9.5H4M12 6.5h2.5M12 9.5h2.5"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="side">
+    <div class="marque">
+      <svg class="logo" viewBox="-350 -180 700 360" width="38" height="20" aria-hidden="true">
+        <g class="sieges"><rect x="-284" y="0" width="68" height="56" rx="9" transform="rotate(-70 -250 30)"/><rect x="-184" y="-100" width="68" height="56" rx="9" transform="rotate(-35 -150 -70)"/><rect x="-34" y="-130" width="68" height="56" rx="9"/><rect x="116" y="-100" width="68" height="56" rx="9" transform="rotate(35 150 -70)"/><rect x="216" y="0" width="68" height="56" rx="9" transform="rotate(70 250 30)"/></g>
+        <ellipse class="table" cx="0" cy="70" rx="190" ry="78"/><path class="v" d="M -42 34 L 0 110 L 42 34"/>
+      </svg>
+      Veto
+    </div>
+    <div class="org"><div><b>Aubert Industrie</b><span>Société fictive · démo</span></div><svg class="ic discret"><use href="#i-haut-bas"/></svg></div>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="#apercu" data-vue="apercu"><svg class="ic"><use href="#i-apercu"/></svg>Vue d'ensemble</a>
+      <a href="#valider" data-vue="valider"><svg class="ic"><use href="#i-valider"/></svg>À valider<span class="badge" id="badge-valider"></span></a>
+      <a href="#incidents" data-vue="incidents"><svg class="ic"><use href="#i-incident"/></svg>Incidents<span class="badge" id="badge-inc"></span></a>
+      <div class="nav-titre">Référentiels</div>
+      <a href="#fournisseurs" data-vue="fournisseurs"><svg class="ic"><use href="#i-batiment"/></svg>Fournisseurs</a>
+      <a href="#agents" data-vue="agents"><svg class="ic"><use href="#i-agent"/></svg>Agents</a>
+      <div class="nav-titre">Contrôle</div>
+      <a href="#regles" data-vue="regles"><svg class="ic"><use href="#i-regles"/></svg>Règles</a>
+      <a href="#journal" data-vue="journal"><svg class="ic"><use href="#i-journal"/></svg>Piste d'audit</a>
+      <a href="#acces" data-vue="acces" data-construction="nav-acces"><svg class="ic"><use href="#i-utilisateurs"/></svg>Rôles et accès<span class="pastille p-construction">En construction</span></a>
+      <div class="nav-titre">Approbateurs</div>
+      <a href="#mobile" data-vue="mobile" data-construction="nav-mobile"><svg class="ic"><use href="#i-mobile"/></svg>App d'approbation<span class="pastille p-construction">En construction</span></a>
+    </nav>
+    <div class="side-pied">
+      <div class="moi"><div class="avatar">CM</div><div><b>Claire Martin</b><span>Directrice financière</span></div></div>
+      <a href="#connexion" class="lien deconnexion">Se déconnecter</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <label class="recherche"><svg class="ic"><use href="#i-loupe"/></svg><input id="recherche" type="search" placeholder="Fournisseur, facture, agent…" aria-label="Rechercher"></label>
+      <span class="puce-env"><svg class="ic"><use href="#i-info"/></svg>Démo · données fictives</span>
+      <span class="date">18 oct. 2026</span>
+    </div>
+    <main class="contenu" id="vue" tabindex="-1"></main>
+  </div>
+</div>
+<div id="calque"></div>
+</body>
+</html>

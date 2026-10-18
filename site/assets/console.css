@@ -1,0 +1,368 @@
+/* Polices Geist 1.7.2 (SIL OFL 1.1, voir /fonts/LICENSE.txt), servies depuis le site : aucune ressource externe. */
+@font-face { font-family: "Geist"; src: url("/fonts/Geist-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist"; src: url("/fonts/Geist-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist"; src: url("/fonts/Geist-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist Mono"; src: url("/fonts/GeistMono-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap }
+@font-face { font-family: "Geist Mono"; src: url("/fonts/GeistMono-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap }
+
+/* Direction D « Sobre » : console B2B, barre latérale + contenu, surfaces neutres à 1 px, une seule couleur d'accent (violet Veto),
+   couleurs d'état réservées au sens. Pensée pour un DAF d'ETI : vocabulaire comptable FR, chiffres tabulaires. */
+:root {
+  --bandeau-h: 44px;
+  --bg: #f6f5f8; --surface: #ffffff; --surface-2: #f2f0f6; --sidebar: #fbfafc;
+  --line: #e6e3ec; --line-strong: #cfcad9;
+  --text: #17151e; --text-2: #5b5768; --text-3: #6f6b7d;
+  --accent: #2e1a6b; --accent-hover: #3d2690; --accent-soft: #efebfb; --on-accent: #ffffff;
+  --ok: #11714f; --ok-soft: #e3f3ec; --warn: #845400; --warn-soft: #fbf0d9; --danger: #b3341a; --danger-soft: #fbe8e2;
+  --c-auto: #4b3bb5; --c-valide: #a99bf2; --c-bloque: #c2522b;
+  --overlay: rgb(23 21 30 / 32%); --shadow: 0 12px 32px rgb(23 21 30 / 14%);
+  --sans: "Geist", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121017; --surface: #1a1722; --surface-2: #221e2c; --sidebar: #15121c;
+  --line: #2c2838; --line-strong: #3d3850;
+  --text: #eeebf5; --text-2: #aba6ba; --text-3: #8f8aa0;
+  --accent: #a99bf2; --accent-hover: #bdb2f6; --accent-soft: #2a2342; --on-accent: #17121f;
+  --ok: #5cc9a0; --ok-soft: #13302a; --warn: #e8b44e; --warn-soft: #33280f; --danger: #f08c6e; --danger-soft: #3a1d16;
+  --c-auto: #8f7fea; --c-valide: #5a48c8; --c-bloque: #d4673e;
+  --overlay: rgb(0 0 0 / 55%); --shadow: 0 12px 32px rgb(0 0 0 / 45%); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121017; --surface: #1a1722; --surface-2: #221e2c; --sidebar: #15121c;
+  --line: #2c2838; --line-strong: #3d3850;
+  --text: #eeebf5; --text-2: #aba6ba; --text-3: #8f8aa0;
+  --accent: #a99bf2; --accent-hover: #bdb2f6; --accent-soft: #2a2342; --on-accent: #17121f;
+  --ok: #5cc9a0; --ok-soft: #13302a; --warn: #e8b44e; --warn-soft: #33280f; --danger: #f08c6e; --danger-soft: #3a1d16;
+  --c-auto: #8f7fea; --c-valide: #5a48c8; --c-bloque: #d4673e;
+  --overlay: rgb(0 0 0 / 55%); --shadow: 0 12px 32px rgb(0 0 0 / 45%); color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html, body { height: 100% }
+body { background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); -webkit-font-smoothing: antialiased }
+button { font: inherit; color: inherit }
+.num, .mono { font-variant-numeric: tabular-nums }
+.mono { font-family: var(--mono); font-size: 12.5px }
+.ic { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0 }
+a { color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+.app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100% }
+
+/* Barre latérale */
+.side { background: var(--sidebar); border-right: 1px solid var(--line); padding: 16px 12px 16px max(12px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; position: sticky; top: var(--bandeau-h); height: calc(100vh - var(--bandeau-h)); overflow-y: auto }
+.marque { display: flex; align-items: center; gap: 10px; padding: 4px 8px; font-weight: 600; font-size: 16px; letter-spacing: -.01em }
+.org { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 10px }
+.org b { font-weight: 500; display: block; font-size: 13px }
+.org span { color: var(--text-3); font-size: 12px }
+.nav { display: grid; gap: 2px }
+.nav a { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 7px 10px; border-radius: 7px; color: var(--text-2); text-decoration: none; font-weight: 500 }
+.nav a:hover { background: var(--surface-2); color: var(--text) }
+.nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent) }
+.nav .badge { margin-left: auto; background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 0 7px; font-size: 12px; font-weight: 600; line-height: 20px; min-width: 20px; text-align: center }
+.nav .badge:empty, .nav .badge[data-n="0"] { display: none }
+.nav-titre { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); padding: 10px 10px 4px }
+.side-pied { margin-top: auto; display: grid; gap: 10px }
+.moi { display: flex; align-items: center; gap: 10px; padding: 6px 8px }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 600; font-size: 12px; flex-shrink: 0 }
+.moi b { font-weight: 500; display: block; font-size: 13px } .moi span { color: var(--text-3); font-size: 12px }
+
+/* Contenu */
+.main { min-width: 0; display: flex; flex-direction: column }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px max(24px, env(safe-area-inset-right, 0px)) 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: var(--bandeau-h); z-index: 5 }
+.recherche { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: var(--text-3); width: min(340px, 40vw); background: var(--bg) }
+.recherche input { border: 0; background: none; outline: none; font: inherit; color: var(--text); width: 100%; min-width: 0 }
+.puce-env { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; border: 1px dashed var(--line-strong); color: var(--text-2); border-radius: 999px; padding: 3px 10px; font-size: 12px; white-space: nowrap }
+.topbar .date { color: var(--text-3); font-size: 13px; white-space: nowrap }
+.contenu { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 48px 24px; display: grid; gap: 20px; max-width: 1360px; width: 100% }
+.entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap }
+.entete h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.015em }
+.entete p { margin: 2px 0 0; color: var(--text-2) }
+
+.carte { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0 }
+.carte > header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; padding: 14px 16px; border-bottom: 1px solid var(--line) }
+.carte > header h2 { margin: 0; font-size: 14px; font-weight: 600 }
+.carte > header a, .lien { color: var(--accent); text-decoration: none; font-weight: 500; font-size: 13px; background: none; border: 0; cursor: pointer; padding: 0 }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+.kpi { padding: 14px 16px; display: grid; gap: 6px }
+.kpi .lib { color: var(--text-2); font-size: 13px; display: flex; align-items: center; gap: 6px }
+.kpi .val { font-size: 26px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.15 }
+.kpi .sous { color: var(--text-3); font-size: 12.5px; font-variant-numeric: tabular-nums }
+.kpi.action { cursor: pointer } .kpi.action:hover { border-color: var(--line-strong) }
+.deux { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px }
+
+.segment { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--surface) }
+.segment button { border: 0; background: none; padding: 5px 12px; border-radius: 6px; cursor: pointer; color: var(--text-2); font-weight: 500; font-size: 13px }
+.segment button[aria-pressed="true"] { background: var(--surface-2); color: var(--text) }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 8px; padding: 7px 14px; font-weight: 500; cursor: pointer; border: 1px solid var(--line-strong); background: var(--surface); min-height: 34px; white-space: nowrap }
+.btn:hover { background: var(--surface-2) }
+.btn.primaire { background: var(--accent); color: var(--on-accent); border-color: var(--accent) }
+.btn.primaire:hover { background: var(--accent-hover) }
+.btn.danger { color: var(--danger) }
+.btn[disabled] { opacity: .5; cursor: not-allowed }
+
+/* Tableaux */
+.defile { overflow-x: auto }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums }
+th { text-align: left; font-weight: 500; color: var(--text-3); font-size: 12px; padding: 9px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface) }
+td { padding: 11px 16px; border-bottom: 1px solid var(--line); vertical-align: middle }
+tr:last-child td { border-bottom: 0 }
+td.droite, th.droite { text-align: right }
+td.mono { white-space: nowrap }
+tbody tr.clic { cursor: pointer }
+tbody tr.clic:hover td { background: var(--surface-2) }
+tbody tr[aria-selected="true"] td { background: var(--accent-soft) }
+.cellule { display: grid; gap: 1px } .cellule span { color: var(--text-3); font-size: 12.5px }
+.montant { font-weight: 500 }
+
+.pastille { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12.5px; font-weight: 500; white-space: nowrap }
+.pastille .ic { width: 13px; height: 13px; stroke-width: 2 }
+.p-ok { background: var(--ok-soft); color: var(--ok) } .p-attente { background: var(--warn-soft); color: var(--warn) }
+.p-refus { background: var(--danger-soft); color: var(--danger) } .p-neutre { background: var(--surface-2); color: var(--text-2) }
+.p-accent { background: var(--accent-soft); color: var(--accent) }
+
+/* Graphique */
+.graph { padding: 12px 16px 14px; position: relative }
+.graph svg { width: 100%; height: 240px; display: block }
+.graph .grille { stroke: var(--line); stroke-width: 1 }
+.graph text { fill: var(--text-3); font-size: 11px; font-family: var(--sans) }
+.legende { display: flex; gap: 16px; flex-wrap: wrap; color: var(--text-2); font-size: 12.5px }
+.legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px }
+.infobulle { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; min-width: 170px; display: grid; gap: 3px; z-index: 3 }
+.infobulle div { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums }
+.infobulle i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px }
+
+/* Onglets de liste */
+.onglets { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 0 12px; overflow-x: auto }
+.onglets button { border: 0; background: none; padding: 11px 10px; cursor: pointer; color: var(--text-2); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap }
+.onglets button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent) }
+.onglets .n { color: var(--text-3); margin-left: 4px; font-variant-numeric: tabular-nums }
+
+/* Tiroir */
+.voile { position: fixed; inset: 0; background: var(--overlay); z-index: 20 }
+.tiroir { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100vw); background: var(--surface); border-left: 1px solid var(--line); z-index: 21; display: flex; flex-direction: column; box-shadow: var(--shadow);
+  padding-top: env(safe-area-inset-top, 0px); padding-right: env(safe-area-inset-right, 0px); padding-bottom: env(safe-area-inset-bottom, 0px) }
+.tiroir header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line) }
+.tiroir .corps { padding: 18px 20px; overflow-y: auto; display: grid; gap: 18px; align-content: start; flex: 1 }
+.tiroir footer { border-top: 1px solid var(--line); padding: 14px 20px; display: grid; gap: 10px }
+.tiroir footer .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap }
+.fermer { border: 0; background: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-2) } .fermer:hover { background: var(--surface-2) }
+.gros-montant { font-size: 28px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums }
+.encadre { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px }
+.encadre.attente { background: var(--warn-soft); border-color: transparent }
+.encadre.refus { background: var(--danger-soft); border-color: transparent }
+.encadre h3 { margin: 0; font-size: 13px; font-weight: 600 }
+.controles { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px }
+.controles li { display: flex; align-items: center; gap: 10px }
+.controles .etat { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0 }
+.controles .etat .ic { width: 12px; height: 12px; stroke-width: 2.4 }
+.controles .ok { background: var(--ok-soft); color: var(--ok) } .controles .doute { background: var(--warn-soft); color: var(--warn) } .controles .ko { background: var(--danger-soft); color: var(--danger) }
+.controles .v { color: var(--text-3); margin-left: auto; font-size: 12.5px; text-align: right }
+.kv { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 12px; margin: 0 }
+.kv dt { color: var(--text-3) } .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere }
+.section-titre { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: var(--text-3); margin: 0 0 8px }
+.chrono { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 }
+.chrono li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; padding-bottom: 12px; position: relative }
+.chrono li::before { content: ""; position: absolute; left: 6px; top: 14px; bottom: 0; width: 1px; background: var(--line) }
+.chrono li:last-child::before { display: none }
+.chrono .pt { width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--line-strong); background: var(--surface); margin-top: 3px }
+.chrono .pt.ok { border-color: var(--ok) } .chrono .pt.refus { border-color: var(--danger) } .chrono .pt.attente { border-color: var(--warn) }
+.chrono time { color: var(--text-3); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap }
+.echeance { display: flex; align-items: center; gap: 8px; color: var(--warn); font-size: 13px }
+
+/* Incidents : maître-détail */
+.md { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start }
+.liste-inc { display: grid }
+.inc { text-align: left; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 12px 16px; cursor: pointer; display: grid; gap: 4px }
+.inc:last-child { border-bottom: 0 }
+.inc:hover { background: var(--surface-2) }
+.inc[aria-selected="true"] { background: var(--accent-soft) }
+.inc .ligne1 { display: flex; justify-content: space-between; gap: 8px; align-items: center }
+.inc b { font-weight: 500 }
+.inc span { color: var(--text-3); font-size: 12.5px }
+.detail { padding: 18px 20px; display: grid; gap: 18px }
+.detail h2 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -.01em }
+.chiffres3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px }
+.chiffres3 > div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px }
+.chiffres3 span { color: var(--text-3); font-size: 12.5px }
+.chiffres3 b { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums }
+.extrait { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; line-height: 1.5; overflow-wrap: anywhere }
+.extrait mark { background: var(--danger-soft); color: var(--danger); border-radius: 3px; padding: 0 2px }
+
+/* Règles */
+.bandeau { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 12px 14px; color: var(--text-2) }
+.bandeau b { color: var(--text); font-weight: 500 }
+.regle { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line) }
+.regle:last-child { border-bottom: 0 }
+.regle b { font-weight: 500; display: block }
+.regle p { margin: 2px 0 0; color: var(--text-3); font-size: 13px }
+.regle .valeur { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap }
+.regle .portee { display: block; color: var(--text-3); font-size: 12px; font-weight: 400 }
+.regle .attente-regle { display: block; margin-top: 4px }
+.champ { display: grid; gap: 6px }
+.champ label { font-weight: 500 }
+.champ input, .champ select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; min-height: 36px }
+.champ .aide { color: var(--text-3); font-size: 12.5px }
+
+/* Journal */
+.integrite { display: inline-flex; align-items: center; gap: 8px; color: var(--ok); font-weight: 500 }
+.empreinte { font-family: var(--mono); font-size: 12px; color: var(--text-2); background: none; border: 0; cursor: pointer; padding: 2px 4px; border-radius: 4px }
+.empreinte:hover { background: var(--surface-2) }
+tr.nouveau td { animation: flash 1.6s ease-out }
+@keyframes flash { from { background: var(--accent-soft) } to { background: transparent } }
+
+/* Modale & toast */
+.modale { position: fixed; z-index: 31; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 20px; display: grid; gap: 14px }
+.modale h2 { margin: 0; font-size: 16px; font-weight: 600 }
+.modale p { margin: 0; color: var(--text-2) }
+.modale .actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap }
+.voile.haut { z-index: 30 }
+.toast { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: max(20px, env(safe-area-inset-bottom, 0px)); z-index: 40; background: var(--text); color: var(--bg); border-radius: 8px; padding: 10px 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; max-width: min(420px, calc(100vw - 40px)) }
+.aide-clavier { color: var(--text-3); font-size: 12.5px }
+kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--text-2) }
+
+/* Option A : la console ne signe rien */
+.sans-cle { display: flex; gap: 10px; align-items: flex-start; color: var(--text-2); font-size: 13px }
+.sans-cle .ic { margin-top: 2px; color: var(--accent) }
+
+/* App mobile d'approbation (aperçu dans un cadre de téléphone) */
+.scene-mobile { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; align-items: start }
+.explique { display: grid; gap: 14px; max-width: 520px }
+.explique ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; color: var(--text-2) }
+.explique b { color: var(--text); font-weight: 500 }
+.telephone { width: 360px; max-width: 100%; height: 740px; border-radius: 44px; border: 10px solid #17151e; background: #17151e; box-shadow: var(--shadow); position: relative; overflow: hidden; justify-self: center }
+.ecran { position: absolute; inset: 0; border-radius: 34px; overflow: hidden; background: var(--bg); display: flex; flex-direction: column }
+.barre-etat { height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; font-size: 13px; font-weight: 600; color: var(--text) }
+.encoche { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 96px; height: 26px; border-radius: 20px; background: #17151e; z-index: 2 }
+.app-tete { padding: 8px 18px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px }
+.app-tete h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em }
+.retour { border: 0; background: none; color: var(--accent); font-weight: 500; cursor: pointer; padding: 6px 0; display: inline-flex; align-items: center; gap: 4px }
+.retour .ic { transform: rotate(180deg) }
+.app-corps { flex: 1; overflow-y: auto; padding: 0 14px 14px; display: grid; gap: 10px; align-content: start }
+.carte-m { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 6px; text-align: left; cursor: pointer; width: 100% }
+.carte-m .l1 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline }
+.carte-m b { font-weight: 600; font-size: 15px }
+.carte-m .m { font-weight: 600; font-variant-numeric: tabular-nums }
+.carte-m span { color: var(--text-3); font-size: 12.5px }
+.app-pied { padding: 12px 14px 22px; border-top: 1px solid var(--line); background: var(--surface); display: grid; gap: 8px }
+.app-pied .deux-btn { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px }
+.app-pied .btn { justify-content: center; min-height: 46px; border-radius: 12px; font-size: 15px }
+.feuille { position: absolute; inset: auto 0 0 0; background: var(--surface); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line); padding: 18px 18px 28px; display: grid; gap: 12px; z-index: 3; box-shadow: 0 -12px 30px rgb(0 0 0 / 18%) }
+.voile-m { position: absolute; inset: 0; background: var(--overlay); z-index: 2 }
+.faceid { width: 64px; height: 64px; border-radius: 18px; border: 2px solid var(--accent); display: grid; place-items: center; color: var(--accent); justify-self: center }
+.faceid .ic { width: 34px; height: 34px; stroke-width: 1.4 }
+.fini { display: grid; justify-items: center; gap: 10px; text-align: center; padding: 40px 20px }
+.fini .rond { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center }
+.fini .rond .ic { width: 30px; height: 30px; stroke-width: 2.2 }
+.motifs { display: grid; gap: 6px }
+.motifs button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 11px 12px; cursor: pointer }
+.motifs button:hover { background: var(--surface-2) }
+
+/* Connexion */
+.connexion { min-height: 100%; display: grid; place-items: center; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)) }
+.connexion .boite { width: min(400px, 100%); display: grid; gap: 18px }
+.connexion h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.015em }
+.connexion .btn { justify-content: center; min-height: 42px; width: 100% }
+.connexion .note { color: var(--text-3); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 14px }
+body.sans-cadre .app { display: none }
+
+/* Matrice des rôles */
+.matrice td, .matrice th { text-align: center } .matrice td:first-child, .matrice th:first-child { text-align: left }
+.matrice .oui { color: var(--ok) } .matrice .non { color: var(--text-3) }
+.perms { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px }
+.perms li { display: flex; gap: 8px; align-items: flex-start }
+.perms .oui .ic { color: var(--ok) } .perms .non .ic { color: var(--danger) }
+
+/* Rapport d'incident (document) */
+.feuille-doc { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; width: min(820px, 100%); justify-self: center; padding: clamp(20px, 5vw, 56px); display: grid; gap: 22px; box-shadow: 0 1px 2px rgb(0 0 0 / 6%) }
+.feuille-doc .entete-doc { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid var(--text); padding-bottom: 14px; flex-wrap: wrap }
+.feuille-doc h1 { margin: 0; font-size: 22px; font-weight: 600 }
+.feuille-doc h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-3); font-weight: 500 }
+.feuille-doc p { margin: 0; max-width: 70ch }
+.sceau { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 4px; font-size: 13px }
+
+@media (max-width: 1100px) { .scene-mobile { grid-template-columns: 1fr } }
+@media (max-width: 1100px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) } .deux, .md { grid-template-columns: 1fr } }
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr) }
+  .side, .main, .nav { min-width: 0 }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); gap: 10px }
+  .org, .side-pied, .nav-titre { display: none }
+  .nav { display: flex; overflow-x: auto; gap: 4px }
+  .nav a { white-space: nowrap }
+  .topbar { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); position: static }
+  .recherche, .topbar .date { display: none }
+  .contenu { padding: 16px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)) }
+  .kpis { grid-template-columns: 1fr 1fr } .kpi .val { font-size: 21px }
+  .chiffres3 { grid-template-columns: 1fr }
+  .regle { grid-template-columns: minmax(0, 1fr) auto } .regle .btn { grid-column: 1 / -1; justify-self: start }
+  .kv { grid-template-columns: 1fr } .kv dt { margin-top: 4px }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+
+/* Classes qui remplacent les attributs style="…" de la maquette (la CSP interdit les styles en ligne,
+   y compris ceux insérés par innerHTML). */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden }
+.logo .sieges { fill: var(--text-3) } .logo .table { fill: var(--accent) } .logo .v { fill: none; stroke: var(--surface); stroke-width: 18; stroke-linejoin: round }
+i.c-auto { background: var(--c-auto) } i.c-valide { background: var(--c-valide) } i.c-bloque { background: var(--c-bloque) }
+rect.c-auto { fill: var(--c-auto) } rect.c-valide { fill: var(--c-valide) } rect.c-bloque { fill: var(--c-bloque) }
+.discret { color: var(--text-3) }
+.vide { color: var(--text-3) } td.vide.large { padding: 28px 16px }
+.vide-p { padding: 16px; color: var(--text-3); margin: 0 }
+.sous-titre { color: var(--text-3); font-size: 13px }
+.meta { color: var(--text-3); font-size: 12.5px }
+.meta-13 { color: var(--text-3); font-size: 13px }
+.txt-2 { color: var(--text-2) }
+.cellule span.fort, .carte-m span.fort, .fort { color: var(--text) }
+.carte-m span.reste { color: var(--warn) }
+.agent-nom { display: inline-flex; gap: 8px; align-items: center }
+.tete-tiroir { display: grid; gap: 4px }
+.t13 { font-size: 13px } .t16 { font-size: 16px; font-weight: 600 } .t17 { font-size: 17px } .t18 { font-size: 18px }
+.gros-montant.m32 { font-size: 32px }
+.app-corps.centre { align-content: center }
+.fini .rond.ok { background: var(--ok-soft); color: var(--ok) } .fini .rond.ko { background: var(--danger-soft); color: var(--danger) }
+.marge-haut { margin-top: 12px }
+.feuille.centre-txt { text-align: center }
+.tete-m { display: grid; gap: 2px; padding: 4px 4px 6px }
+.carte-m.statique { cursor: default }
+.meta.pad-x { padding: 0 4px }
+.pad-20 { padding: 20px }
+.pastille.debut { justify-self: start }
+.mt6 { margin-top: 6px }
+.droite-txt { text-align: right }
+.pile6 { display: grid; gap: 6px }
+.rangee { display: flex; gap: 8px; flex-wrap: wrap }
+.resume { margin: 0; color: var(--text-2); max-width: 70ch }
+.ok-txt { color: var(--ok) }
+.agent-b { font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.actions-inc { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 14px }
+.nowrap { white-space: nowrap }
+.marque.sans-pad { padding: 0 }
+.sous-h1 { margin: 4px 0 0; color: var(--text-2) }
+.lien.deconnexion { padding: 0 8px; font-weight: 400; color: var(--text-3) }
+
+/* Bandeau permanent de la démo publique */
+.bandeau-demo { position: sticky; top: 0; z-index: 15; min-height: 44px; display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--accent); color: var(--on-accent); font-size: 13.5px }
+.bandeau-demo p { margin: 0; font-weight: 500; flex: 1 1 22em }
+.bandeau-demo a { color: var(--on-accent); font-weight: 500; text-underline-offset: 3px; white-space: nowrap }
+.bandeau-demo .retour-site { text-decoration: none }
+.bandeau-demo :focus-visible { outline-color: var(--on-accent) }
+
+/* Fonctions en construction : pastille et encadré */
+.p-construction { background: var(--warn-soft); color: var(--warn); font-size: 11px; padding: 1px 7px; margin-left: auto }
+.p-construction .ic { width: 12px; height: 12px }
+.construction { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; color: var(--text-2); font-size: 13px }
+.construction .p-construction { margin-left: 0; font-size: 12px }
+.encadre-construction { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 12px 14px; color: var(--text) }
+.nav a .p-construction { font-weight: 500 }
+.nav a[aria-current="page"] .p-construction { background: var(--surface) }
+@media (max-width: 760px) { .side { overflow-y: visible } }
+
+/* Contraste : « .cellule span » et « .inc span » écrasaient la couleur des pastilles (gris sur fond teinté, sous 4,5:1),
+   et le gris tertiaire ne tient pas 4,5:1 sur le fond d'une ligne sélectionnée. */
+.pastille.p-ok { color: var(--ok) } .pastille.p-attente { color: var(--warn) } .pastille.p-refus { color: var(--danger) }
+.pastille.p-neutre { color: var(--text-2) } .pastille.p-accent { color: var(--accent) } .pastille.p-construction { color: var(--warn) }
+.inc[aria-selected="true"] span:not(.pastille), tbody tr[aria-selected="true"] .cellule span:not(.pastille) { color: var(--text-2) }
