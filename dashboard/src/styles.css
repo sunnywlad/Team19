@@ -1,240 +1,190 @@
-/* Système de design Veto, direction A « Table ronde » : jetons repris de
-   veto-design-A/design/tokens.css, sous les noms que cette feuille employait déjà.
-   Aucune ressource externe : polices Jost et IBM Plex Mono servies depuis
-   src/fonts/ (SIL OFL 1.1, licences à côté des fichiers), icônes en SVG en ligne.
+/* Console Veto, direction D : jetons de docs/console/tokens-direction-d.json.
+   Aucune ressource externe : Geist et Geist Mono (SIL OFL 1.1) sont servies
+   depuis public/fonts/, licence à côté des fichiers. Icônes en SVG en ligne.
    Aucun style en attribut : la CSP n'autorise que cette feuille.
-   Jetons de couleur : mêmes noms en clair et en sombre. Contrastes du texte et
-   des marques : veto-design-A/design/Fondations-visuelles.md, recalculés par
-   test/tokens.test.ts. */
+   Couleurs : mêmes noms en clair et en sombre ; contrastes recalculés par
+   test/tokens.test.ts sur les valeurs écrites ici. */
 @font-face {
-  font-family: "Jost";
-  src: url("./fonts/Jost-400.woff2") format("woff2");
+  font-family: "Geist";
+  src: url("/fonts/Geist-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Jost";
-  src: url("./fonts/Jost-500.woff2") format("woff2");
+  font-family: "Geist";
+  src: url("/fonts/Geist-Medium.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Jost";
-  src: url("./fonts/Jost-600.woff2") format("woff2");
+  font-family: "Geist";
+  src: url("/fonts/Geist-SemiBold.woff2") format("woff2");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Jost";
-  src: url("./fonts/Jost-700.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  src: url("./fonts/IBMPlexMono-400.woff2") format("woff2");
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "IBM Plex Mono";
-  src: url("./fonts/IBMPlexMono-500.woff2") format("woff2");
+  font-family: "Geist Mono";
+  src: url("/fonts/GeistMono-Medium.woff2") format("woff2");
   font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "IBM Plex Mono";
-  src: url("./fonts/IBMPlexMono-600.woff2") format("woff2");
-  font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
   color-scheme: light dark;
-  --fond: #eeebf3;
-  --surface: #faf8fc;
-  --surface-2: #e7e3ee;
-  --papier: #f3ead7;
-  --texte: #1e1730;
-  --discret: #554f6b;
-  --trait: #d2cddd;
-  --trait-fort: #7d7595;
+  --bg: #f6f5f8;
+  --surface: #ffffff;
+  --surface-2: #f2f0f6;
+  --sidebar: #fbfafc;
+  --line: #e6e3ec;
+  --line-strong: #cfcad9;
+  --text: #17151e;
+  --text-2: #5b5768;
+  --text-3: #6f6b7d;
   --accent: #2e1a6b;
-  --accent-fond: #e3dcf5;
-  --on-accent: #f3ead7;
-  --siege: #3a3a3a;
-  --accepte: #146158;
-  --accepte-signal: #218576;
-  --accepte-fond: #dcf0ec;
-  --humain: #714500;
-  --humain-signal: #a97100;
-  --humain-fond: #faefd0;
-  --refuse: #a02f12;
-  --refuse-signal: #d9592b;
-  --refuse-fond: #fbe2d8;
-  --bloque: #4a4564;
-  --bloque-fond: #e4e1ed;
-  --simulation: #2f4690;
-  --simulation-fond: #e2e7f7;
-  --sur-signal: #130e1f;
-  --table: #2e1a6b;
-  --table-v: #f3ead7;
-  --focus: #2e1a6b;
-  --entete-fond: #1e1730;
-  --entete-texte: #f3ead7;
-  --entete-discret: #c4bbd8;
-  --entete-accent: #c3b1ff;
-  --entete-trait: #3d3259;
-  --lueur-couleur: #a97100b3;
-  --viz-cat-1: #5a44b8;
-  --viz-cat-2: #b0307f;
-  --viz-cat-3: #2f6fb5;
-  --viz-cat-4: #6a7a14;
-  --viz-seq-1: #e3dcf5;
-  --viz-seq-2: #bfb1ea;
-  --viz-seq-3: #8f7bd6;
-  --viz-seq-4: #5a44b8;
-  --viz-seq-5: #2e1a6b;
-  --relief: 0 2px 0 rgb(30 23 48 / 16%);
-  --lueur: 0 0 0 4px rgb(169 113 0 / 30%);
+  --accent-hover: #3d2690;
+  --accent-soft: #efebfb;
+  --on-accent: #ffffff;
+  --ok: #11714f;
+  --ok-soft: #e3f3ec;
+  --warn: #845400;
+  --warn-soft: #fbf0d9;
+  --danger: #b3341a;
+  --danger-soft: #fbe8e2;
+  --serie-auto: #4b3bb5;
+  --serie-validee: #a99bf2;
+  --serie-bloquee: #c2522b;
+  --voile: rgba(23, 21, 30, 0.32);
+  --shadow-flottant: 0 12px 32px rgba(23, 21, 30, 0.14);
+}
+
+:root {
   --espace-1: 4px;
   --espace-2: 8px;
   --espace-3: 12px;
   --espace-4: 16px;
-  --espace-5: 24px;
-  --espace-6: 32px;
-  --espace-7: 48px;
-  --espace-8: 64px;
-  --rayon-xs: 4px;
-  --rayon-sm: 8px;
-  --rayon: 16px;
-  --rayon-lg: 24px;
+  --espace-5: 20px;
+  --espace-6: 24px;
+  --rayon-sm: 6px;
+  --rayon: 8px;
+  --rayon-carte: 10px;
+  --rayon-modale: 12px;
   --pilule: 999px;
-  --ovale: 50%;
-  --duree-instant: 90ms;
-  --duree-rapide: 160ms;
+  --ligne-tableau: 44px;
+  --controle: 34px;
+  --barre-laterale: 236px;
+  --tiroir: 520px;
+  --sans: "Geist", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --focus: var(--accent);
+  /* Anciens noms, le temps que les écrans passent à la direction D. */
+  --fond: var(--bg);
+  --texte: var(--text);
+  --discret: var(--text-2);
+  --trait: var(--line);
+  --trait-fort: var(--line-strong);
+  --accent-fond: var(--accent-soft);
+  --papier: var(--surface-2);
+  --accepte: var(--ok);
+  --accepte-signal: var(--ok);
+  --accepte-fond: var(--ok-soft);
+  --humain: var(--warn);
+  --humain-signal: var(--warn);
+  --humain-fond: var(--warn-soft);
+  --refuse: var(--danger);
+  --refuse-signal: var(--danger);
+  --refuse-fond: var(--danger-soft);
+  --bloque: var(--text-2);
+  --bloque-fond: var(--surface-2);
+  --simulation: var(--accent);
+  --simulation-fond: var(--accent-soft);
+  --siege: var(--text-3);
+  --table: var(--accent);
+  --table-v: var(--surface);
+  --sur-signal: var(--surface);
+  --entete-fond: var(--surface);
+  --entete-texte: var(--text);
+  --entete-discret: var(--text-2);
+  --entete-accent: var(--accent);
+  --entete-trait: var(--line);
+  --lueur-couleur: var(--warn);
+  --relief: none;
+  --ombre: none;
+  --font-sans: var(--sans);
+  --font-mono: var(--mono);
+  --courbe-sortie: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duree-base: 240ms;
   --duree-veto: 320ms;
-  --courbe-sortie: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --cible-min: 24px;
-  --cible-confort: 32px;
-  --cadre-max: 1440px;
-  --cadre-min: 1024px;
-  --gouttiere: 24px;
-  --font-sans: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  /* Anciens noms, gardés pour le code existant. */
-  --ombre: var(--relief);
-  --mono: var(--font-mono);
-  --sans: var(--font-sans);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --fond: #1e1730;
-    --surface: #271e3b;
-    --surface-2: #32284a;
-    --papier: #3a2f52;
-    --texte: #f3ead7;
-    --discret: #bdb4d0;
-    --trait: #3d3259;
-    --trait-fort: #8a80a8;
-    --accent: #c3b1ff;
-    --accent-fond: #352a5c;
-    --on-accent: #1e1730;
-    --siege: #9a95a8;
-    --accepte: #6fd6c6;
-    --accepte-signal: #2a9d8f;
-    --accepte-fond: #123a38;
-    --humain: #f2c55c;
-    --humain-signal: #e0a526;
-    --humain-fond: #3d2f12;
-    --refuse: #ff9d7c;
-    --refuse-signal: #e8643a;
-    --refuse-fond: #43201a;
-    --bloque: #bfb8d2;
-    --bloque-fond: #2f2a42;
-    --simulation: #a9bcff;
-    --simulation-fond: #222b52;
-    --sur-signal: #130e1f;
-    --table: #7059d6;
-    --table-v: #f3ead7;
-    --focus: #d6c9ff;
-    --entete-fond: #150f20;
-    --entete-texte: #f3ead7;
-    --entete-discret: #bdb4d0;
-    --entete-accent: #c3b1ff;
-    --entete-trait: #2f2548;
-    --lueur-couleur: #e0a526b3;
-    --viz-cat-1: #8c7aea;
-    --viz-cat-2: #d0589f;
-    --viz-cat-3: #5489d6;
-    --viz-cat-4: #8d9c26;
-    --viz-seq-1: #352a5c;
-    --viz-seq-2: #55418f;
-    --viz-seq-3: #7a64cf;
-    --viz-seq-4: #a995f3;
-    --viz-seq-5: #d6cbff;
-    --relief: 0 2px 0 rgb(0 0 0 / 40%);
-    --lueur: 0 0 0 4px rgb(224 165 38 / 38%);
+    --bg: #121017;
+    --surface: #1a1722;
+    --surface-2: #221e2c;
+    --sidebar: #15121c;
+    --line: #2c2838;
+    --line-strong: #3d3850;
+    --text: #eeebf5;
+    --text-2: #aba6ba;
+    --text-3: #8f8aa0;
+    --accent: #a99bf2;
+    --accent-hover: #bdb2f6;
+    --accent-soft: #2a2342;
+    --on-accent: #17121f;
+    --ok: #5cc9a0;
+    --ok-soft: #13302a;
+    --warn: #e8b44e;
+    --warn-soft: #33280f;
+    --danger: #f08c6e;
+    --danger-soft: #3a1d16;
+    --serie-auto: #8f7fea;
+    --serie-validee: #5a48c8;
+    --serie-bloquee: #d4673e;
+    --voile: rgba(0, 0, 0, 0.55);
+    --shadow-flottant: 0 12px 32px rgba(0, 0, 0, 0.45);
   }
 }
 
 :root[data-theme="dark"] {
+  --bg: #121017;
+  --surface: #1a1722;
+  --surface-2: #221e2c;
+  --sidebar: #15121c;
+  --line: #2c2838;
+  --line-strong: #3d3850;
+  --text: #eeebf5;
+  --text-2: #aba6ba;
+  --text-3: #8f8aa0;
+  --accent: #a99bf2;
+  --accent-hover: #bdb2f6;
+  --accent-soft: #2a2342;
+  --on-accent: #17121f;
+  --ok: #5cc9a0;
+  --ok-soft: #13302a;
+  --warn: #e8b44e;
+  --warn-soft: #33280f;
+  --danger: #f08c6e;
+  --danger-soft: #3a1d16;
+  --serie-auto: #8f7fea;
+  --serie-validee: #5a48c8;
+  --serie-bloquee: #d4673e;
+  --voile: rgba(0, 0, 0, 0.55);
+  --shadow-flottant: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] {
   color-scheme: dark;
-  --fond: #1e1730;
-  --surface: #271e3b;
-  --surface-2: #32284a;
-  --papier: #3a2f52;
-  --texte: #f3ead7;
-  --discret: #bdb4d0;
-  --trait: #3d3259;
-  --trait-fort: #8a80a8;
-  --accent: #c3b1ff;
-  --accent-fond: #352a5c;
-  --on-accent: #1e1730;
-  --siege: #9a95a8;
-  --accepte: #6fd6c6;
-  --accepte-signal: #2a9d8f;
-  --accepte-fond: #123a38;
-  --humain: #f2c55c;
-  --humain-signal: #e0a526;
-  --humain-fond: #3d2f12;
-  --refuse: #ff9d7c;
-  --refuse-signal: #e8643a;
-  --refuse-fond: #43201a;
-  --bloque: #bfb8d2;
-  --bloque-fond: #2f2a42;
-  --simulation: #a9bcff;
-  --simulation-fond: #222b52;
-  --sur-signal: #130e1f;
-  --table: #7059d6;
-  --table-v: #f3ead7;
-  --focus: #d6c9ff;
-  --entete-fond: #150f20;
-  --entete-texte: #f3ead7;
-  --entete-discret: #bdb4d0;
-  --entete-accent: #c3b1ff;
-  --entete-trait: #2f2548;
-  --lueur-couleur: #e0a526b3;
-  --viz-cat-1: #8c7aea;
-  --viz-cat-2: #d0589f;
-  --viz-cat-3: #5489d6;
-  --viz-cat-4: #8d9c26;
-  --viz-seq-1: #352a5c;
-  --viz-seq-2: #55418f;
-  --viz-seq-3: #7a64cf;
-  --viz-seq-4: #a995f3;
-  --viz-seq-5: #d6cbff;
-  --relief: 0 2px 0 rgb(0 0 0 / 40%);
-  --lueur: 0 0 0 4px rgb(224 165 38 / 38%);
 }
 
 :root[data-theme="light"] {

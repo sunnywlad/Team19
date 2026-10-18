@@ -1,18 +1,20 @@
-// Jetons du système de design Veto : les contrastes annoncés par
-// veto-design-A/design/Fondations-visuelles.md sont recalculés ici sur les
-// valeurs réellement écrites dans src/styles.css, en clair et en sombre.
+// Jetons de la direction D : les valeurs écrites dans src/styles.css sont celles
+// de docs/console/tokens-direction-d.json, en clair et en sombre, et les
+// contrastes annoncés y sont recalculés.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(join(process.cwd(), "src", "styles.css"), "utf8");
+type TokenFile = { color: { tokens: { name: string; value: { light: string; dark: string } }[] } };
+const reference = JSON.parse(readFileSync(join(process.cwd(), "..", "docs", "console", "tokens-direction-d.json"), "utf8")) as TokenFile;
 
-/** Jetons « --nom: #rrggbb » du bloc qui suit le sélecteur donné. */
+/** Jetons « --nom: #rrggbb » ou « --nom: rgba(…) » du bloc qui suit le sélecteur donné. */
 function tokens(selector: string): Record<string, string> {
   const start = css.indexOf(selector);
   if (start === -1) throw new Error(`bloc absent : ${selector}`);
   const body = css.slice(css.indexOf("{", start) + 1, css.indexOf("}", start));
-  return Object.fromEntries([...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})\s*;/g)].map((m) => [m[1]!, m[2]!]));
+  return Object.fromEntries([...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6}|rgba\([^)]*\))\s*;/g)].map((m) => [m[1]!, m[2]!]));
 }
 
 const light = tokens(":root {");
@@ -34,41 +36,36 @@ function contrast(a: string, b: string): number {
 
 // Texte : 4,5:1 (WCAG 2.1 AA).
 const TEXT: [string, string][] = [
-  ["texte", "fond"],
-  ["texte", "surface"],
-  ["texte", "surface-2"],
-  ["discret", "fond"],
-  ["discret", "surface"],
-  ["discret", "surface-2"],
+  ["text", "bg"],
+  ["text", "surface"],
+  ["text", "surface-2"],
+  ["text", "sidebar"],
+  ["text", "accent-soft"],
+  ["text-2", "bg"],
+  ["text-2", "surface"],
+  ["text-2", "surface-2"],
+  ["text-2", "sidebar"],
+  ["text-3", "bg"],
+  ["text-3", "surface"],
+  ["text-3", "surface-2"],
+  ["text-3", "sidebar"],
   ["accent", "surface"],
-  ["accent", "accent-fond"],
-  ["accepte", "surface"],
-  ["humain", "surface"],
-  ["refuse", "surface"],
-  ["bloque", "surface"],
-  ["simulation", "surface"],
-  ["accepte", "accepte-fond"],
-  ["humain", "humain-fond"],
-  ["refuse", "refuse-fond"],
-  ["bloque", "bloque-fond"],
-  ["simulation", "simulation-fond"],
+  ["accent", "sidebar"],
+  ["accent", "accent-soft"],
   ["on-accent", "accent"],
-  ["entete-texte", "entete-fond"],
-  ["entete-discret", "entete-fond"],
-  ["entete-accent", "entete-fond"],
+  ["ok", "surface"],
+  ["ok", "ok-soft"],
+  ["warn", "surface"],
+  ["warn", "warn-soft"],
+  ["danger", "surface"],
+  ["danger", "danger-soft"],
 ];
 
-// Marques sans texte (aplats, traits, anneau de focus) : 3:1.
+// Marques sans texte : 3:1. serie-validee n'y arrive pas (le fichier de jetons le dit) : sa légende est obligatoire.
 const MARKS: [string, string][] = [
-  ["accepte-signal", "surface"],
-  ["humain-signal", "surface"],
-  ["refuse-signal", "surface"],
-  ["trait-fort", "surface"],
-  ["focus", "surface"],
-  ["table", "surface"],
-  ["sur-signal", "accepte-signal"],
-  ["sur-signal", "humain-signal"],
-  ["sur-signal", "refuse-signal"],
+  ["accent", "surface"],
+  ["serie-auto", "surface"],
+  ["serie-bloquee", "surface"],
 ];
 
 describe.each([
@@ -85,6 +82,13 @@ describe.each([
 });
 
 describe("jetons, cohérence de la feuille", () => {
+  it("chaque couleur est celle du fichier de jetons de la direction D", () => {
+    for (const { name, value } of reference.color.tokens) {
+      expect(light[name], `${name} (clair)`).toBe(value.light);
+      expect(dark[name], `${name} (sombre)`).toBe(value.dark);
+    }
+  });
+
   it("le sombre du système et le sombre choisi ont les mêmes valeurs", () => {
     expect(systemDark).toEqual(dark);
   });
@@ -93,9 +97,15 @@ describe("jetons, cohérence de la feuille", () => {
     expect(Object.keys(dark).sort()).toEqual(Object.keys(light).sort());
   });
 
-  it("les polices viennent du dépôt, jamais d'ailleurs", () => {
+  it("les polices viennent du dépôt, jamais d'ailleurs : Geist et Geist Mono, cinq graisses", () => {
     const sources = [...css.matchAll(/url\(([^)]*)\)/g)].map((m) => m[1]!.replace(/["']/g, ""));
-    expect(sources.length).toBe(7);
-    for (const source of sources) expect(source).toMatch(/^\.\/fonts\/[A-Za-z]+-\d{3}\.woff2$/);
+    expect(sources).toEqual([
+      "/fonts/Geist-Regular.woff2",
+      "/fonts/Geist-Medium.woff2",
+      "/fonts/Geist-SemiBold.woff2",
+      "/fonts/GeistMono-Regular.woff2",
+      "/fonts/GeistMono-Medium.woff2",
+    ]);
+    expect(css).not.toMatch(/@import/);
   });
 });

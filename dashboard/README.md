@@ -63,6 +63,18 @@ aucune ressource externe).
 
 Chaque panneau porte son étiquette « réel » ou « simulation ».
 
+## Polices
+
+Geist et Geist Mono, servies depuis [public/fonts/](public/fonts/) : aucune
+ressource externe, la CSP n'autorise que `font-src 'self'`. Licence SIL OFL 1.1,
+[public/fonts/LICENSE.txt](public/fonts/LICENSE.txt).
+
+| Provenance | Valeur |
+|---|---|
+| Paquet npm | `geist`, version `1.7.2` (récupéré par `npm pack`, pas installé comme dépendance) |
+| Intégrité du paquet | `sha512-Gu5lDFa3pLRyoBlBPf0QIFHVdWAnpco7fS1bJm41jyLPFoguBgiubseUN2oLXMgqZ7uxAxDoXcHMhCY/fOTTgg==` |
+| Fichiers repris | `dist/fonts/geist-sans/Geist-{Regular,Medium,SemiBold}.woff2`, `dist/fonts/geist-mono/GeistMono-{Regular,Medium}.woff2`, `LICENSE.txt` |
+
 ## Garde-fous
 
 - **Données hostiles.** Chaque réponse est validée avant affichage (ajv, schémas de `specs/schemas` et de [schemas/](schemas/)). Une réponse non conforme n'est pas affichée : erreur explicite. Les validateurs sont précompilés ([tools/gen-validators.mjs](tools/gen-validators.mjs)) pour tenir sous une CSP sans `unsafe-eval`.
