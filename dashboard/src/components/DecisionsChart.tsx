@@ -92,29 +92,32 @@ export function DecisionsChart({ days }: { days: Day[] }) {
             </li>
           ))}
         </ul>
-        <table className="visuellement-cache">
-          <caption>Décisions par jour</caption>
-          <thead>
-            <tr>
-              <th scope="col">Jour</th>
-              {SERIES.map((s) => (
-                <th key={s.key} scope="col">
-                  {s.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {days.map((day) => (
-              <tr key={day.startMs}>
-                <th scope="row">{DAY_LONG.format(new Date(day.startMs))}</th>
-                <td>{day.auto}</td>
-                <td>{day.approved}</td>
-                <td>{day.blocked}</td>
+        {/* Un tableau ignore la largeur de 1 px : c'est son conteneur qui est caché. */}
+        <div className="visuellement-cache">
+          <table>
+            <caption>Décisions par jour</caption>
+            <thead>
+              <tr>
+                <th scope="col">Jour</th>
+                {SERIES.map((s) => (
+                  <th key={s.key} scope="col">
+                    {s.label}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {days.map((day) => (
+                <tr key={day.startMs}>
+                  <th scope="row">{DAY_LONG.format(new Date(day.startMs))}</th>
+                  <td>{day.auto}</td>
+                  <td>{day.approved}</td>
+                  <td>{day.blocked}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </figcaption>
     </figure>
   );

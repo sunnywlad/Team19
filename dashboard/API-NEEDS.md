@@ -1,6 +1,7 @@
 # Points d'accès dont le dashboard a besoin et que l'API réelle n'offre pas
 
-Le dashboard ne lit que par `GET`. État au 10 octobre : les § 1 à 5 existent.
+Le dashboard ne lit que par `GET`. État au 18 octobre : les § 1 à 5 existent ;
+les § 7 et 8 sont servis par le proxy local du dashboard lui-même.
 `relay/` sert `/vault` (§ 1) et `response/` sert les § 2 à 5 ; leurs réponses
 passent les schémas ci-dessous. Restent ouverts le § 6 et, pour le § 1, l'essai
 contre un vrai contrat : `/vault` n'a tourné que sur le faux coffre de `relay/`.
@@ -123,6 +124,68 @@ ferait passer pour refusé un cas 1 dont le montant est toujours bloqué.
 - Les refus ignorés restent dans `/decisions` et `/events`, avec leur motif.
 - Le dashboard n'appelle pas `/decisions/<request_id>` : il ne construit aucune URL à partir d'une donnée reçue. Il déduit les cas en attente de `/decisions`, et ne ferme un cas que sur `APPROVED`, `APPROVAL_REFUSED` ou `APPROVAL_TIMEOUT` : il suit déjà la même règle.
 
+## 7. Libellés
+
+`GET /api/local/libelles` → [schemas/local-libelles.schema.json](schemas/local-libelles.schema.json)
+
+Servi par le **proxy local du dashboard** ([vite.config.ts](vite.config.ts)),
+pas par le relais : l'API garde des identifiants opaques (`specs/README.md`) et
+la console a besoin d'un nom lisible pour un fournisseur, un agent, une facture
+(écart 1 de `docs/console/correspondance-console.md`).
+
+```json
+{
+  "version": 1,
+  "libelles": [
+    { "id": "0x33ff…1f2c", "genre": "beneficiaire", "libelle": "Fournisseur fictif A", "detail": "Fournitures · données synthétiques" }
+  ]
+}
+```
+
+- Source : le fichier `LIBELLES_FILE`, relu à chaque demande. Défaut :
+  [fixtures/libelles.json](fixtures/libelles.json), **synthétique**, aux
+  identifiants de `specs/examples/fixtures.json`. En production, il viendrait
+  de l'ERP du client : non construit.
+- `genre` : `beneficiaire`, `agent`, `facture`, `placement`, `client`. Un libellé
+  d'un autre genre que celui attendu n'est pas affiché.
+- `libelle`, `detail` : 60 caractères au plus, lettres latines, chiffres et
+  ponctuation courante ; aucune balise, aucun caractère invisible ou
+  bidirectionnel. Aucun IBAN, SIREN ni nom de personne dans le fichier de démo.
+- Jamais transmis au relais, jamais écrit sur la chaîne ni dans le journal.
+- Fichier absent ou illisible : 503. Réponse non conforme : rejetée. Dans les
+  deux cas, ou si un identifiant n'y figure pas, la console affiche
+  l'identifiant abrégé.
+- Restent **MANQUE** (correspondance) : IBAN masqué, SIREN, ancienneté au
+  référentiel. Ils demanderaient des champs de plus, à décider avec l'équipe.
+
+## 8. Unité d'affichage
+
+`GET /api/local/unite` → [schemas/local-unite.schema.json](schemas/local-unite.schema.json)
+
+Servi par le proxy local, comme le § 7. Les montants de l'API sont en wei
+(écart 2 de la correspondance) ; la console les affiche dans une unité déclarée.
+
+```json
+{ "symbole": "u", "decimales": 15 }
+```
+
+- `UNITE_SYMBOLE` (1 à 4 lettres, ou « € ») et `UNITE_DECIMALES` (0 à 30) :
+  1 symbole = 10^decimales wei. Valeur absente ou mal formée : défaut.
+- Défaut : « u » et **15**, l'unité du monde de test (`unit_wei` de
+  `specs/examples/fixtures.json`). Jamais « € » par défaut : une unité
+  monétaire se déclare.
+- Proxy muet ou réponse non conforme : défaut, et le pied de la console le dit.
+- La conversion est un affichage : aucun montant n'est recalculé.
+
+## Ce que la console D attend encore
+
+| Besoin | État | Où |
+|---|---|---|
+| Échéance comparée à l'heure du dernier bloc, pas à l'horloge du navigateur | MANQUE | § 6 : `head_block_timestamp` dans `/status`. D'ici là, le temps restant est dit « estimé » |
+| App d'approbation (signature de l'approbateur, passkey) | MANQUE, chantier séparé | Bouton « Ouvrir dans l'app d'approbation » désactivé, « À venir » |
+| Comité de vérificateurs (`VerificationMarket`) | MANQUE | Côté contrats, relié ni au relais ni au dashboard |
+| Plus de 500 événements | MANQUE | § 6 : `order=desc` |
+
 ## Brancher un vrai point d'accès
 
 | Variable (proxy local, jamais dans le bundle) | Effet |
@@ -131,6 +194,8 @@ ferait passer pour refusé un cas 1 dont le montant est toujours bloqué.
 | `RELAY_VAULT_MODE=chain` ou `fake` | servi par le proxy (`/api/local/mode`) : `fake` affiche « COFFRE SIMULÉ » et l'étiquette « simulation » ; absent : « origine non confirmée » |
 | `RESPONSE_API_URL=http://127.0.0.1:…` | les § 2 à 5 sont lus sur le service de réponse |
 | `RESPONSE_API_TOKEN=…` | jeton ajouté par le proxy, côté serveur |
+| `LIBELLES_FILE=…` | référentiel de libellés servi par `/api/local/libelles` (§ 7) |
+| `UNITE_SYMBOLE=…`, `UNITE_DECIMALES=…` | unité servie par `/api/local/unite` (§ 8) |
 
 Tant que le relais est réel et le service de réponse simulé, le dashboard ne
 rapproche pas leurs demandes : la colonne « réponse déclenchée » affiche « non
