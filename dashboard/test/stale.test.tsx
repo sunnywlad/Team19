@@ -3,7 +3,7 @@
 import { act, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { backoffDelay, isStale, MAX_BACKOFF_MS } from "../src/hooks/poller.ts";
-import { renderScenario, text } from "./helpers.tsx";
+import { OVERVIEW_PANELS, renderScenario, text } from "./helpers.tsx";
 
 const advance = (ms: number): Promise<void> => act(async () => void (await vi.advanceTimersByTimeAsync(ms)));
 
@@ -51,7 +51,7 @@ describe("fraîcheur", () => {
     renderScenario("1", { down: () => true });
     await advance(50);
     expect(screen.queryByTestId("placable")).toBeNull();
-    expect(screen.getAllByText(/Rien n'est affiché\./).length).toBe(5);
+    expect(screen.getAllByText(/Rien n'est affiché\./).length).toBe(OVERVIEW_PANELS);
     await advance(11_000);
     expect(screen.getByText("Données indisponibles")).toBeTruthy();
   });

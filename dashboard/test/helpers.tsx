@@ -54,4 +54,7 @@ export function renderScenario(name: ScenarioName, options: FetchOptions & { t0?
   return render(<App client={scenarioClient(name, options)} />);
 }
 
+/** Cartes de la vue d'ensemble lues sur une API : chacune dit son erreur ou son chargement. */
+export const OVERVIEW_PANELS = 12;
+
 export const text = (element: Element): string => (element.textContent ?? "").replace(/\s+/g, " ").trim();

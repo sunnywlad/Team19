@@ -6,7 +6,7 @@ import { buildWorld, type ScenarioName } from "../fixtures/scenarios.ts";
 import { SimulatedApiClient } from "../src/api/client.ts";
 import { App } from "../src/App.tsx";
 import { fixtureFetch, renderScenario } from "./helpers.tsx";
-import { open } from "./tour.ts";
+import { navName, open } from "./tour.ts";
 
 const advance = (ms: number): Promise<void> => act(async () => void (await vi.advanceTimersByTimeAsync(ms)));
 
@@ -19,7 +19,8 @@ describe("effet a : flux vivant", () => {
   it("à l'ouverture, rien ne s'anime ; une nouvelle décision illumine son chemin, dans sa couleur", async () => {
     vi.useFakeTimers();
     live("1", Date.now() + 500);
-    open("Supervision");
+    // Le flux est le contenu du mode présentation.
+    fireEvent.keyDown(window, { key: "p" });
     await advance(100);
     expect(screen.getByTestId("flux").getAttribute("data-nouveau")).toBe("false");
     await advance(3000);
@@ -33,7 +34,7 @@ describe("effet a : flux vivant", () => {
 
   it("arrêt à la porte : chemin gris, branche Réponse allumée", async () => {
     renderScenario("3");
-    open("Supervision");
+    fireEvent.keyDown(window, { key: "p" });
     const flux = await screen.findByTestId("flux");
     await vi.waitFor(() => expect(flux.getAttribute("data-ton")).toBe("bloque"));
     expect(flux.querySelector('[data-arete="porte-reponse"]')?.getAttribute("data-etat")).toBe("actif");
@@ -46,7 +47,7 @@ describe("effet b : anneau de compte à rebours", () => {
     vi.useFakeTimers();
     const t0 = Date.now() - 3000;
     live("6", t0);
-    open("En attente");
+    open("À valider");
     await advance(100);
     const part = (): number => Number(screen.getByTestId("anneau").getAttribute("data-part"));
     const first = part();
@@ -110,15 +111,17 @@ describe("effet e : mode présentation", () => {
     renderScenario("1");
     await screen.findAllByTestId("decision");
     fireEvent.keyDown(window, { key: "p" });
-    expect(document.querySelector(".page")?.getAttribute("data-presentation")).toBe("oui");
+    expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("oui");
+    expect(screen.queryByRole("navigation", { name: "Écrans" })).toBeNull();
     expect(document.querySelector(".panneau-flux-grand")).not.toBeNull();
     expect(screen.getByTestId("pied-mention").textContent).toBe("Données fictives · réseau de test");
     expect(screen.getByRole("heading", { name: "Flux d'une demande" }).parentElement?.querySelector(".source")?.textContent).toBe("simulation");
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(document.querySelector(".page")?.getAttribute("data-presentation")).toBe("non");
-    expect(screen.getByRole("button", { name: "Décisions", current: "page" })).toBeTruthy();
+    expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("non");
+    expect(screen.getByRole("button", { name: navName("Vue d'ensemble"), current: "page" })).toBeTruthy();
+    expect(document.querySelector(".laterale")).not.toBeNull();
     // Avec un modificateur, P ne fait rien : Ctrl+P reste l'impression du navigateur.
     fireEvent.keyDown(window, { key: "p", ctrlKey: true });
-    expect(document.querySelector(".page")?.getAttribute("data-presentation")).toBe("non");
+    expect(document.querySelector(".console")?.getAttribute("data-presentation")).toBe("non");
   });
 });
