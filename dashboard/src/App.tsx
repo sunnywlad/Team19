@@ -96,7 +96,9 @@ export function App({ client }: { client: ApiClient }) {
 
 /** La console : elle lit, elle n'agit pas. Aucun bouton ici ne déclenche un paiement, une pause ou une approbation. */
 function Console({ client }: { client: ApiClient }) {
-  const { unite, uniteEtat } = useAffichage();
+  const { unite, uniteEtat, libelles } = useAffichage();
+  // Société du référentiel local, s'il en nomme une : affichage seulement.
+  const societe = [...libelles.values()].find((l) => l.genre === "client") ?? null;
   const relay = usePolled(useCallback((signal: AbortSignal) => loadRelay(client, signal), [client]));
   const vault = usePolled(useCallback((signal: AbortSignal) => client.getVaultState(signal), [client]));
   const response = usePolled(useCallback((signal: AbortSignal) => loadResponse(client, signal), [client]));
@@ -207,6 +209,12 @@ function Console({ client }: { client: ApiClient }) {
           <BrandMark />
           <span>Veto</span>
         </p>
+        {societe && (
+          <p className="org" data-testid="societe">
+            <b>{societe.libelle}</b>{" "}
+            {(societe.sous_titre ?? societe.detail) && <span>{societe.sous_titre ?? societe.detail}</span>}
+          </p>
+        )}
         <nav className="nav" aria-label="Écrans" ref={nav} onKeyDown={onNavKey}>
           {GROUPS.map((group) => (
             <div key={group.title} className="nav-groupe" role="group" aria-label={group.title}>

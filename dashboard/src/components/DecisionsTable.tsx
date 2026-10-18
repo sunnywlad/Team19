@@ -12,6 +12,8 @@ type Props = {
   events: RelayEvent[];
   /** Réaction du service de réponse pour une demande. */
   reactionFor: (requestId: string) => Reaction;
+  /** Nombre de lignes affichées, les plus récentes. Sans valeur : toutes. */
+  limit?: number;
 };
 
 export function ReactionCell({ reaction }: { reaction: Reaction }) {
@@ -24,7 +26,7 @@ export function ReactionCell({ reaction }: { reaction: Reaction }) {
  * Décisions du contrat, lues dans les événements Decision indexés : jamais dans
  * le statut d'un reçu. Une ligne par événement (clé : transaction et index).
  */
-export function DecisionsTable({ decisions, events, reactionFor }: Props) {
+export function DecisionsTable({ decisions, events, reactionFor, limit }: Props) {
   if (decisions.length === 0) return <p className="vide">Aucune décision du contrat pour l'instant.</p>;
   return (
     <div className="defilement" role="region" aria-label="Décisions du contrat" tabIndex={0}>
@@ -42,7 +44,9 @@ export function DecisionsTable({ decisions, events, reactionFor }: Props) {
           </tr>
         </thead>
         <tbody>
-          {newestFirst(decisions).map((d) => {
+          {newestFirst(decisions)
+            .slice(0, limit ?? decisions.length)
+            .map((d) => {
             const read = readDecision(d);
             const amount = amountFor(d, events);
             return (

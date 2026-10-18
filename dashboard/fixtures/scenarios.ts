@@ -1,6 +1,7 @@
 // Un jeu de données par scénario de specs/acceptance/scenarios.md, et la scène
 // de démonstration (3, puis 4, puis 1). Chaque scénario est une suite d'étapes
 // datées : le monde servi à l'instant t ne contient que les étapes déjà jouées.
+import { pitchSteps } from "./pitch.ts";
 import { ADDRESS, Sim, fixture, fixtureId, units, type World } from "./sim.ts";
 
 type Step = { at: number; run: (sim: Sim, ts: number) => void };
@@ -232,14 +233,19 @@ export const SCENARIOS = {
   scene: scene(),
 } as const;
 
-export type ScenarioName = keyof typeof SCENARIOS;
+/**
+ * « pitch » : 30 jours d'Aubert Industrie (fixtures/pitch.ts). Ses étapes
+ * dépendent du calendrier de « maintenant » : elles sont construites à l'appel.
+ */
+export type ScenarioName = keyof typeof SCENARIOS | "pitch";
 
 export function isScenarioName(value: string): value is ScenarioName {
-  return Object.prototype.hasOwnProperty.call(SCENARIOS, value);
+  return value === "pitch" || Object.prototype.hasOwnProperty.call(SCENARIOS, value);
 }
 
-/** Durée du script, en millisecondes. */
+/** Durée du script, en millisecondes. « pitch » est tout entier dans le passé : 0. */
 export function scenarioLength(name: ScenarioName): number {
+  if (name === "pitch") return 0;
   return Math.max(...SCENARIOS[name].map((step) => step.at));
 }
 
@@ -249,8 +255,16 @@ export function scenarioLength(name: ScenarioName): number {
  */
 export function buildWorld(name: ScenarioName, t0: number, now: number = Number.POSITIVE_INFINITY): World {
   const sim = new Sim();
-  setup(sim, t0 - 600_000);
-  const steps = [...SCENARIOS[name]].sort((a, b) => a.at - b.at);
+  let steps: Step[];
+  if (name === "pitch") {
+    const pitch = pitchSteps(t0);
+    pitch.setup(sim);
+    steps = pitch.steps;
+  } else {
+    setup(sim, t0 - 600_000);
+    steps = [...SCENARIOS[name]];
+  }
+  steps = steps.sort((a, b) => a.at - b.at);
   for (const step of steps) {
     if (t0 + step.at > now) break;
     step.run(sim, t0 + step.at);

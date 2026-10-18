@@ -1,6 +1,6 @@
 # Rejoue en local les contrôles de .github/workflows/ci.yml.
 .PHONY: setup check secrets contrat dependances specs relay gateway response dashboard docs offchain semgrep lint-ci scan-final \
-	demo demo-stop demo-status demo-reset demo-peupler scenes scene demo-smoke demo-chain-check demo-test
+	demo demo-stop demo-status demo-reset demo-peupler scenes scene demo-smoke demo-chain-check demo-test pitch
 
 PRE_COMMIT := $(shell command -v pre-commit 2>/dev/null || echo .tools/venv/bin/pre-commit)
 
@@ -40,6 +40,11 @@ response:
 # Lint de sécurité, types, tests et contrôle du bundle de dashboard/.
 dashboard:
 	dashboard/tools/check.sh
+
+# Démo investisseurs : fixtures du scénario « pitch » et dashboard, sur
+# 127.0.0.1:5174. Données fictives uniquement ; refuse un démarrage mixte.
+pitch:
+	dashboard/tools/pitch.sh
 
 # Livrables (README.md, docs/) : formules interdites, liens et chemins cités,
 # secrets, et fiche de défense égale à ce que donnent les fichiers de mesure.

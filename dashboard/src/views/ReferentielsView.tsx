@@ -10,6 +10,7 @@ import { agentsRetenus, fournisseursRetenus, trouvailles } from "../domain/reche
 import { agentRows, beneficiaryRows, formatDelay, mandateWords, rulesOf, type Setting } from "../domain/referentiels.ts";
 import { useAffichage } from "../hooks/useAffichage.ts";
 import { formatDateTime } from "../lib/format.ts";
+import { WindowNote } from "./ApercuView.tsx";
 import { sameWorld, vaultFed, type ViewProps } from "./shared.ts";
 
 function ReadOnlyNote({ children }: { children: string }) {
@@ -133,6 +134,7 @@ export function FournisseursView({ view, query = "", onClear = () => undefined }
               </table>
             </div>
             )}
+            {data.window === "derniers" && <WindowNote />}
             </>
           );
         }}
@@ -218,6 +220,7 @@ export function AgentsView({ view, query = "", onClear = () => undefined }: { vi
               </table>
             </div>
             )}
+            {data.window === "derniers" && <WindowNote />}
             </>
           );
         }}

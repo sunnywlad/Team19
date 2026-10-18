@@ -465,6 +465,27 @@ td .nom-libelle {
   color: var(--accent);
 }
 
+/* Société du référentiel local, sous la marque. */
+.org {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+
+.org b {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.org span {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
 .principal {
   min-width: 0;
   display: flex;
@@ -2079,6 +2100,7 @@ caption {
     gap: 4px;
   }
 
+  .org,
   .nav-titre,
   .laterale-pied .discret {
     display: none;

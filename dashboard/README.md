@@ -58,8 +58,49 @@ npm run dev:fixtures            # scène 3, puis 4, puis 1 ; ou : npm run dev:fi
 npm run dev:sim                 # http://127.0.0.1:5173
 ```
 
-Scénarios servis : `1` à `8`, `6a` (approuvé), `6b` (délai dépassé), `scene`.
-Relancer le serveur de fixtures rejoue le script.
+Scénarios servis : `1` à `8`, `6a` (approuvé), `6b` (délai dépassé), `scene`,
+`pitch`. Relancer le serveur de fixtures rejoue le script.
+
+En simulation, le client lit les listes récentes (`order=desc`) et les
+agrégats par jour (`GET /stats/daily`) que sert le serveur de fixtures
+([API-NEEDS.md](API-NEEDS.md) § 6 et § 9). Le client réel ne les demande pas
+tant que le relais ne les sert pas.
+
+### Démo investisseurs : `make pitch`
+
+```bash
+make pitch                      # depuis la racine ; http://127.0.0.1:5174
+```
+
+Aubert Industrie, société **fictive**, sur 30 jours déjà joués
+([fixtures/pitch.ts](fixtures/pitch.ts)) : environ 1 000 paiements, 25 à 40
+blocages, 5 incidents dont 2 ouverts, 3 demandes à valider dont l'échéance
+tombe 2 à 20 h après le lancement, 4 agents dont 1 en pause. Noms, montants et
+incidents repris de la maquette. Montants en euros, libellés de
+[fixtures/libelles-pitch.json](fixtures/libelles-pitch.json).
+
+<!-- Libellés du pitch : noms de la maquette (fictifs), IBAN masqués (le schéma
+refuse un IBAN complet), SIREN fictifs dont la clé de Luhn est fausse, donc
+d'aucune entreprise réelle. Décision validée par l'équipe ; vérifié par
+test/pitch.test.tsx. Fichier généré : node fixtures/libelles-pitch.ts --ecrire. -->
+
+- **Garde-fou.** Le mode pitch refuse de démarrer si `RELAY_API_URL`,
+  `RESPONSE_API_URL` ou `RELAY_HAS_VAULT` est défini : contrôle dans
+  [tools/pitch.sh](tools/pitch.sh) (environnement) et dans le proxy de
+  [vite.config.ts](vite.config.ts) (environnement et `.env`). Le proxy n'a alors
+  aucun chemin vers le relais. Un écran ne mélange jamais réel et fictif.
+- **Puce permanente.** « Démo · données fictives », dans la barre haute et le
+  pied de page ; elle ne se ferme pas.
+- **Ports constants**, distincts de `make demo` : dashboard 5174, fixtures 8799.
+- **Hors du dashboard, même en pitch** : l'app d'approbation, la modification
+  des règles, les exports.
+
+Écarts assumés avec la maquette : les blocages fréquents sont des refus bénins
+isolés (facture déjà payée, délai d'approbation dépassé), car chaque « facture
+inconnue » ou blocage à la porte ouvre un incident et met l'agent en pause
+(`specs/05` § 3) ; les deux incidents ouverts touchent le même agent ;
+« Imprimerie Vasseur » attend une validation pour un montant au-dessus du seuil
+(29 840 €), le « doute » de la maquette venant d'un contrôle VISION.
 
 Réel, contre l'API du relais (`cd ../relay && npm start`, port 8787) et le
 service de réponse (`cd ../response && npm start`, port 8790) :

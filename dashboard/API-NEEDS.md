@@ -109,6 +109,15 @@ répétition).
 | Besoin | Proposition |
 |---|---|
 | `/decisions` et `/events` renvoient les **premiers** événements, par `id` croissant. Le dashboard s'interdit de construire une URL à partir d'une donnée reçue : il n'utilise donc pas `since_id`, et au-delà de 500 événements il afficherait les plus anciens. Il le signale (« affichage tronqué »). | `order=desc` : les `limit` derniers, URL fixe. |
+
+`order=desc` est servi par le serveur de fixtures ([fixtures/handler.ts](fixtures/handler.ts)) :
+`asc` par défaut comme le relais, toute autre valeur refusée (400). Le client de
+simulation l'utilise, avec des URL constantes : `/decisions?order=desc&limit=500`,
+`/events?order=desc&limit=500`, et `/events?name=<inscription>&order=desc&limit=500`
+pour une liste fermée de noms (inscriptions, réglages, pauses, `HoldPlaced`), sans
+quoi une inscription vieille d'un mois sortirait de la fenêtre. Le client réel ne
+l'envoie pas : le relais **ignore** aujourd'hui un `order` inconnu et renverrait
+l'ordre croissant sans le dire. Il garde donc « affichage tronqué » au-delà de 500.
 | Le délai restant d'un cas en attente compare une échéance en heure de bloc à l'horloge locale du navigateur. | `head_block_number` et `head_block_timestamp` dans `/status`. |
 | `HoldPlaced.deadline` était un nombre avec `FakeVault` et une chaîne décimale avec `ChainVault` (`uint64` → `bigint`). | Fait côté relais : tout `uint64` est un nombre de secondes. Le dashboard accepte toujours les deux formes. |
 
@@ -183,6 +192,42 @@ Servi par le proxy local, comme le § 7. Les montants de l'API sont en wei
   monétaire se déclare.
 - Proxy muet ou réponse non conforme : défaut, et le pied de la console le dit.
 - La conversion est un affichage : aucun montant n'est recalculé.
+
+## 9. Agrégats par jour
+
+`GET /stats/daily` → [schemas/stats-daily.schema.json](schemas/stats-daily.schema.json)
+
+**Servi par le serveur de fixtures seulement** ([fixtures/stats.ts](fixtures/stats.ts)).
+Le relais ne l'implémente pas encore : une PR séparée, côté `relay/`, le proposera.
+
+Les chiffres de la vue d'ensemble (paiements exécutés, part sans intervention,
+bloqués par une règle) et le graphique « décisions par jour » portent sur une
+période. Les dériver des 500 événements lus sous-compterait dès que la période
+en contient davantage. La source les compte sur tous ses événements, à URL fixe.
+
+```json
+{
+  "version": 1,
+  "timezone": "Europe/Paris",
+  "generated_at_ms": 1792310400000,
+  "days": [
+    { "date": "2026-10-18", "paid_auto": 41, "paid_auto_wei": "…", "paid_approved": 2, "paid_approved_wei": "…",
+      "blocked": 1, "blocked_gate": 0, "blocked_wei": "…", "blocked_unknown": 0 }
+  ]
+}
+```
+
+- `days` : exactement 30 jours civils, du plus ancien à aujourd'hui, dans le
+  fuseau `timezone` de la source. Un jour sans rien vaut zéro : c'est un compte.
+- Mêmes définitions que la console ([src/domain/apercu.ts](src/domain/apercu.ts)) :
+  payés automatiquement = `Paid` d'une décision 2 au motif `NONE` ; après
+  validation = au motif `APPROVED` ; bloqués = refus du contrat (hors refus d'un
+  approbateur) et `DETECTION` au verdict `BLOCK`, dont `blocked_gate` à la porte.
+  Jour du bloc pour le contrat, jour du journal pour la porte.
+- `blocked_wei` : montant inscrit des références bloquées, quand il est connu ;
+  `blocked_unknown` compte les autres, hors total. Jamais 0 à la place d'un inconnu.
+- Sans ce point d'accès (client réel, aujourd'hui), la console calcule comme
+  avant sur ce qu'elle a lu : rien n'est estimé, la troncature reste signalée.
 
 ## Ce que la console D attend encore
 

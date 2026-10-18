@@ -2,6 +2,7 @@
 // avec les mêmes paramètres et les mêmes formes ; les suivantes sont les points
 // d'accès proposés dans API-NEEDS.md. GET uniquement : tout le reste reçoit 405.
 import { toDecisions, type World } from "./sim.ts";
+import { dailyStats } from "./stats.ts";
 
 const BYTES32 = /^0x[0-9a-f]{64}$/;
 const EVENT_NAME = /^[A-Za-z]{1,40}$/;
@@ -18,7 +19,15 @@ function intParam(url: URL, name: string, fallback: number, max: number): number
   return Math.min(Number(raw), max);
 }
 
-function route(world: World, url: URL): FixtureResponse {
+/** order=asc (défaut, comme le relais) ou desc (API-NEEDS.md § 6). Toute autre valeur : 400. */
+function orderParam(url: URL): "asc" | "desc" {
+  const raw = url.searchParams.get("order");
+  if (raw === null || raw === "asc") return "asc";
+  if (raw === "desc") return "desc";
+  throw new BadRequest("order");
+}
+
+function route(world: World, url: URL, now: number): FixtureResponse {
   const path = url.pathname;
   const sinceId = (): number => intParam(url, "since_id", 0, Number.MAX_SAFE_INTEGER);
   const limit = (): number => intParam(url, "limit", 200, MAX_LIMIT);
@@ -31,7 +40,7 @@ function route(world: World, url: URL): FixtureResponse {
     if (requestId !== null && !BYTES32.test(requestId)) throw new BadRequest("request_id");
     const since = sinceId();
     const rows = toDecisions(world.events).filter((d) => d.id > since && (requestId === null || d.request_id === requestId));
-    return { status: 200, body: rows.slice(0, limit()) };
+    return { status: 200, body: (orderParam(url) === "desc" ? rows.reverse() : rows).slice(0, limit()) };
   }
   if (path.startsWith("/decisions/")) {
     const requestId = path.slice("/decisions/".length);
@@ -43,7 +52,8 @@ function route(world: World, url: URL): FixtureResponse {
     const name = url.searchParams.get("name");
     if (name !== null && !EVENT_NAME.test(name)) throw new BadRequest("name");
     const since = sinceId();
-    return { status: 200, body: world.events.filter((e) => e.id > since && (name === null || e.name === name)).slice(0, limit()) };
+    const rows = world.events.filter((e) => e.id > since && (name === null || e.name === name));
+    return { status: 200, body: (orderParam(url) === "desc" ? rows.reverse() : rows).slice(0, limit()) };
   }
   if (path === "/queue") return { status: 200, body: [...world.queue].reverse().slice(0, limit()) };
 
@@ -53,14 +63,15 @@ function route(world: World, url: URL): FixtureResponse {
   if (path === "/journal/entries") return { status: 200, body: world.journal.slice(-limit()) };
   if (path === "/journal/verification") return { status: 200, body: world.verification };
   if (path === "/agents/paused") return { status: 200, body: world.pausedAgents };
+  if (path === "/stats/daily") return { status: 200, body: dailyStats(world, now) };
 
   return { status: 404, body: { error: "not_found" } };
 }
 
-export function handleFixtureRequest(world: World, method: string, rawUrl: string): FixtureResponse {
+export function handleFixtureRequest(world: World, method: string, rawUrl: string, now: number = Date.now()): FixtureResponse {
   if (method !== "GET" && method !== "HEAD") return { status: 405, body: { error: "method_not_allowed" }, headers: { allow: "GET, HEAD" } };
   try {
-    return route(world, new URL(rawUrl, "http://127.0.0.1"));
+    return route(world, new URL(rawUrl, "http://127.0.0.1"), now);
   } catch (error) {
     if (error instanceof BadRequest) return { status: 400, body: { error: "bad_parameter", parameter: error.message } };
     return { status: 500, body: { error: "internal" } };

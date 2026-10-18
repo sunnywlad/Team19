@@ -4,6 +4,7 @@
 import * as generated from "../generated/validators.js";
 import type { AjvValidator } from "../generated/validators.js";
 import type {
+  DailyStats,
   IncidentItem,
   IncidentReport,
   JournalEntry,
@@ -51,4 +52,5 @@ export const parse = {
   journalEntry: parser<JournalEntry>("entrée de journal", generated.journalEntry),
   libelles: parser<Libelles>("libellés", generated.libelles),
   unite: parser<Unite>("unité d'affichage", generated.unite),
+  dailyStats: parser<DailyStats>("agrégats par jour", generated.dailyStats),
 };

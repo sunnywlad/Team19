@@ -62,6 +62,26 @@ function securityHeaders(policy: string): Record<string, string> {
   };
 }
 
+/**
+ * Mode pitch (make pitch) : fixtures du scénario « pitch », libellés fictifs,
+ * euros. Ports constants, distincts de ceux de make demo, pour ne jamais
+ * mélanger les deux.
+ */
+export const PITCH = {
+  port: 5174,
+  fixtures: `http://${HOST}:8799`,
+  libelles: "fixtures/libelles-pitch.json",
+  unite: { symbole: "€", decimales: 15 },
+} as const;
+
+/** Ce qui brancherait des données réelles. En mode pitch, une seule suffit à refuser le démarrage. */
+export const PITCH_FORBIDDEN = ["RELAY_API_URL", "RESPONSE_API_URL", "RELAY_HAS_VAULT"] as const;
+
+/** Variables réelles définies (non vides) à côté du mode pitch. Le message les nomme, jamais leur valeur. */
+export function pitchConflicts(env: Record<string, string | undefined>): string[] {
+  return PITCH_FORBIDDEN.filter((name) => (env[name] ?? "").trim() !== "");
+}
+
 type Next = (error?: unknown) => void;
 
 /** Lecture seule jusque dans le proxy : aucune autre méthode que GET ne sort d'ici. */
@@ -175,8 +195,14 @@ function hardening(local: Local): Plugin {
 
 export default defineConfig(({ mode, command, isPreview }) => {
   const env = { ...loadEnv(mode, root, ""), ...process.env };
-  const fixtures = apiUrl("FIXTURES_API_URL", env.FIXTURES_API_URL, `http://${HOST}:8788`);
-  const simulation = env.DASHBOARD_MODE === "simulation";
+  const pitch = env.DASHBOARD_PITCH === "1";
+  if (pitch) {
+    // Un écran ne mélange jamais données réelles et fictives : le mode pitch refuse de démarrer.
+    const conflicts = pitchConflicts(env);
+    if (conflicts.length > 0) throw new Error(`mode pitch refusé : ${conflicts.join(", ")} défini (environnement ou .env). Le pitch ne montre que des données fictives.`);
+  }
+  const fixtures = pitch ? PITCH.fixtures : apiUrl("FIXTURES_API_URL", env.FIXTURES_API_URL, `http://${HOST}:8788`);
+  const simulation = pitch || env.DASHBOARD_MODE === "simulation";
   const relay = apiUrl("RELAY_API_URL", env.RELAY_API_URL, `http://${HOST}:8787`);
   const responseSet = !simulation && (env.RESPONSE_API_URL ?? "").trim() !== "";
   const response = responseSet ? apiUrl("RESPONSE_API_URL", env.RESPONSE_API_URL, fixtures) : null;
@@ -189,13 +215,14 @@ export default defineConfig(({ mode, command, isPreview }) => {
     rewrite: (path) => path.slice(prefix.length) || "/",
   });
   const proxy: Record<string, ProxyOptions> = {
-    "/api/relay": upstream("/api/relay", relay),
+    // En mode pitch, aucun chemin ne mène au relais : seules les fixtures sont relayées.
+    ...(pitch ? {} : { "/api/relay": upstream("/api/relay", relay) }),
     "/api/simulation": upstream("/api/simulation", fixtures),
     // Le jeton éventuel est ajouté ici, côté serveur : il n'atteint jamais le navigateur.
     ...(response ? { "/api/reponse": upstream("/api/reponse", response, token ? { authorization: `Bearer ${token}` } : {}) } : {}),
   };
 
-  const devPort = 5173;
+  const devPort = pitch ? PITCH.port : 5173;
   const nonce = randomBytes(16).toString("base64");
 
   return {
@@ -203,8 +230,8 @@ export default defineConfig(({ mode, command, isPreview }) => {
     plugins: [
       hardening({
         vault: vaultModeFrom(env.RELAY_VAULT_MODE),
-        libelles: libellesFile(env.LIBELLES_FILE),
-        unite: uniteFrom(env.UNITE_SYMBOLE, env.UNITE_DECIMALES),
+        libelles: libellesFile(pitch ? PITCH.libelles : env.LIBELLES_FILE),
+        unite: pitch ? { ...PITCH.unite } : uniteFrom(env.UNITE_SYMBOLE, env.UNITE_DECIMALES),
       }),
     ],
     // Aucune variable d'environnement n'entre dans le bundle : ce préfixe n'est porté par aucune.

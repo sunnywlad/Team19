@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:argent-intelligent:dashboard:stats-daily:1",
+  "title": "PROPOSÉ (API-NEEDS.md § 9) : GET /stats/daily, agrégats des 30 derniers jours, par jour civil. Servi par le serveur de fixtures seulement tant que le relais ne l'implémente pas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "timezone", "generated_at_ms", "days"],
+  "properties": {
+    "version": { "const": 1 },
+    "timezone": {
+      "description": "Fuseau des jours civils, nom IANA (Europe/Paris).",
+      "type": "string",
+      "pattern": "^[A-Za-z_]{1,32}(/[A-Za-z_+-]{1,32}){0,2}$"
+    },
+    "generated_at_ms": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+    "days": {
+      "description": "Exactement 30 jours, du plus ancien à aujourd'hui compris.",
+      "type": "array",
+      "minItems": 30,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["date", "paid_auto", "paid_auto_wei", "paid_approved", "paid_approved_wei", "blocked", "blocked_gate", "blocked_wei", "blocked_unknown"],
+        "properties": {
+          "date": { "type": "string", "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$" },
+          "paid_auto": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+          "paid_auto_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/wei" },
+          "paid_approved": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+          "paid_approved_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/wei" },
+          "blocked": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+          "blocked_gate": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" },
+          "blocked_wei": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/wei" },
+          "blocked_unknown": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/uint" }
+        }
+      }
+    }
+  }
+}

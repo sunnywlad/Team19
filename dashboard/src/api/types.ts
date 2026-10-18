@@ -187,3 +187,20 @@ export type Libelles = { version: 1; libelles: Libelle[] };
 
 /** PROPOSÉ, API-NEEDS.md § 8. Unité d'affichage : 1 symbole = 10^decimales wei. */
 export type Unite = { symbole: string; decimales: number };
+
+/** PROPOSÉ, API-NEEDS.md § 9. Un jour civil, dans le fuseau de la réponse. */
+export type DailyStat = {
+  date: string;
+  paid_auto: number;
+  paid_auto_wei: string;
+  paid_approved: number;
+  paid_approved_wei: string;
+  /** Refus du contrat (hors refus d'un approbateur) et blocages à la porte. */
+  blocked: number;
+  blocked_gate: number;
+  /** Montant inscrit des références bloquées, quand il est connu. */
+  blocked_wei: string;
+  /** Blocages dont le montant est inconnu : hors de blocked_wei. */
+  blocked_unknown: number;
+};
+export type DailyStats = { version: 1; timezone: string; generated_at_ms: number; days: DailyStat[] };
