@@ -41,6 +41,18 @@ export function formatWei(wei: string | null | undefined, decimales: number = DE
   return rest === "" ? group(whole.toString()) : `${group(whole.toString())},${rest}`;
 }
 
+/**
+ * Montant dans l'unité déclarée. En euros : format monétaire français, deux
+ * décimales au moins (48 600,00), sans arrondi : une décimale non nulle au-delà
+ * du centime reste affichée. null si absent ou mal formé, jamais 0.
+ */
+export function formatAmount(wei: string | null | undefined, unite: Unite): string | null {
+  const text = formatWei(wei, unite.decimales);
+  if (text === null || unite.symbole !== "€") return text;
+  const [whole = "", rest = ""] = text.split(",");
+  return `${whole.replaceAll(" ", "\u202f")},${rest.padEnd(2, "0")}`;
+}
+
 const TIME = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 const DATE_TIME = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",

@@ -230,8 +230,31 @@ kbd {
 }
 
 .vide {
+  display: grid;
+  gap: 2px;
   color: var(--text-3);
   padding: var(--espace-2) 0;
+}
+
+.vide-titre {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.vide-aide {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.filtre-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: 13px;
 }
 
 .synthese {
@@ -448,7 +471,7 @@ td .nom-libelle {
   flex-direction: column;
 }
 
-/* Barre haute : provenance et fraîcheur de chaque source, date, thème, présentation. */
+/* Barre haute : recherche, environnement (provenance au clic), date, thème, présentation. */
 .barre-haute {
   position: sticky;
   top: 0;
@@ -461,11 +484,177 @@ td .nom-libelle {
   background: var(--surface);
 }
 
-.fraicheur {
+/* Recherche locale : aucun appel réseau, un filtre sur ce qui est déjà lu. */
+.recherche-zone {
+  position: relative;
+  margin-right: auto;
+}
+
+.recherche {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  margin: 0 auto 0 0;
+  align-items: center;
+  gap: 8px;
+  width: min(340px, 36vw);
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
+  background: var(--bg);
+  color: var(--text-3);
+}
+
+.recherche:focus-within {
+  border-color: var(--line-strong);
+}
+
+.recherche input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+}
+
+.recherche-liste {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  width: max(100%, 360px);
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--shadow);
+}
+
+.recherche-liste[hidden] {
+  display: none;
+}
+
+.recherche-option {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 0 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.recherche-option[aria-selected="true"],
+.recherche-option:hover {
+  background: var(--surface-2);
+}
+
+.recherche-genre {
+  grid-row: span 2;
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+.recherche-nom {
+  font-weight: 500;
+}
+
+.recherche-sous,
+.recherche-vide {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.recherche-vide {
+  padding: 8px 10px;
+}
+
+/* Puce d'environnement : une seule mention de la provenance dans la barre, le détail au clic. */
+.env {
+  position: relative;
+}
+
+.puce-env {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--pilule);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.puce-env:hover {
+  background: var(--surface-2);
+}
+
+.puce-env .ic {
+  width: 14px;
+  height: 14px;
+}
+
+/* Faux coffre, origine non dite : teinte d'avertissement, et un trait plein pour qui ne voit pas la couleur. */
+.puce-env-coffre-simule,
+.puce-env-non-confirme {
+  border: 1px solid var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 500;
+}
+
+.puce-env-coffre-simule:hover,
+.puce-env-non-confirme:hover {
+  background: var(--warn-soft);
+  filter: brightness(0.97);
+}
+
+.puce-env-precision {
+  font-weight: 400;
+}
+
+.sources-panneau {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--rayon-carte);
+  box-shadow: var(--shadow);
+}
+
+.sources-panneau[hidden] {
+  display: none;
+}
+
+.sources-titre {
+  font-weight: 600;
+}
+
+.sources-env {
+  color: var(--text-2);
+}
+
+.sources-note {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.fraicheur {
+  display: grid;
+  gap: 8px;
+  margin: 0;
   padding: 0;
   list-style: none;
   font-size: 12.5px;
@@ -473,18 +662,34 @@ td .nom-libelle {
 }
 
 .fraicheur li {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--rayon);
 }
 
 .fraicheur-nom {
-  color: var(--text-2);
+  color: var(--text);
   font-weight: 500;
 }
 
-.fraicheur .perime {
+.fraicheur-origine {
+  justify-self: end;
+  font-weight: 500;
+}
+
+.fraicheur-origine.source-reel {
+  color: var(--ok);
+}
+
+.fraicheur-origine.source-simulation {
+  color: var(--accent);
+}
+
+.fraicheur .perime .fraicheur-etat,
+.fraicheur .perime .fraicheur-heure {
   color: var(--danger);
 }
 
@@ -616,13 +821,6 @@ td .nom-libelle {
   border-color: transparent;
   background: var(--warn-soft);
   color: var(--warn);
-}
-
-/* Hachures : le bandeau de simulation se distingue même sans la couleur. */
-.bandeau-simule {
-  border: 1px dashed var(--accent);
-  color: var(--accent);
-  background: repeating-linear-gradient(135deg, var(--accent-soft) 0 10px, var(--surface) 10px 20px);
 }
 
 .alerte-ligne {
@@ -843,6 +1041,14 @@ td .nom-libelle {
 }
 
 /* --- Chiffres clés --- */
+.graphe-vide {
+  position: absolute;
+  inset: 30% 10% auto;
+  color: var(--text-3);
+  font-size: 13px;
+  text-align: center;
+}
+
 .kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -877,6 +1083,15 @@ td .nom-libelle {
   font-weight: 600;
 }
 
+/* Une valeur absente se dit en petit et en gris, jamais en gros titre. */
+.kpi-valeur .indisponible,
+.placable .indisponible {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 30px;
+}
+
 .kpi-sous {
   color: var(--text-3);
   font-size: 12.5px;
@@ -895,6 +1110,7 @@ td .nom-libelle {
 
 /* --- Graphique --- */
 .graphe {
+  position: relative;
   margin: 0;
   display: grid;
   gap: 10px;
@@ -1104,26 +1320,83 @@ caption {
   color: var(--accent);
 }
 
-/* Étiquettes de provenance : la forme porte le sens autant que la couleur. */
+/* Provenance d'un panneau : une icône, le mot dans l'infobulle. Un clic ouvre le panneau « Sources ». */
 .source {
   display: inline-flex;
   align-items: center;
-  padding: 0 8px;
-  border-radius: var(--pilule);
-  font-size: 11.5px;
-  font-weight: 500;
-  line-height: 18px;
-  white-space: nowrap;
+  gap: 4px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.source:hover {
+  background: var(--surface-2);
+}
+
+.source .ic {
+  width: 14px;
+  height: 14px;
 }
 
 .source-reel {
-  border: 1px solid var(--ok);
   color: var(--ok);
 }
 
 .source-simulation {
-  border: 1px dashed var(--accent);
-  color: var(--accent);
+  color: var(--text-3);
+}
+
+.source-simulation .ic {
+  stroke-dasharray: 2.4 1.6;
+}
+
+.source-non-confirme {
+  color: var(--text-3);
+}
+
+.source-mot {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.horloge-icone {
+  display: inline-flex;
+  vertical-align: -2px;
+  color: var(--text-3);
+}
+
+.horloge-icone .ic {
+  width: 13px;
+  height: 13px;
+}
+
+/* Notes techniques : repliées sous le panneau, ouvertes à la demande. */
+.details-tech {
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.details-tech > summary {
+  width: fit-content;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.details-tech > summary:hover {
+  color: var(--text-2);
+}
+
+.details-corps {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
 }
 
 .horloge {
@@ -1827,17 +2100,33 @@ caption {
     padding: 8px 16px;
   }
 
-  .fraicheur {
-    width: 100%;
+  /* Recherche sur sa propre ligne ; la puce garde son mot, la précision passe au panneau « Sources ». */
+  .recherche-zone {
     order: 3;
+    width: 100%;
+    margin-right: 0;
   }
 
+  .recherche {
+    width: 100%;
+  }
+
+  .recherche-liste {
+    width: 100%;
+  }
+
+  .puce-env-precision,
   .date {
     display: none;
   }
 
-  .barre-haute .outil:first-of-type {
-    margin-left: auto;
+  .env {
+    margin-right: auto;
+  }
+
+  .sources-panneau {
+    right: auto;
+    left: 0;
   }
 
   .contenu {

@@ -49,6 +49,11 @@ export function DecisionsChart({ days }: { days: Day[] }) {
 
   return (
     <figure className="graphe" data-testid="graphe-jours">
+      {totals.auto + totals.approved + totals.blocked === 0 && (
+        <p className="graphe-vide" data-testid="graphe-vide">
+          Aucune décision sur ces {days.length} jours. Le graphique se remplit à la première.
+        </p>
+      )}
       <svg className="graphe-svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={summary} focusable="false">
         {ticks.map((t) => (
           <g key={t}>

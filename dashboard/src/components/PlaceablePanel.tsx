@@ -1,7 +1,7 @@
 import type { VaultState } from "../api/types.ts";
 import { useAffichage } from "../hooks/useAffichage.ts";
 import { formatTime, unitLegend } from "../lib/format.ts";
-import { Amount } from "./atoms.tsx";
+import { Amount, Details } from "./atoms.tsx";
 import { PlaceableBar } from "./PlaceableBar.tsx";
 import { Rolling } from "./Rolling.tsx";
 
@@ -19,7 +19,6 @@ export function PlaceableValues({ vault, simulated = false }: { vault: VaultStat
           <Amount wei={vault.placeable_wei} />
         </Rolling>
       </p>
-      <p className="formule">plaçable = cash − dettes admises − réserve de sécurité − placements bloqués (jamais négatif)</p>
       <PlaceableBar vault={vault} />
       <dl className="termes">
         <div>
@@ -63,12 +62,15 @@ export function PlaceableValues({ vault, simulated = false }: { vault: VaultStat
           </dd>
         </div>
       </dl>
-      <p className="discret" data-testid="placable-origine">
-        {simulated
-          ? `Valeurs d'un faux coffre en mémoire dans le relais (bloc simulé ${vault.block_number}, ${formatTime(vault.block_timestamp * 1000)}) : aucun fonds, aucune chaîne.`
-          : `Valeurs lues dans le contrat au bloc ${vault.block_number} (${formatTime(vault.block_timestamp * 1000)}, horloge du bloc).`}{" "}
-        Aucun recalcul dans l'interface. Une facture bloquée reste une dette admise : elle n'est pas déduite deux fois. {unitLegend(unite)}.
-      </p>
+      <Details>
+        <p className="formule">plaçable = cash − dettes admises − réserve de sécurité − placements bloqués (jamais négatif)</p>
+        <p className="discret" data-testid="placable-origine">
+          {simulated
+            ? `Valeurs d'un faux coffre en mémoire dans le relais (bloc simulé ${vault.block_number}, ${formatTime(vault.block_timestamp * 1000)}) : aucun fonds, aucune chaîne.`
+            : `Valeurs lues dans le contrat au bloc ${vault.block_number} (${formatTime(vault.block_timestamp * 1000)}, horloge du bloc).`}{" "}
+          Aucun recalcul dans l'interface. Une facture bloquée reste une dette admise : elle n'est pas déduite deux fois. {unitLegend(unite)}.
+        </p>
+      </Details>
       {vault.vault_paused === true && (
         <p className="alerte-ligne" role="status">
           Coffre en pause : aucune sortie.

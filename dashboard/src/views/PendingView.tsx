@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent }
 import { createPortal } from "react-dom";
 import type { JournalEntry, RelayDecision, RelayEvent } from "../api/types.ts";
 import { Nom, libelleOf } from "../components/Affichage.tsx";
-import { Amount, ClockTag, OpaqueId } from "../components/atoms.tsx";
+import { Amount, ClockTag, Details, OpaqueId, Vide } from "../components/atoms.tsx";
 import { Icon, type IconName } from "../components/icons.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { CaseStatePill } from "../components/pills.tsx";
@@ -152,10 +152,12 @@ function Drawer({ c, events, decisions, journal, now, onClose }: DrawerProps) {
                 </li>
               ))}
             </ul>
-            <p className="discret">
-              Déduits du motif de la décision et de l'entrée DETECTION du journal. « Écart à l'habitude » et « doublon possible » ne sont pas
-              calculés : ils n'apparaissent pas.
-            </p>
+            <Details>
+              <p className="discret">
+                Déduits du motif de la décision et de l'entrée DETECTION du journal. « Écart à l'habitude » et « doublon possible » ne sont pas
+                calculés : ils n'apparaissent pas.
+              </p>
+            </Details>
           </section>
 
           <section aria-labelledby={`${titleId}-faits`}>
@@ -174,8 +176,22 @@ function Drawer({ c, events, decisions, journal, now, onClose }: DrawerProps) {
               <dt>Bénéficiaire inscrit</dt>
               <dd data-testid="tiroir-beneficiaire">
                 <Nom id={c.beneficiaryId} genre="beneficiaire" withId missing="non disponible" />
-                {beneficiary?.detail && <span className="discret"> · {beneficiary.detail}</span>}
+                {(beneficiary?.sous_titre ?? beneficiary?.detail) && <span className="discret"> · {beneficiary?.sous_titre ?? beneficiary?.detail}</span>}
               </dd>
+              {beneficiary?.siren && (
+                <>
+                  <dt>SIREN</dt>
+                  <dd data-testid="tiroir-siren">{beneficiary.siren}</dd>
+                </>
+              )}
+              {beneficiary?.iban_masque && (
+                <>
+                  <dt>IBAN au référentiel</dt>
+                  <dd className="mono" data-testid="tiroir-iban">
+                    {beneficiary.iban_masque}
+                  </dd>
+                </>
+              )}
               <dt>Agent</dt>
               <dd>
                 <Nom id={c.agentId} genre="agent" withId />
@@ -250,7 +266,7 @@ function Drawer({ c, events, decisions, journal, now, onClose }: DrawerProps) {
 
 function ClosedTable({ cases, state }: { cases: ClosedCase[]; state: Exclude<CaseState, "attente"> }) {
   const rows = cases.filter((c) => c.state === state);
-  if (rows.length === 0) return <p className="vide carte-vide">Aucun cas {CASE_STATE_WORDS[state].toLowerCase()}.</p>;
+  if (rows.length === 0) return <Vide className="carte-vide">Aucun cas {CASE_STATE_WORDS[state].toLowerCase()} pour l'instant.</Vide>;
   return (
     <div className="defilement" role="region" aria-label={`Cas ${CASE_STATE_WORDS[state].toLowerCase()}s`} tabIndex={0}>
       <table className="tableau">
@@ -322,7 +338,7 @@ export function PendingView({ view }: { view: ViewProps }) {
   });
 
   return (
-    <Panel title="Demandes renvoyées à un humain" id="titre-attente" source={vaultFed(sources.relay, vaultOrigin)} snapshot={relay} now={now} className="carte-liste">
+    <Panel title="Demandes renvoyées à un humain" id="titre-attente" source={vaultFed(sources.relay, vaultOrigin)} famille="relay" snapshot={relay} now={now} className="carte-liste">
       {(data) => {
         const closed = closedCases(data.decisions, data.events);
         const counts: Record<CaseState, number> = {
@@ -356,7 +372,9 @@ export function PendingView({ view }: { view: ViewProps }) {
               {tab !== "attente" ? (
                 <ClosedTable cases={closed} state={tab} />
               ) : cases.length === 0 ? (
-                <p className="vide carte-vide">Aucun cas en attente.</p>
+                <Vide className="carte-vide" hint="L'approbateur est notifié à chaque nouvelle demande au-dessus du seuil.">
+                  Aucune demande n'attend votre décision.
+                </Vide>
               ) : (
                 <div className="defilement" role="region" aria-label="Cas en attente" tabIndex={0}>
                   <table className="tableau">
@@ -409,16 +427,19 @@ export function PendingView({ view }: { view: ViewProps }) {
                 </div>
               )}
             </div>
-            <p className="discret carte-note">
-              Faits inscrits au contrat, lus dans ses événements. La justification rédigée par un agent n'est jamais affichée. L'échéance est en
-              heure de bloc, comparée ici à l'horloge locale du navigateur <ClockTag clock="bloc" /> : le temps restant est estimé.
-              {tab === "attente" && cases.length > 0 && (
-                <>
-                  {" "}
-                  <kbd>J</kbd> et <kbd>K</kbd> : cas suivant et précédent ; <kbd>Échap</kbd> ferme le détail.
-                </>
-              )}
-            </p>
+            {tab === "attente" && cases.length > 0 && (
+              <p className="discret carte-note">
+                <kbd>J</kbd> et <kbd>K</kbd> : cas suivant et précédent ; <kbd>Échap</kbd> ferme le détail.
+              </p>
+            )}
+            <div className="carte-note">
+              <Details>
+                <p className="discret">
+                  Faits inscrits au contrat, lus dans ses événements. La justification rédigée par un agent n'est jamais affichée. L'échéance est
+                  en heure de bloc, comparée ici à l'horloge locale du navigateur <ClockTag clock="bloc" /> : le temps restant est estimé.
+                </p>
+              </Details>
+            </div>
             {current && <Drawer key={current.requestId} c={current} events={data.events} decisions={data.decisions} journal={journal} now={now} onClose={() => setSelected(null)} />}
           </>
         );

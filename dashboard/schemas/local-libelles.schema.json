@@ -18,7 +18,18 @@
           "id": { "$ref": "urn:argent-intelligent:dashboard:defs:1#/$defs/hex32" },
           "genre": { "enum": ["beneficiaire", "agent", "facture", "placement", "client"] },
           "libelle": { "$ref": "#/$defs/texte" },
-          "detail": { "$ref": "#/$defs/texte" }
+          "detail": { "$ref": "#/$defs/texte" },
+          "sous_titre": { "$ref": "#/$defs/texte" },
+          "iban_masque": {
+            "description": "IBAN déjà masqué : code pays, clé, au moins un groupe •••• et au plus quatre caractères en clair à la fin. Un IBAN complet est refusé.",
+            "type": "string",
+            "pattern": "^[A-Z]{2}[0-9]{2}( [0-9]{4}){0,2}( ••••){1,5} [0-9A-Z]{1,4}$"
+          },
+          "siren": {
+            "description": "Neuf chiffres en trois groupes : 812 447 905.",
+            "type": "string",
+            "pattern": "^[0-9]{3} [0-9]{3} [0-9]{3}$"
+          }
         }
       }
     }

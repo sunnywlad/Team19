@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import type { ApiClient } from "./api/client.ts";
 import { AffichageProvider } from "./components/Affichage.tsx";
-import { Banners, Freshness } from "./components/Banners.tsx";
+import { Banners, EnvironnementPuce, environnementOf, environnementTexte } from "./components/Banners.tsx";
 import { FlowPanel } from "./components/FlowPanel.tsx";
 import { Icon, type IconName } from "./components/icons.tsx";
+import { Recherche } from "./components/Recherche.tsx";
 import { loadRelay, loadResponse } from "./data/load.ts";
 import { latestIncidents, pendingCases } from "./domain/activity.ts";
 import { useAffichage } from "./hooks/useAffichage.ts";
+import { ProvenanceContext } from "./hooks/useProvenance.ts";
 import { useNow, usePolled } from "./hooks/usePolled.ts";
 import { THEME_LABELS, useTheme, type Theme } from "./hooks/useTheme.ts";
 import { formatLongDate, unitLegend } from "./lib/format.ts";
@@ -125,6 +127,10 @@ function Console({ client }: { client: ApiClient }) {
   );
 
   const [theme, nextTheme] = useTheme();
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const provenance = useMemo(() => ({ ouvrirSources: () => setSourcesOpen(true) }), []);
+  const [query, setQuery] = useState("");
+  const env = environnementOf(view.sources, view.vaultOrigin);
 
   // Touche « P » : mode présentation pour la vidéo. Navigation masquée, flux agrandi ;
   // bandeaux, étiquettes de provenance et pied restent. Échap en sort.
@@ -191,6 +197,7 @@ function Console({ client }: { client: ApiClient }) {
   const screen = SCREENS.find((s) => s.key === current) ?? SCREENS[0]!;
 
   return (
+    <ProvenanceContext.Provider value={provenance}>
     <div className={presenting ? "console mode-presentation" : "console"} data-presentation={presenting ? "oui" : "non"}>
       <button type="button" className="evitement" data-ui="navigation" onClick={() => main.current?.focus()}>
         Aller au contenu
@@ -246,7 +253,16 @@ function Console({ client }: { client: ApiClient }) {
 
       <div className="principal">
         <header className="barre-haute">
-          <Freshness view={view} />
+          <Recherche
+            events={relay.data?.events ?? null}
+            query={query}
+            onQuery={setQuery}
+            onPick={(item) => {
+              setQuery(item.nom);
+              show(item.genre === "agent" ? "agents" : "fournisseurs");
+            }}
+          />
+          <EnvironnementPuce view={view} open={sourcesOpen} onToggle={setSourcesOpen} />
           <p className="date" data-testid="date-du-jour">
             {formatLongDate(now)}
           </p>
@@ -282,8 +298,8 @@ function Console({ client }: { client: ApiClient }) {
                 {current === "apercu" && <ApercuView view={view} onOpen={show} />}
                 {current === "valider" && <PendingView view={view} />}
                 {current === "incidents" && <IncidentView view={view} />}
-                {current === "fournisseurs" && <FournisseursView view={view} />}
-                {current === "agents" && <AgentsView view={view} />}
+                {current === "fournisseurs" && <FournisseursView view={view} query={query} onClear={() => setQuery("")} />}
+                {current === "agents" && <AgentsView view={view} query={query} onClear={() => setQuery("")} />}
                 {current === "regles" && <ReglesView view={view} />}
                 {current === "journal" && <JournalView view={view} />}
                 {current === "campagne" && <CampagneView />}
@@ -292,7 +308,7 @@ function Console({ client }: { client: ApiClient }) {
           )}
           <footer className="pied">
             <p className="pied-mention" data-testid="pied-mention">
-              Données fictives · réseau de test
+              {environnementTexte(env)}
             </p>
             <p>
               Cette console n'émet que des lectures (GET) et ne détient aucune clé : elle ne peut ni payer, ni mettre en pause, ni approuver.
@@ -303,5 +319,6 @@ function Console({ client }: { client: ApiClient }) {
         </div>
       </div>
     </div>
+    </ProvenanceContext.Provider>
   );
 }

@@ -1,7 +1,7 @@
 import { allOutcomes, initialOutcome, requestSteps, type Outcome } from "../domain/flow.ts";
 import { useArrival } from "../hooks/useArrival.ts";
 import { sameWorld, vaultFed, type ViewProps } from "../views/shared.ts";
-import { ClockTag, SourceTag } from "./atoms.tsx";
+import { ClockTag, Details, SourceTag } from "./atoms.tsx";
 import { FlowDiagram, StepTimeline } from "./FlowDiagram.tsx";
 import { Panel } from "./Panel.tsx";
 
@@ -19,7 +19,7 @@ export function FlowPanel({ view, large = false }: { view: ViewProps; large?: bo
   const arrival = useArrival<Outcome>([relay.data ? outcomes.contract : null, response.data ? outcomes.gateway : null]);
 
   return (
-    <Panel title="Flux d'une demande" id="titre-flux" source={vaultFed(sources.relay, vaultOrigin)} snapshot={relay} now={now} className={`panneau-flux${large ? " panneau-flux-grand" : ""}`}>
+    <Panel title="Flux d'une demande" id="titre-flux" source={vaultFed(sources.relay, vaultOrigin)} famille="relay" snapshot={relay} now={now} className={`panneau-flux${large ? " panneau-flux-grand" : ""}`}>
       {() => {
         // L'issue arrivée est relue dans les données courantes : si elle a disparu, on revient à la dernière connue.
         const fresh = arrival ? [...outcomes.contract, ...outcomes.gateway].find((o) => o.key === arrival.item.key) : undefined;
@@ -33,11 +33,13 @@ export function FlowPanel({ view, large = false }: { view: ViewProps; large?: bo
             {outcome !== null && (
               <>
                 <StepTimeline steps={requestSteps(outcome, stepsJournal)} />
-                <p className="discret flux-note">
-                  Étapes cochées seulement si le journal les atteste <ClockTag clock="journal" />. Arrêts à la porte et réponse lus au service de
-                  réponse <SourceTag source={sources.response} />
-                  {!linked && " : non rapprochés des décisions du relais, mondes différents"}.
-                </p>
+                <Details>
+                  <p className="discret flux-note">
+                    Étapes cochées seulement si le journal les atteste <ClockTag clock="journal" />. Arrêts à la porte et réponse lus au service de
+                    réponse <SourceTag source={sources.response} famille="response" lu={response.lastOkAt} />
+                    {!linked && " : non rapprochés des décisions du relais, mondes différents"}.
+                  </p>
+                </Details>
               </>
             )}
           </>
