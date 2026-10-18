@@ -1,0 +1,80 @@
+{
+  "name": "Veto — Direction D · Console",
+  "version": 1,
+  "meta": { "source": "Veto Console (démo HTML, direction D)" },
+  "color": {
+    "themes": [{ "id": "light", "name": "Clair" }, { "id": "dark", "name": "Sombre" }],
+    "tokens": [
+      { "name": "bg", "value": { "light": "#f6f5f8", "dark": "#121017" }, "usage": "Fond de page derrière les cartes et tableaux." },
+      { "name": "surface", "value": { "light": "#ffffff", "dark": "#1a1722" }, "usage": "Cartes, tableaux, tiroir, modale, barre haute. Texte `text`, `text-2`, `text-3` dessus." },
+      { "name": "surface-2", "value": { "light": "#f2f0f6", "dark": "#221e2c" }, "usage": "Survol de ligne, onglet de segment actif, zone d'extrait." },
+      { "name": "sidebar", "value": { "light": "#fbfafc", "dark": "#15121c" }, "usage": "Fond de la barre latérale de navigation." },
+      { "name": "line", "value": { "light": "#e6e3ec", "dark": "#2c2838" }, "usage": "Filets d'un pixel : bordures de carte, séparateurs de ligne. Décoratif, jamais seul pour délimiter un contrôle." },
+      { "name": "line-strong", "value": { "light": "#cfcad9", "dark": "#3d3850" }, "usage": "Bordure de bouton secondaire, de champ, d'infobulle." },
+      { "name": "text", "value": { "light": "#17151e", "dark": "#eeebf5" }, "usage": "Texte principal, titres, montants." },
+      { "name": "text-2", "value": { "light": "#5b5768", "dark": "#aba6ba" }, "usage": "Texte secondaire : phrases d'en-tête, navigation inactive." },
+      { "name": "text-3", "value": { "light": "#6f6b7d", "dark": "#8f8aa0" }, "usage": "Libellés de colonne, conditions, horodatages. 4,5:1 sur `surface`." },
+      { "name": "accent", "value": { "light": "#2e1a6b", "dark": "#a99bf2" }, "usage": "Violet Veto : bouton principal, liens, onglet courant, table du logo. La seule couleur d'accent." },
+      { "name": "accent-hover", "value": { "light": "#3d2690", "dark": "#bdb2f6" }, "usage": "Survol du bouton principal." },
+      { "name": "accent-soft", "value": { "light": "#efebfb", "dark": "#2a2342" }, "usage": "Élément de navigation courant, ligne sélectionnée." },
+      { "name": "on-accent", "value": { "light": "#ffffff", "dark": "#17121f" }, "usage": "Texte sur un aplat `accent`." },
+      { "name": "ok", "value": { "light": "#11714f", "dark": "#5cc9a0" }, "usage": "Texte et icône d'état : payé, validé, actif, chaîne intègre." },
+      { "name": "ok-soft", "value": { "light": "#e3f3ec", "dark": "#13302a" }, "usage": "Fond de pastille `ok`." },
+      { "name": "warn", "value": { "light": "#845400", "dark": "#e8b44e" }, "usage": "Texte et icône d'état : à valider, échéance, changement en cours." },
+      { "name": "warn-soft", "value": { "light": "#fbf0d9", "dark": "#33280f" }, "usage": "Fond de pastille `warn` et de l'encadré « Pourquoi ce paiement attend votre décision »." },
+      { "name": "danger", "value": { "light": "#b3341a", "dark": "#f08c6e" }, "usage": "Texte et icône d'état : rejeté, bloqué, suspendu, gravité critique." },
+      { "name": "danger-soft", "value": { "light": "#fbe8e2", "dark": "#3a1d16" }, "usage": "Fond de pastille `danger` et de l'élément signalé dans un extrait." },
+      { "name": "serie-auto", "value": { "light": "#4b3bb5", "dark": "#8f7fea" }, "usage": "Graphique : paiements passés automatiquement. Palette validée daltonisme." },
+      { "name": "serie-validee", "value": { "light": "#a99bf2", "dark": "#5a48c8" }, "usage": "Graphique : paiements passés après validation humaine. Contraste < 3:1 : légende et infobulle obligatoires." },
+      { "name": "serie-bloquee", "value": { "light": "#c2522b", "dark": "#d4673e" }, "usage": "Graphique : demandes bloquées par une règle." },
+      { "name": "voile", "value": { "light": "rgba(23, 21, 30, 0.32)", "dark": "rgba(0, 0, 0, 0.55)" }, "usage": "Voile derrière le tiroir et la modale." }
+    ]
+  },
+  "type": {
+    "fonts": [],
+    "families": {
+      "sans": "\"Geist\", \"Helvetica Neue\", Arial, system-ui, sans-serif",
+      "mono": "\"Geist Mono\", ui-monospace, \"SFMono-Regular\", Menlo, Consolas, monospace"
+    },
+    "groups": [
+      { "name": "Titres et chiffres", "family": "sans", "styles": [
+        { "name": "gros-montant", "fontSize": "28px", "lineHeight": "32px", "fontWeight": 600, "letterSpacing": "-0.02em", "sample": "48 600,00 €", "usage": "Montant en tête du tiroir d'une demande." },
+        { "name": "chiffre-cle", "fontSize": "26px", "lineHeight": "30px", "fontWeight": 600, "letterSpacing": "-0.02em", "sample": "4 208 392 €", "usage": "Valeur d'une carte de chiffre clé." },
+        { "name": "titre-page", "fontSize": "22px", "lineHeight": "28px", "fontWeight": 600, "letterSpacing": "-0.015em", "sample": "À valider", "usage": "Titre d'écran." },
+        { "name": "titre-carte", "fontSize": "14px", "lineHeight": "20px", "fontWeight": 600, "sample": "Décisions par jour", "usage": "Titre de carte ou de section." }
+      ]},
+      { "name": "Texte", "family": "sans", "styles": [
+        { "name": "corps", "fontSize": "14px", "lineHeight": "20px", "fontWeight": 400, "sample": "Paiements proposés par vos agents IA.", "usage": "Texte courant, cellules de tableau." },
+        { "name": "secondaire", "fontSize": "12.5px", "lineHeight": "18px", "fontWeight": 400, "sample": "avant 15:30", "usage": "Sous-ligne de cellule, conditions, horodatages." },
+        { "name": "etiquette", "fontSize": "11px", "lineHeight": "16px", "fontWeight": 500, "letterSpacing": "0.08em", "sample": "CONTRÔLES", "usage": "Titres de groupe en capitales espacées. Plancher : rien sous 11 px." }
+      ]},
+      { "name": "Identifiants", "family": "mono", "styles": [
+        { "name": "identifiant", "fontSize": "12.5px", "lineHeight": "18px", "fontWeight": 400, "sample": "AP-Factures-01 · c8b587…8d43", "usage": "Agents, références, empreintes, IBAN masqués, horodatages de la piste d'audit." }
+      ]}
+    ]
+  },
+  "spacing": { "tokens": [
+    { "name": "espace-1", "value": "4px", "usage": "Entre une icône et son mot dans une pastille." },
+    { "name": "espace-2", "value": "8px", "usage": "Entre boutons, entre lignes d'un bloc." },
+    { "name": "espace-3", "value": "12px", "usage": "Entre cartes de chiffres." },
+    { "name": "espace-4", "value": "16px", "usage": "Marge interne de carte, gouttière mobile." },
+    { "name": "espace-5", "value": "20px", "usage": "Écart vertical entre sections d'un écran, marge du tiroir." },
+    { "name": "espace-6", "value": "24px", "usage": "Gouttière du contenu sur ordinateur." }
+  ]},
+  "radius": { "tokens": [
+    { "name": "rayon-sm", "value": "6px", "usage": "Onglets de segment, éléments de navigation." },
+    { "name": "rayon", "value": "8px", "usage": "Boutons, champs, encadrés." },
+    { "name": "rayon-carte", "value": "10px", "usage": "Cartes et tableaux." },
+    { "name": "rayon-modale", "value": "12px", "usage": "Modale." },
+    { "name": "pilule", "value": "999px", "usage": "Pastilles d'état, puce de mode démo." }
+  ]},
+  "shadow": { "tokens": [
+    { "name": "shadow-flottant", "value": { "light": "0 12px 32px rgba(23, 21, 30, 0.14)", "dark": "0 12px 32px rgba(0, 0, 0, 0.45)" }, "usage": "Uniquement ce qui flotte : tiroir, modale, infobulle, toast. Jamais sur une carte." }
+  ]},
+  "hauteur": { "tokens": [
+    { "name": "ligne-tableau", "value": "44px", "usage": "Hauteur d'une ligne de tableau : 12 à 15 lignes visibles en 1440 × 900." },
+    { "name": "controle", "value": "34px", "usage": "Hauteur minimale d'un bouton." },
+    { "name": "barre-laterale", "value": "236px", "usage": "Largeur de la navigation." },
+    { "name": "tiroir", "value": "520px", "usage": "Largeur du panneau latéral de détail." }
+  ]}
+}
