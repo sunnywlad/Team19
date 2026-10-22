@@ -1,7 +1,34 @@
 # VETO
 
 Passerelle de confiance entre des agents IA et la trésorerie d'une entreprise.
-Projet du hackathon Secure Horizons, track 1 « Fintech Security ».
+
+> **In English.** VETO is a trust gateway between AI agents and a company
+> treasury. Each payment request is scored at the gate, then decided by a
+> Solidity vault on its own state: rejected, sent to a human, or paid.
+> Built with Foundry, replayed on anvil and on a private Avalanche L1 test chain:
+> test networks only. 332 Foundry and 199 off-chain tests.
+
+## En bref
+
+- **Problème** : un agent IA nourri d'un document piégé peut ordonner un paiement que rien n'arrête.
+- **Ce qui tourne** : porte d'entrée et détecteur, relais, journal chaîné, dashboard et coffre `ArgentVault` ; `make demo` lance toute la chaîne.
+- **Stack** : Solidity et Foundry, L1 Avalanche privé (chaîne 191919), services TypeScript sur Node 22.
+- **Périmètre** : réseaux locaux et de test seulement ; aucun réseau public, aucun audit indépendant.
+
+**Résultat** : Hackathon Secure Horizons avec Avalanche et ESSEC, track Fintech
+Security, 3e sur 16, 10-11 octobre 2026.
+
+**Rôle** : Wladimir était lead du projet et a écrit toute la partie blockchain,
+dont le coffre ArgentVault.
+
+### Équipe
+
+| Nom | Rôle |
+|---|---|
+| Wladimir | Contrats (coffre ArgentVault, marché de vérification), L1 Avalanche VETO, services de vérification hors chaîne |
+| Loris | Porte d'entrée et réponse |
+| Joseph | Relais, dashboard, CI, livrables |
+| Nicolas | Pitch et relecture |
 
 Ce README dit ce qui tourne aujourd'hui. Ce qui est conçu mais pas écrit est
 marqué comme tel : voir [État des composants](#état-des-composants).
@@ -28,25 +55,21 @@ sur notre L1 Avalanche de test (chaîne 191919, un seul validateur,
 [preuve](docs-jury/preuves/vault-l1-aws.md)). Par défaut, `VAULT_MODE=fake` : le flux tourne contre un faux
 coffre, sans fonds ni chaîne.
 
+## Prouvé
+
+- **Tests** : 332 tests Foundry (253 pour le marché, 79 pour le coffre) et 199 tests hors chaîne, tous verts ([tests.md](docs-jury/tests.md)).
+- **Coffre** : scènes d'attaque rejouées sur anvil (chaîne 31337, [mesure](docs/mesures/demo.json)) et sur notre L1 de test (chaîne 191919, [preuve](docs-jury/preuves/vault-l1-aws.md)) ; sur chacun, quatre attaques, deux passées par la porte puis refusées par le contrat, aucune sortie de fonds.
+- **Journal chaîné** : chaque étape y écrit une entrée, et `npm run verify-journal` en vérifie la chaîne depuis `response/`.
+- **Détecteur** `regles-0.3` : 50 attaques détectées sur 100 et 4 demandes légitimes bloquées à tort sur 100, sur un jeu synthétique écrit par un modèle ; ces taux ne valent pas pour le monde réel ([mesure](docs/mesures/bench-test.json)).
+- **Banc LLM** : un comité de cinq instances Amazon Bedrock refuse 18 attaques synthétiques sur 20, en renvoie 2 en revue humaine, sans faux positif sur 20 demandes légitimes ; hors chaîne, non déployé sur le L1 ([banc](docs-jury/rendus/detection-llm.md)).
+
 ## Cadrage du paiement
 
-**Démontré, sur réseau de test.** Le coffre détient des fonds de test et paie
-dans la transaction de décision : événement `Paid`, suivi d'un transfert natif.
-
-**Envisagé, non construit.** En production, `Paid` serait l'autorisation qu'un
-connecteur bancaire consomme. Dans ce mode, le contrat ne détient plus les
-fonds : la garantie « seuls les fonds détenus par le contrat sont protégés » ne
-s'applique plus, et le connecteur devient un composant de confiance à concevoir
-(finalité, rejeu, montant et bénéficiaire lus dans l'événement). Ce connecteur
-n'existe pas : ni code, ni spec.
-
-**État du dépôt.** Le premier mode est celui de la spec ([02-contrat.md](specs/02-contrat.md) § 1
-et § 8) et de l'interface gelée. Le contrat est écrit (`src/ArgentVault.sol`) et
-`VAULT_MODE=chain make demo` le déploie sur un réseau de test local (anvil,
-chaîne 31337). Les mêmes scènes ont été rejouées sur notre L1 Avalanche de
-test ([preuve](docs-jury/preuves/vault-l1-aws.md)) : « démontré » vaut pour ces deux réseaux et pour eux
-seuls. Aucun réseau de test public n'est testé. En mode fake, le mode par défaut, rien n'est
-payé : un faux coffre rejoue les règles, sans fonds.
+**Démontré, sur réseau de test.** Le coffre détient des fonds de test et paie dans la transaction de décision
+(événement `Paid`, puis transfert natif), sur anvil et sur notre L1 de test, et sur eux seuls ; en mode fake, rien n'est payé.
+**Envisagé, non construit.** En production, `Paid` serait l'autorisation consommée par un connecteur bancaire ; le contrat
+ne détiendrait plus les fonds et le connecteur deviendrait un composant de confiance à concevoir.
+Ce connecteur n'existe pas : ni code, ni spec. Spec du premier mode : [02-contrat.md](specs/02-contrat.md) § 1 et § 8.
 
 ## Architecture
 
@@ -100,65 +123,12 @@ Les étapes 1 à 4 et 6 à 8 écrivent une entrée dans le journal, tenu par
 `response/`. Les décisions du contrat (9 et 10) y sont recopiées par le service
 de réponse, qui les lit dans l'indexeur. Les étapes 5, 11 et 12 n'écrivent rien.
 
-## Installation
-
-Prérequis : Node 22, npm, make, curl et jq. Foundry (forge, anvil) est
-facultatif en mode fake ; il est requis pour les contrats de `src/`, pour le
-test du relais sur chaîne locale et pour `VAULT_MODE=chain`.
-
-```bash
-cp .env.example .env
-```
-
-Remplir `.env` avec des clés de **test uniquement**. Ne jamais commiter ce
-fichier. Aucun service ne lit `.env` de lui-même : il se charge dans le shell.
-
-```bash
-set -a; . ./.env; set +a
-```
-
-Tout ce qui suit tourne avec les valeurs par défaut, sans aucune clé.
-
-Chaque dossier applicatif est un paquet Node autonome :
-
-```bash
-(cd gateway && npm ci --ignore-scripts)
-```
-
-```bash
-(cd response && npm ci --ignore-scripts)
-```
-
-```bash
-(cd relay && npm ci --ignore-scripts)
-```
-
-```bash
-(cd dashboard && npm ci --ignore-scripts)
-```
-
-## Lancer
-
-Chaque service écoute sur `127.0.0.1` seulement. Un terminal par service.
-
-| Service | Commande | Port |
-|---|---|---|
-| Journal et réponse | `cd response && npm start` | 8790 |
-| Porte d'entrée | `cd gateway && npm start` | 8780 |
-| Relais, indexeur, API en lecture | `cd relay && npm start` | 8787 |
-| Dashboard simulé | `cd dashboard && npm run dev:fixtures`, puis `npm run dev:sim` | 5173 |
-
-Le journal se lance en premier : sans lui, la porte refuse tout. Sans contrat
-configuré, le relais démarre « coffre fermé » et ne soumet rien. Détail des
-variables : `gateway/README.md`, `response/README.md`, `relay/README.md`,
-`dashboard/README.md`.
-
 ## Lancer la démo
 
 Une commande lance toute la chaîne sur `127.0.0.1` : service de réponse (8790),
 porte d'entrée (8780), IA du client (8770), relais et API (8787), dashboard
 (5173). Il faut Node 22.18 ou plus récent et les dépendances de `response/`,
-`gateway/`, `relay/` et `dashboard/` (`npm ci --ignore-scripts` dans chacun).
+`gateway/`, `relay/` et `dashboard/` : voir [Installation](#installation).
 
 ```bash
 make demo
@@ -251,6 +221,47 @@ npm run verify-journal -- var/journal.jsonl
 
 Une pause ne se lève que par la commande humaine du [playbook](docs-jury/rendus/playbook.md).
 
+## Installation
+
+Prérequis : Node 22, npm, make, curl et jq. Foundry (forge, anvil) est
+facultatif en mode fake ; il est requis pour les contrats de `src/`, pour le
+test du relais sur chaîne locale et pour `VAULT_MODE=chain`.
+
+```bash
+cp .env.example .env
+```
+
+Remplir `.env` avec des clés de **test uniquement**. Ne jamais commiter ce
+fichier. Aucun service ne lit `.env` de lui-même : il se charge dans le shell.
+
+```bash
+set -a; . ./.env; set +a
+```
+
+Tout ce qui suit tourne avec les valeurs par défaut, sans aucune clé.
+
+Chaque dossier applicatif est un paquet Node autonome :
+
+```bash
+for d in gateway response relay dashboard; do (cd "$d" && npm ci --ignore-scripts); done
+```
+
+## Lancer
+
+Chaque service écoute sur `127.0.0.1` seulement. Un terminal par service.
+
+| Service | Commande | Port |
+|---|---|---|
+| Journal et réponse | `cd response && npm start` | 8790 |
+| Porte d'entrée | `cd gateway && npm start` | 8780 |
+| Relais, indexeur, API en lecture | `cd relay && npm start` | 8787 |
+| Dashboard simulé | `cd dashboard && npm run dev:fixtures`, puis `npm run dev:sim` | 5173 |
+
+Le journal se lance en premier : sans lui, la porte refuse tout. Sans contrat
+configuré, le relais démarre « coffre fermé » et ne soumet rien. Détail des
+variables : `gateway/README.md`, `response/README.md`, `relay/README.md`,
+`dashboard/README.md`.
+
 ## Vérifier
 
 ```bash
@@ -271,13 +282,7 @@ et qu'aucun chiffre de la fiche ne vient d'ailleurs que d'un fichier de mesure.
 
 ## Résultats
 
-La mesure du détecteur est enregistrée. Sur un jeu de test synthétique, une
-attaque pour une légitime, il détecte 50 attaques sur 100 et bloque à tort 4
-demandes légitimes sur 100. Ces chiffres valent pour ce jeu, pas pour le monde
-réel : en production les attaques sont rares, et la part des blocages à tort
-serait bien plus forte.
-
-Le tableau complet, les cas manqués et les lignes encore « à mesurer » vivent
+Les mesures du détecteur sont dans « Prouvé ». Le tableau complet, les cas manqués et les lignes encore « à mesurer » vivent
 dans l'[annexe de la fiche de défense](docs-jury/rendus/fiche-defense-mesures.md), remplie par un script depuis
 [docs/mesures/](docs/mesures/README.md). Les chiffres du jeu provisoire écrit
 par l'auteur des règles ne sont pas repris ici.
@@ -351,33 +356,26 @@ Du dépôt :
 
 Détail : [fiche de défense](docs-jury/rendus/fiche-defense.md), « Limites connues », et son [annexe](docs-jury/rendus/fiche-defense-mesures.md).
 
-## Livrables
+## Documentation
 
 | Document | Contenu |
 |---|---|
-| [docs-jury/rendus/fiche-defense.md](docs-jury/rendus/fiche-defense.md) | Fiche de défense d'une page |
-| [docs-jury/rendus/detection-llm.md](docs-jury/rendus/detection-llm.md) | Banc Bedrock de cinq instances : 18/20 attaques refusées, deux revues humaines, 0/20 faux positifs, corpus et votes livrés |
-| [docs-jury/rendus/fiche-defense-mesures.md](docs-jury/rendus/fiche-defense-mesures.md) | Annexe de la fiche : tableau de mesures généré, cas manqués, limites |
-| [docs-jury/rendus/playbook.md](docs-jury/rendus/playbook.md) | Playbook de réponse, état de chaque étape |
-| [docs-jury/rendus/conformite.md](docs-jury/rendus/conformite.md) | Contenu de la slide conformité, preuves et références |
-| [docs/pitch/questions-reponses.md](docs/pitch/questions-reponses.md) | Réponses aux questions du jury, et ce que nous ne disons pas |
-| [docs/deck/plan.md](docs/deck/plan.md) | Plan du deck en huit slides |
-| [docs/mesures/](docs/mesures/README.md) | Fichiers de mesure et leur format |
 | [docs-jury/README.md](docs-jury/README.md) | Partie blockchain : sommaire, état du marché et du coffre, décomptes de tests mesurés |
 | [docs-jury/architecture.md](docs-jury/architecture.md) | L1 privé VETO (chainId 191919, TxAllowList, Native Minter), contrats par phase, ArgentVault, part hors chaîne |
 | [docs-jury/flux-demande.md](docs-jury/flux-demande.md) | Parcours d'une demande dans le marché : commit, reveal, code 0/1/2, contestation |
 | [docs-jury/fautes.md](docs-jury/fautes.md) | Les trois fautes des vérificateurs, leurs sanctions, nos limites |
-| [docs-jury/rapport-securite.md](docs-jury/rapport-securite.md) | Revue de sécurité interne du marché, du coffre et du L1 ; pas un audit indépendant |
 | [docs-jury/tests.md](docs-jury/tests.md) | Suites Foundry et hors chaîne, familles de tests, commandes |
+| [docs-jury/preuves/](docs-jury/preuves/README.md) | Extraits nettoyés des runs : scène d'attaque et bout en bout sur le L1, coffre, Slither, gaz |
+| [docs-jury/rapport-securite.md](docs-jury/rapport-securite.md) | Revue de sécurité interne du marché, du coffre et du L1 ; pas un audit indépendant |
 | [docs-jury/mesures-gaz.md](docs-jury/mesures-gaz.md) | Tailles des contrats et coûts en gaz mesurés |
 | [docs-jury/rejouer-la-demo.md](docs-jury/rejouer-la-demo.md) | Redéployer la pile et rejouer la scène d'attaque sur le L1 |
-| [docs-jury/preuves/](docs-jury/preuves/README.md) | Extraits nettoyés des runs : scène d'attaque et bout en bout sur le L1, coffre, Slither, gaz |
+| [docs-jury/rendus/detection-llm.md](docs-jury/rendus/detection-llm.md) | Banc Bedrock de cinq instances : 18/20 attaques refusées, deux revues humaines, 0/20 faux positifs, corpus et votes livrés |
+| [docs/mesures/](docs/mesures/README.md) | Fichiers de mesure et leur format |
 
-## Équipe
+Rendus du hackathon : [fiche de défense](docs-jury/rendus/fiche-defense.md),
+son [annexe de mesures](docs-jury/rendus/fiche-defense-mesures.md) et le
+[playbook de réponse](docs-jury/rendus/playbook.md).
 
-| Nom | Rôle |
-|---|---|
-| Wladimir | Contrats (coffre ArgentVault, marché de vérification), L1 Avalanche VETO, services de vérification hors chaîne |
-| Loris | Porte d'entrée et réponse |
-| Joseph | Relais, dashboard, CI, livrables |
-| Nicolas | Pitch et relecture |
+## Licence
+
+[MIT](LICENSE).
